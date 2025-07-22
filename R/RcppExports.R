@@ -3,10 +3,6 @@
 
 #' C++ version of embed function
 #'
-#' @useDynLib beacon, .registration = TRUE
-#' @importFrom Rcpp evalCpp
-#' @importFrom RcppParallel RcppParallelLibs
-#' 
 #' @param x A numeric vector.
 #' @param dimension A numeric.
 #' @param numCores A numeric. A number of cores
