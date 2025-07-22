@@ -1175,23 +1175,23 @@ seqarima.new <- function(
 }
 
 # ETC ----
-#' Reinstall gwr
+#' Reinstall beacon
 #'
-#' @param gwr.path A character. A gwr package path.
+#' @param beacon.path A character. A beacon package path.
 #' @return reloading
 #' @export
-reinstall.gwr <- function(gwr.path = "~/projects/GW/gwr") {
+reinstall.beacon <- function(beacon.path = "~/projects/GW/beacon") {
     library(devtools)
-    detach(name = package:gwr, unload = T)
-    message("1) Removing 'gwr'...")
-    remove.packages("gwr")
+    detach(name = package:beacon, unload = T)
+    message("1) Removing 'beacon'...")
+    remove.packages("beacon")
 
-    message("2) Checking 'gwr'...")
-    checked <- check(gwr.path)
+    message("2) Checking 'beacon'...")
+    checked <- check(beacon.path)
 
     if (length(checked$errors) == 0) {
-        message("3) Re-installing 'gwr'...")
-        install(gwr.path)
+        message("3) Re-installing 'beacon'...")
+        install(beacon.path)
     } else {
         cat(checked$errors)
         stop("\nPlease check output")
