@@ -7,7 +7,7 @@
 #' @param csvpath A character. A pre-downloaded csv file path. If 'offline=TRUE', this need to be given.
 #' @return A data frame.
 #' @export
-get.gwosc <- function(
+get_gwosc <- function(
     #event_name="ALL", (DEPRECATED FOR A MOMENT)
     offline = F,
     csvpath = NULL
@@ -60,7 +60,7 @@ get.gwosc <- function(
 #'              Parameters that want to get.
 #'              It can be either one character or a vector of source.names.
 #' @export
-get.gwosc.param <- function(gwosc.list, source.names, param) {
+get_gwosc_param <- function(gwosc.list, source.names, param) {
     step1 <- gwosc.list |>
         dplyr::filter(commonName %in% source.names) |>
         dplyr::arrange(dplyr::desc(version)) |>
@@ -86,7 +86,7 @@ get.gwosc.param <- function(gwosc.list, source.names, param) {
 #' @param direct.url    A character (default: NULL). The file URL can be directly given.
 #' @return A list. $Data: A vector of strain, $tstart: A numeric of GPS start time, if 'load=TRUE'.
 #' @export
-download.gwosc <- function(
+download_gwosc <- function(
     destfile = "/tmp/tmp.hdf5",
     event_name,
     det,
@@ -176,7 +176,6 @@ download.gwosc <- function(
     #   change 'load=TRUE' and assign it like: 'data <- download.gwosc(...)'.
     if (load) {
         stopifnot(file.format == "hdf5")
-        check.installed("hdf5r")
         tmp <- hdf5r::h5file(filename = destfile, mode = 'r')
         tstart <- tmp[['meta']]$open(name = 'GPSstart')$read()
         Data <- tmp[['strain']]$open(name = 'Strain')$read()
