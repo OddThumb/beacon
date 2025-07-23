@@ -1,7 +1,7 @@
 #' Loading waveforms from PyCBC
 #'
 #' @export
-get.wave <- function(
+get_wave <- function(
     model.name,
     sampling.freq,
     fl = NULL,
@@ -46,14 +46,12 @@ get.wave <- function(
     # polarization.
     # If R.ts=TRUE, return list will have attributes
 
-    check.installed("reticulate")
-
     # Generate waveforms
-    get.td.waveform <- reticulate::import(
+    get_td_waveform <- reticulate::import(
         'pycbc.waveform',
         convert = FALSE
     )$get_td_waveform
-    waveforms <- get.td.waveform(
+    waveforms <- get_td_waveform(
         approximant = model.name,
         mass1 = m1,
         mass2 = m2,
@@ -104,7 +102,7 @@ get.wave <- function(
         } else {
             add <- reticulate::import("operator")$add
             mul <- reticulate::import("operator")$mul
-            ap <- get.antpatt(det, ra, dec, pol, t_gps)
+            ap <- get_antpatt(det, ra, dec, pol, t_gps)
             ht <- add(mul(ap$fp, waveforms$hp), mul(ap$fc, waveforms$hc))
             waveforms$ht <- ht
 
@@ -147,7 +145,7 @@ get.wave <- function(
 #' Generate noise sample
 #'
 #' @export
-gen.noise <- function(
+gen_noise <- function(
     tlen,
     sampling.freq,
     fl = 5,
@@ -235,7 +233,7 @@ gen.noise <- function(
 #' Generate colored noise sample
 #'
 #' @export
-gen.colornoise <- function(tlen, fs, type, seed) {
+gen_colornoise <- function(tlen, fs, type, seed) {
     set.seed(seed)
     if (type == "mix") {
         noise.brown <- tuneR::noise(
@@ -281,7 +279,7 @@ gen.colornoise <- function(tlen, fs, type, seed) {
 #' Generating random noise and inserting signal into the noise
 #'
 #' @export
-gen.data <- function(
+gen_data <- function(
     signal,
     sampling_freq,
     beta = 1,
@@ -307,7 +305,7 @@ gen.data <- function(
 
     # Noise with the scale of beta
     noise <- beta *
-        gen.noise(
+        gen_noise(
             tlen,
             sampling_freq,
             fl = fl,
@@ -320,7 +318,7 @@ gen.data <- function(
         )
 
     # Matching phase
-    signal <- shift.phase(signal, noise)
+    signal <- shift_phase(signal, noise)
 
     # Random signal starting index
     signal.ind <- runif(1, min = 0, max = N - length(signal)) %>% trunc()
@@ -336,12 +334,12 @@ gen.data <- function(
     # Start time and event time of simulation data w.r.t. signal time
     start_time <- rev(
         seq(
-            from = gwr::ti(signal),
-            to = gwr::ti(signal) - (signal.ind / sampling_freq + pre.sec),
+            from = beacon::ti(signal),
+            to = beacon::ti(signal) - (signal.ind / sampling_freq + pre.sec),
             by = -(1 / sampling_freq)
         )
     )[1]
-    tevent <- gwr::ti(signal)
+    tevent <- beacon::ti(signal)
 
     # If start_time is shifted to 0,
     if (!t0.signal) {
@@ -377,7 +375,7 @@ gen.data <- function(
 #' @param phase A numeric (default: NULL). A specific shifting phase.
 #' @return A phase-shifted phase.
 #' @export
-shift.phase <- function(ts, ref = NULL, phase = NULL) {
+shift_phase <- function(ts, ref = NULL, phase = NULL) {
     sampling.freq <- frequency(ts)
 
     if (is.null(ref) & is.null(phase)) {

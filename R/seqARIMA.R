@@ -9,7 +9,7 @@
 #'      \code{$head}: time stamps whose values are NA at the head,
 #'      \code{$tail}: time stamps whose values are NA at the tail.
 #' @export
-get.MissingValues <- function(ts, ref) {
+get_MissingValues <- function(ts, ref) {
     NA.idx <- is.na(match(time(ref), time(ts)))
     head.NA.idx <- 1:(which(NA.idx == FALSE)[1] - 1)
     tail.NA.idx <- (tail(which(NA.idx == FALSE), 1) + 1):length(NA.idx)
@@ -32,7 +32,6 @@ get.MissingValues <- function(ts, ref) {
 #' @return A data frame of p.values for both level and trend.
 #' @export
 check_stationary <- function(ts, t.seg = 0.5) {
-    check.installed("tseries")
     kpss.test <- function(x) {
         c(
             tseries::kpss.test(x, null = "Level", lshort = F)$p.value,
@@ -67,7 +66,6 @@ check_stationary <- function(ts, t.seg = 0.5) {
 #' @return A numeric vector of p.values.
 #' @export
 check_normality <- function(ts, t.seg = 0.5) {
-    check.installed("nortest")
     norm.test <- function(x) {
         nortest::ad.test(x)$p.value
     }
@@ -100,23 +98,23 @@ auto.diff <- function(ts, t.seg = 0.5, d_max = 2, verbose = TRUE) {
 
     d <- 0
 
-    message.verb(
+    message_verb(
         "|> KPSS test on segments (each ",
         t.seg,
         " second)",
         v = verbose
     )
-    message.verb("||> d=", d, v = verbose)
+    message_verb("||> d=", d, v = verbose)
     p.values <- suppressWarnings(check_stationary(out, t.seg))
     pval.list[[paste("d", d, sep = "")]] <- p.values
 
     while (!all(p.values == 0.1)) {
-        message.verb('|||> Non-stationary. p-value < 10 %', v = verbose)
+        message_verb('|||> Non-stationary. p-value < 10 %', v = verbose)
 
         d <- d + 1
         out <- diff(out, difference = 1)
 
-        message.verb("||> d=", d, v = verbose)
+        message_verb("||> d=", d, v = verbose)
         p.values <- suppressWarnings(check_stationary(out, t.seg))
         pval.list[[paste("d", d, sep = "")]] <- p.values
         if (!is.null(d_max)) {
@@ -367,7 +365,7 @@ burgar <- function(
 #' @param ... Additional arguments for 'ar'.
 #' @return A list with `$res: ar(ts, ...)$resid` and `$AR: ar(ts, ...)` result itself.
 #' @export
-ar.resid <- function(ts, ...) {
+ar_resid <- function(ts, ...) {
     AR <- burgar(x = ts, ...)
     resid <- AR$resid %>% na.omit()
     return(list("res" = resid, "AR" = AR))
@@ -378,7 +376,7 @@ ar.resid <- function(ts, ...) {
 #' @param ar An AR object.
 #' @return A ggplot object.
 #' @export
-plot.aic <- function(ar) {
+plot_aic <- function(ar) {
     check.installed('latex2exp')
 
     ar.aic.df <- data.frame(p = seq(0, length(ar$aic) - 1), AIC = ar$aic)
@@ -520,7 +518,7 @@ ma <- function(ts, order, na.rm = T) {
 #' @param ... Additional arguments for 'prcomp'.
 #' @return PCA object with fixed loadings' sign.
 #' @export
-apply.pca <- function(
+apply_pca <- function(
     x,
     retx = T,
     center = F,
@@ -558,7 +556,7 @@ apply.pca <- function(
 #' @return A matrix or a vector.
 #' @export
 extract_pc <- function(x, pc = "PC1") {
-    unname(apply.pca(na.omit(x))$x[, pc])
+    unname(apply_pca(na.omit(x))$x[, pc])
 }
 
 #' Ensemble of Averages (EoA)
@@ -588,260 +586,6 @@ eoa <- function(ts, qs, collector = "median") {
     return(ret.list)
 }
 
-
-#' Sequential ARIMA function
-#'
-#' (Difference -> AR -> MA -> band-pass)
-#'
-#' @param ts           A time series (`ts`) object.
-#' @param d            An integer. The FIXED order of difference.
-#' @param p            An integer. The FIXED order of AR.
-#' @param q            An integer. The FIXED order of MA.
-#' @param t.seg        A numeric (default: 0.5). A time length in each segment.
-#' @param d_max        An integer (default: NULL). If d_max is given, the order d will not exceed d_max.
-#' @param p_max        An integer. The maximum order of AR.
-#' @param min.q        An integer (default: 1). The lower bound of q for MAC.
-#' @param q_max        An integer. The upper bound of q for MAC.
-#' @param fl           A numeric. The frequency lower bound for the band-pass filter.
-#' @param fu           A numeric. The frequency upper bound for the band-pass filter.
-#' @param ar.choose    A character (default: "residual"). Choose 'residual' or 'fitted'.
-#' @param var.method   An integer (default: 1). The method to estimate the innovations variance for AR (See `ar.burg`)
-#' @param ma.collector A character (default: "median"). A function name for collecting various MA models. (one of "mean", "median", or "pca)
-#' @param return.mas   A logical (default: TRUE). Whether it returns a data frame 'mas' containing various MAs.
-#' @param elap.t       A logical (default: FALSE). Whether it calculates elapsed time 'elap.t'.
-#' @param verbose      A logical (default: TRUE). Whether it message out about its processing.
-#' @return A list.
-#'      `$x`: A original ts,
-#'      `$out`: Final result ts,
-#'      `$DD`: A list of intermediate result of difference,
-#'      `$AR`: A list of intermediate result of AR,
-#'      `$MA`: A ts of intermediate result of MA,
-#'      `$EOA`: A ts of intermediate result of MAC,
-#'      `$mas`: A data frame. Various MAs.
-#'      `$NA.times`: A list with
-#'          `$all` : time stamps whose values are NA,
-#'          `$head`: time stamps whose values are NA at the head,
-#'          `$tail`: time stamps whose values are NA at the tail,
-#'      with attributes:
-#'          `$d`: The optimal order of difference,
-#'          `$p`: The optimal order of AR,
-#'          `$q`: The order(s) of MA(C),
-#'          `$ma.collector`: Used collector function for MAC,
-#'          `$elap.t`: Elapsed time in second.
-#'          `$suffix`: Final model name, e.g. "ARIMAC(10|1~10|1)"
-#' @export
-seqarima <- function(
-    ts, # Input time series (ts object)
-    d = NULL,
-    p = NULL,
-    q = NULL, # Sequential ARIMA with fixed p,q,d
-    t.seg = .5, # These activate KPSS test for selecting d
-    d_max = NULL, # Upper limit of d
-    p_max = NULL, # AIC test is performed for selecting p
-    min.q = 1,
-    q_max = NULL, # These activate MAC (Moving Average Collection)
-    fl = NULL,
-    fu = NULL, # For Band-pass filter
-    ar.choose = 'residual', # Choose 'residual' or 'fitted'
-    var.method = 1, # The method to estimate the innovations variance for AR
-    numCores = NULL, # Only for parallel computing in calculating AR residual. [Default: 4 cores (p_max<4000), 8 cores (p_max>4000)]
-    ma.collector = "median", # PCA, median, mean
-    return.mas = FALSE, # Returning option
-    elap.t = FALSE, # Miscellaneous options
-    verbose = TRUE # Miscellaneous options
-) {
-    # Argument matching
-    ar.choose <- match.arg(ar.choose, c("fitted", "residual"))
-    ma.collector <- match.arg(ma.collector, c("mean", "median", "pca"))
-
-    if (elap.t) {
-        check.installed('tictoc')
-        tictoc::tic() # Start measuring execution time
-    }
-
-    message.verb("> Running seqarima...", v = verbose)
-
-    # Check ts object
-    if (!is.ts(ts)) {
-        stop("Error) Input object type is not 'ts'")
-    }
-
-    # Some info
-    source <- attr(ts, "source")
-    sampling.freq <- frequency(ts)
-
-    # Initializing
-    return.list <- list()
-    return.list[['x']] <- ts
-
-    # Difference
-    if (is.null(d)) {
-        message.verb("> (1) Difference stage", v = verbose)
-        diff.res <- auto.diff(
-            ts,
-            t.seg = t.seg,
-            d_max = d_max,
-            verbose = verbose
-        )
-
-        ts <- diff.res$out
-
-        return.list[['out']] <- ts
-        return.list[['DD']] <- diff.res
-        d.order <- diff.res$d
-        attr(return.list, 'd') <- d.order
-
-        message.verb("|> d=", d.order, " is selected!", v = verbose)
-    } else {
-        if (d == 0) {
-            d.order <- d
-            attr(return.list, 'd') <- d.order
-        } else {
-            message.verb("> (1) Difference stage with d=", d, v = verbose)
-            ts <- diff(ts, diff = d)
-            return.list[['out']] <- ts
-            return.list[['DD']] <- ts
-            d.order <- d
-            attr(return.list, 'd') <- d.order
-        }
-    }
-
-    # Auto-Regressive (AR)
-    if (is.null(p)) {
-        p.order <- 0
-
-        if ((p_max != 0) && !is.null(p_max)) {
-            message.verb("> (2) AR stage", v = verbose)
-            message.verb("|> Selecting p by AIC...", v = verbose)
-            ar.res <- ar.resid(
-                ts,
-                ic = T,
-                order.max = p_max,
-                numCores = numCores
-            )
-            ar.obj <- ar.res$AR
-            p.order <- ar.obj$order
-            message.verb("|> p=", p.order, " is selected!", v = verbose)
-
-            if (ar.choose == "fitted") {
-                ts <- ts - ar.res$res
-            } else {
-                ts <- ar.res$res
-            }
-            message.verb(
-                "|> ",
-                ar.choose,
-                " is chosen for a result.",
-                v = verbose
-            )
-
-            return.list[['out']] <- ts
-            return.list[['AR']] <- ar.obj
-            return.list[["ar.choose"]] <- ar.choose
-            attr(return.list, 'p') <- p.order
-        }
-    } else {
-        message.verb("> (2) AR stage with p=", p, v = verbose)
-        ar.res <- ar.resid(ts, ic = F, order.max = p)
-        p.order <- ar.res$AR$order
-        if (ar.choose == "fitted") {
-            ts <- ts - ar.res$res
-        } else {
-            ts <- ar.res$res
-        }
-        message.verb("|> ", ar.choose, " is chosen for a result.", v = verbose)
-
-        return.list[['out']] <- ts
-        return.list[['AR']] <- ar.res$AR
-        attr(return.list, 'p') <- p.order
-    }
-
-    # Moving Average (ma)
-    if (is.null(q)) {
-        q.order <- 0
-
-        if ((q_max != 0) && !is.null(q_max)) {
-            message.verb("> (3) EoA (Ensemble of Averages) stage", v = verbose)
-            qs <- seq(min.q, q_max)
-            eoa <- eoa(ts, qs, ma.collector)
-            mas.df <- eoa$df
-            eoa.res <- eoa$res
-            attr(mas.df, "qs") <- qs
-
-            if (return.mas) {
-                return.list[['MAs']] <- mas.df
-                message.verb("|> MAs data frame is also returned!", v = verbose)
-            }
-
-            ts <- eoa.res
-            q.order <- paste(min.q, "~", q_max, sep = '')
-
-            return.list[['out']] <- ts
-            return.list[['EOA']] <- ts
-
-            attr(return.list, 'q') <- q.order
-            attr(return.list, 'ma.collector') <- ma.collector
-
-            message.verb(
-                "|> q=",
-                q.order,
-                " by a collector: ",
-                ma.collector,
-                v = verbose
-            )
-        }
-    } else {
-        message.verb("> (3) MA stage with q=", q, v = verbose)
-        ts <- ma(ts, q)
-        q.order <- q
-        return.list[['out']] <- ts
-        return.list[['MA']] <- ts
-        attr(return.list, 'q') <- q.order
-    }
-
-    # Band-pass filter
-    if ((fl != 0 || fu != 0) && (!is.null(fl) || !is.null(fu))) {
-        message.verb("> (4) Pass filter stage", v = verbose)
-
-        ts <- bandpass(ts, fl, fu, verb = verbose)
-        attr(ts, "type") <- NULL
-        attr(ts, "order") <- NULL
-        return.list[['out']] <- ts
-
-        attr(return.list, 'lower.freq') <- fl
-        attr(return.list, 'upper.freq') <- fu
-    }
-
-    # Execution time measuring
-    if (elap.t) {
-        tctc <- tictoc::toc(quiet = T) # Finish measuring execution time
-        attr(return.list, 'elap.t') <- (tctc$toc - tctc$tic)[[1]] # Store elap.t as an attribute
-        message.verb("> ", tctc$callback_msg, v = verbose)
-    }
-
-    # Also return missing values caused by ARIMA
-    return.list[['NA.times']] <- get.MissingValues(
-        ts = return.list[['out']],
-        ref = return.list[['x']]
-    )
-
-    # Additional attributes
-    attr(return.list[['out']], 'model') <- paste(
-        'ARIMA(',
-        p.order,
-        '|',
-        q.order,
-        '|',
-        d.order,
-        ')',
-        sep = ''
-    )
-    attr(return.list[['out']], 'source') <- source
-
-    return(return.list)
-}
-
-# SEQARIMA Ver. 2 ----
 # Ensemble of AR
 ear <- function(
     ts,
@@ -927,9 +671,9 @@ ear <- function(
 differencing <- function(ts, d = NULL, t.seg = 0.5, kpss = T, verbose = T) {
     if (is.null(d)) {
         # Automatic selection of d
-        message.verb("> (1) Difference stage", v = verbose)
+        message_verb("> (1) Difference stage", v = verbose)
         diff.res <- auto.diff(ts, t.seg = t.seg, verbose = verbose)
-        message.verb("|> d=", diff.res$d, " is selected!", v = verbose)
+        message_verb("|> d=", diff.res$d, " is selected!", v = verbose)
 
         out <- diff.res$out
         DD <- diff.res
@@ -941,21 +685,21 @@ differencing <- function(ts, d = NULL, t.seg = 0.5, kpss = T, verbose = T) {
     } else {
         if (kpss) {
             # d_max limited auto.diff
-            message.verb("> (1) Difference stage with d_max=", d, v = verbose)
+            message_verb("> (1) Difference stage with d_max=", d, v = verbose)
             diff.res <- auto.diff(
                 ts,
                 t.seg = t.seg,
                 d_max = d,
                 verbose = verbose
             )
-            message.verb("|> d=", diff.res$d, " is selected!", v = verbose)
+            message_verb("|> d=", diff.res$d, " is selected!", v = verbose)
 
             out <- diff.res$out
             DD <- diff.res
             d.order <- diff.res$d
         } else {
             # Specific d
-            message.verb("> (1) Difference stage with d=", d, v = verbose)
+            message_verb("> (1) Difference stage with d=", d, v = verbose)
             ts <- diff(ts, diff = d)
 
             out <- ts
@@ -971,7 +715,7 @@ differencing <- function(ts, d = NULL, t.seg = 0.5, kpss = T, verbose = T) {
 autoregressive <- function(ts, p = NULL, aic = T, verbose = TRUE, ...) {
     if (length(p) > 1) {
         # length(p) > 1 : Ensemble of AR (EAR)
-        message.verb(
+        message_verb(
             "> (2) EAR stage with p={",
             paste(p, collapse = ','),
             "}",
@@ -979,7 +723,7 @@ autoregressive <- function(ts, p = NULL, aic = T, verbose = TRUE, ...) {
         )
         ar.fit <- ear(ts, ps = p, aic = aic, ...)
         p.order <- ar.fit$p.order
-        message.verb(
+        message_verb(
             "|> p={",
             paste(p.order, collapse = ', '),
             "} is selected and aggregated by a collector: ",
@@ -988,8 +732,8 @@ autoregressive <- function(ts, p = NULL, aic = T, verbose = TRUE, ...) {
         )
     } else {
         # length(p) == 1 : Single AR
-        message.verb("> (2) AR stage with p_max=", p, v = verbose)
-        ar.res <- ar.resid(ts, ic = aic, order.max = p, ...)
+        message_verb("> (2) AR stage with p_max=", p, v = verbose)
+        ar.res <- ar_resid(ts, ic = aic, order.max = p, ...)
         p.order <- ar.res$AR$order
         feature <- c('ar' = ar.res$AR$ar)
         ar.fit <- list(
@@ -997,7 +741,7 @@ autoregressive <- function(ts, p = NULL, aic = T, verbose = TRUE, ...) {
             'feature' = feature,
             'p.selected' = p.order
         )
-        message.verb("|> p=", p.order, " is selected!", v = verbose)
+        message_verb("|> p=", p.order, " is selected!", v = verbose)
     }
     list("AR" = ar.fit, "p.order" = p.order)
 }
@@ -1007,11 +751,11 @@ autoregressive <- function(ts, p = NULL, aic = T, verbose = TRUE, ...) {
 movingaverage <- function(ts, q = NULL, verbose = TRUE, ...) {
     if (length(q) > 1) {
         # length(p) > 1 : Ensemble of Average (EoA)
-        message.verb("> (3) EoA (Ensemble of Averages) stage", v = verbose)
+        message_verb("> (3) EoA (Ensemble of Averages) stage", v = verbose)
         eoa <- eoa(ts, q, ...)
         out <- eoa$res
         q.order <- q
-        message.verb(
+        message_verb(
             "|> q={",
             paste(q.order, collapse = ','),
             "} by a collector: ",
@@ -1020,10 +764,10 @@ movingaverage <- function(ts, q = NULL, verbose = TRUE, ...) {
         )
     } else {
         # length(q) == 1 : Single MA
-        message.verb("> (3) MA stage with q=", q, v = verbose)
+        message_verb("> (3) MA stage with q=", q, v = verbose)
         out <- ma(ts, q)
         q.order <- q
-        message.verb("|> q=", q.order, v = verbose)
+        message_verb("|> q=", q.order, v = verbose)
     }
     list("x_eoa" = out, "q.order" = q.order)
 }
@@ -1064,7 +808,7 @@ movingaverage <- function(ts, q = NULL, verbose = TRUE, ...) {
 #'          `$elap.t`: Elapsed time in second.
 #'          `$suffix`: Final model name, e.g. "ARIMAC(10|1~10|1)"
 #' @export
-seqarima.new <- function(
+seqarima <- function(
     ts, # Input time series (ts object)
     d = NULL,
     p = NULL,
@@ -1087,7 +831,7 @@ seqarima.new <- function(
         tictoc::tic() # Start measuring execution time
     }
 
-    message.verb("> Running seqarima...", v = verbose)
+    message_verb("> Running seqarima...", v = verbose)
 
     # Check ts object
     if (!is.ts(ts)) {
@@ -1144,7 +888,7 @@ seqarima.new <- function(
 
     # 4) Band-pass filter
     if ((fl != 0 || fu != 0) && (!is.null(fl) || !is.null(fu))) {
-        message.verb("> (4) Pass filter stage", v = verbose)
+        message_verb("> (4) Pass filter stage", v = verbose)
 
         x_bp <- bandpass(out, fl, fu, verb = verbose)
         attr(x_bp, "type") <- NULL
@@ -1162,38 +906,14 @@ seqarima.new <- function(
     if (elap.t) {
         tctc <- tictoc::toc(quiet = T) # Finish measuring execution time
         attr(return.list, 'elap.t') <- (tctc$toc - tctc$tic)[[1]] # Store elap.t as an attribute
-        message.verb("> ", tctc$callback_msg, v = verbose)
+        message_verb("> ", tctc$callback_msg, v = verbose)
     }
 
     # Also return missing values caused by ARIMA
-    return.list[['NA.times']] <- get.MissingValues(
+    return.list[['NA.times']] <- get_MissingValues(
         ts = return.list[['out']],
         ref = return.list[['x']]
     )
 
     return(return.list)
-}
-
-# ETC ----
-#' Reinstall beacon
-#'
-#' @param beacon.path A character. A beacon package path.
-#' @return reloading
-#' @export
-reinstall.beacon <- function(beacon.path = "~/projects/GW/beacon") {
-    library(devtools)
-    detach(name = package:beacon, unload = T)
-    message("1) Removing 'beacon'...")
-    remove.packages("beacon")
-
-    message("2) Checking 'beacon'...")
-    checked <- check(beacon.path)
-
-    if (length(checked$errors) == 0) {
-        message("3) Re-installing 'beacon'...")
-        install(beacon.path)
-    } else {
-        cat(checked$errors)
-        stop("\nPlease check output")
-    }
 }

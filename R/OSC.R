@@ -32,20 +32,20 @@ get.gwosc <- function(
         # All events info will be stored as a data frame
         full_url <- paste(base_url, "/eventapi/jsonfull/query/show", sep = '')
         query.list <- suppressMessages({
-            full_url %>%
-                request::api() %>%
+            full_url |>
+                request::api() |>
                 request::http()
         })
-        query.df <- bind_rows(query.list$events, .id = "commonName") %>%
-            separate(commonName, c("commonName", "v"), "-")
+        query.df <- dplyr::bind_rows(query.list$events, .id = "commonName") |>
+            tidyr::separate(commonName, c("commonName", "v"), "-")
 
         query.df_strain <- rlist::list.rbind(lapply(
             query.df$strain,
             rlist::list.cbind
         ))
-        return.obj <- bind_cols(query.df, query.df_strain) %>%
-            relocate(colnames(query.df_strain), .before = strain) %>%
-            select(-strain)
+        return.obj <- dplyr::bind_cols(query.df, query.df_strain) |>
+            dplyr::relocate(colnames(query.df_strain), .before = strain) |>
+            dplyr::select(-strain)
     }
     return(return.obj)
 }
@@ -61,14 +61,14 @@ get.gwosc <- function(
 #'              It can be either one character or a vector of source.names.
 #' @export
 get.gwosc.param <- function(gwosc.list, source.names, param) {
-    step1 <- gwosc.list %>%
-        filter(commonName %in% source.names) %>%
-        arrange(desc(version)) %>%
-        distinct(commonName, .keep_all = T)
+    step1 <- gwosc.list |>
+        dplyr::filter(commonName %in% source.names) |>
+        dplyr::arrange(dplyr::desc(version)) |>
+        dplyr::distinct(commonName, .keep_all = T)
     if (length(param) > 1) {
-        step1 %>% select(param)
+        step1 |> dplyr::select(param)
     } else {
-        step1 %>% pull(param)
+        step1 |> dplyr::pull(param)
     }
 }
 
@@ -100,7 +100,6 @@ download.gwosc <- function(
     direct.url = NULL
 ) {
     # Check internet
-    check.installed("curl")
     if (!curl::has_internet()) {
         stop("No internet connection")
     }
@@ -114,13 +113,13 @@ download.gwosc <- function(
         step1 <- get.gwosc()
 
         # Step 2: Filter by commonName
-        step2 <- step1 %>% filter(commonName == event_name)
+        step2 <- step1 |> dplyr::filter(commonName == event_name)
 
         # Step 3: Choose version
         if (version == "latest") {
-            step3 <- step2 %>%
-                arrange(desc(version)) %>% # [[ LATEST ]]
-                distinct(
+            step3 <- step2 |>
+                dplyr::arrange(dplyr::desc(version)) |> # [[ LATEST ]]
+                dplyr::distinct(
                     commonName,
                     detector,
                     sampling_rate,
@@ -137,8 +136,8 @@ download.gwosc <- function(
                     event_name
                 ))
             }
-            step3 <- step2 %>%
-                filter(version == version)
+            step3 <- step2 |>
+                dplyr::filter(version == version)
         }
 
         # Step 4: Filter by detector
@@ -152,13 +151,13 @@ download.gwosc <- function(
                 version
             ))
         }
-        step4 <- step3 %>% filter(detector == det)
+        step4 <- step3 |> dplyr::filter(detector == det)
 
         # Step 5: Filter by dur, file.format, sampling.freq
-        step5 <- step4 %>%
-            filter(duration == dur) %>%
-            filter(format == file.format) %>%
-            filter(sampling_rate == sampling.freq)
+        step5 <- step4 |>
+            dplyr::filter(duration == dur) |>
+            dplyr::filter(format == file.format) |>
+            dplyr::filter(sampling_rate == sampling.freq)
 
         # Step 6: Get url
         file.url <- step5$url

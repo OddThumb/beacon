@@ -2,7 +2,7 @@
 % Please edit documentation in R/etc.R
 \name{vi}
 \alias{vi}
-\title{Simple initial value point}
+\title{Simple initial value}
 \usage{
 vi(x, n = 1)
 }
@@ -15,5 +15,5 @@ vi(x, n = 1)
 Numeric(s). n initial times.
 }
 \description{
-Simple initial value point
+Simple initial value
 }

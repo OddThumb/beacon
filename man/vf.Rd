@@ -2,7 +2,7 @@
 % Please edit documentation in R/etc.R
 \name{vf}
 \alias{vf}
-\title{Simple final value point}
+\title{Simple final value}
 \usage{
 vf(x, n = 1)
 }
@@ -15,5 +15,5 @@ vf(x, n = 1)
 Numeric(s). n final times.
 }
 \description{
-Simple final value point
+Simple final value
 }

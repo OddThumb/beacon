@@ -95,7 +95,7 @@ qseries <- function(fseries, Q, f0, return_complex = FALSE) {
     # At the line with the function 'cyclic' which will use this 'center' later, the shift by this center results in
     # (1) value > asymmetric vector
     # (2) index > the symmetric side-by-side (head and tail concentrated) vector.
-    # Let's assume (2) index.
+    # Let's assume "(2) index".
 
     tlen <- attr(fseries, "tlen")
     # windowed <- fseries[fstart:(fend-1)] * (1-xfreqs^2)^2 * norm # This is Python-based
@@ -183,6 +183,7 @@ qplane <- function(qplane.tile.list, fseries, return_complex = FALSE) {
 #' @export
 interp2d <- function(x, y, z, xout, yout, method = "linear") {
     interp.surface <- function(x, y, z, loc, method = "linear") {
+        # Inspired by fields::interp.surface
         nx <- length(x)
         ny <- length(y)
         ll <- switch(
@@ -244,7 +245,6 @@ qtransform <- function(
     mismatch = 0.2,
     return_complex = FALSE
 ) {
-    check.installed(c("pracma", "fields"))
     if (is.null(frange)) {
         frange <- c(30, as.integer(frequency(ts) / 2 * 8))
     }

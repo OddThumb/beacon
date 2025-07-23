@@ -25,7 +25,7 @@ amin <- function(x, na.rm = T) {
 #' @param x A numeric vector.
 #' @return A numeric.
 #' @export
-get.order <- function(x) {
+get_order <- function(x) {
     10^(floor(log10(amax(x))))
 }
 
@@ -36,7 +36,7 @@ get.order <- function(x) {
 #' @param mar.frac A numeric. A margin. This will be multiplied on amax(x).
 #' @return A vector. c(-amax, +amax)*mar.frac.
 #' @export
-get.limit <- function(x, mar.frac = 1.5) {
+get_limit <- function(x, mar.frac = 1.5) {
     c(-amax(x), amax(x)) * mar.frac
 }
 

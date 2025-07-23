@@ -99,7 +99,7 @@ start_time <- function(x, tstart = NULL) {
 tsfy <- function(obj, ref, sampling.freq = NULL, na.rm = T) {
     # vector to ts
     tsref <- function(x, ref, na.rm = na.rm) {
-        out <- ts(x, start = stats::time(ref)[1], frequency = frequency(ref))
+        out <- ts(x, start = time(ref)[1], frequency = frequency(ref))
         if (na.rm) {
             out <- na.omit(out) #tseries::na.remove()
         }
@@ -186,16 +186,16 @@ tsfy <- function(obj, ref, sampling.freq = NULL, na.rm = T) {
 #' @param tzero A numeric (default: 0). A zero time. Times will be shifted by '\code{tzero}'.
 #' @return A data frame with 'time' column at first.
 #' @export
-ts.df <- function(ts, tzero = 0, val.name = "x") {
+ts_df <- function(ts, tzero = 0, val.name = "x") {
     if (!is.ts(ts)) {
         stop("Input object class is not 'ts'")
     }
 
     if (!is.null(dim(ts))) {
-        ts %>%
-            as.data.frame() %>%
-            mutate(time = c(time(ts) - tzero)) %>%
-            relocate(time, .before = 1)
+        ts |>
+            as.data.frame() |>
+            dplyr::mutate(time = c(time(ts) - tzero)) |>
+            dplyr::relocate(time, .before = 1)
     } else {
         data.frame(time = c(time(ts) - tzero), c(ts)) |>
             `colnames<-`(c("time", val.name))
@@ -207,12 +207,7 @@ ts.df <- function(ts, tzero = 0, val.name = "x") {
 #' @param ts A time series (`ts`) object.
 #' @return A tbl_time.
 #' @export
-as.tbt <- function(ts, time_col = 'time', val_col = 'x') {
-    check.installed('tibbletime')
-
-    #tibble(time = as.POSIXct(gps2utc(time(ts)), tz="UTC"),
-    #       x = c(ts)) %>%
-    #    tibbletime::as_tbl_time(time)
+as_tbt <- function(ts, time_col = 'time', val_col = 'x') {
     timerange <- as.POSIXct(
         tr(ts),
         origin = as.Date("1980-01-06"),
@@ -223,9 +218,9 @@ as.tbt <- function(ts, time_col = 'time', val_col = 'x') {
         timerange[1] ~ timerange[2],
         period = paste(as.character(1 / frequency(ts)), "second")
     ) |>
-        mutate('{val_col}' := c(ts)) |>
-        rename('{time_col}' := date)
-    attr(tbt, "index_quo") <- quo(time)
+        dplyr::mutate('{val_col}' := c(ts)) |>
+        dplyr::rename('{time_col}' := date)
+    attr(tbt, "index_quo") <- dplyr::quo(time)
     tbt
 }
 
@@ -235,7 +230,7 @@ as.tbt <- function(ts, time_col = 'time', val_col = 'x') {
 #'
 #' @return A `ts` object with respect to the given `fs` object.
 #' @export
-to.ts <- function(fs, start = 0, delta_t = NULL) {
+to_ts <- function(fs, start = 0, delta_t = NULL) {
     " Return the Fourier transform of this time series.
 
     Note that this assumes even length time series!
@@ -318,7 +313,7 @@ crop_to <- function(ts, ind.range) {
     if (!all(ind.range %in% seq_along(ts))) {
         stop("(InputError) A given `ind.range` includes an index out of `ts`")
     }
-    gwr::window_to(ts, time(ts)[ind.range])
+    window_to(ts, time(ts)[ind.range])
 }
 
 #' Padding short ts into longer zeros.
@@ -390,8 +385,8 @@ evenify <- function(ts) {
 #' @param ts A time series (`ts`) object.
 #' @return A scaled time series. A scale factor is calculated by '`get.order`'. The factor will be stored in '`$order`' attribute.
 #' @export
-one.ts <- function(ts) {
-    order.val <- get.order(ts)
+one_ts <- function(ts) {
+    order.val <- get_order(ts)
     norm <- ts / order.val
     attr(norm, 'order') <- order.val
     return(norm)
@@ -425,7 +420,6 @@ bandpass <- function(
     filt_order = NULL,
     verbose = T
 ) {
-    check.installed("signal")
     if (resp == "FIR") {
         filt.name <- "signal::fir1"
         n <- ifelse(is.null(filt_order), 512, filt_order)
@@ -494,7 +488,7 @@ bandpass <- function(
             v = verbose
         )
     }
-    out <- signal::filtfilt(filt = FiltFun, x = ts) %>% tsfy(ref = ts)
+    out <- signal::filtfilt(filt = FiltFun, x = ts) |> tsfy(ref = ts)
 
     attr(filt.func, "name") <- filt.name
     attr(window.func, "name") <- 'bspec::welchwindow'
@@ -515,6 +509,6 @@ bandpass <- function(
 #' @export
 whiten <- function(ts, sl, fl, fu, ...) {
     PSD <- psd(ts, sl, fl)
-    to.ts((to.fs(ts) / (PSD^0.5))) |>
+    to_ts((to.fs(ts) / (PSD^0.5))) |>
         bandpass(fl, fu, verbose = F, ...)
 }

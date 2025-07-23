@@ -9,18 +9,12 @@ seqarima(
   d = NULL,
   p = NULL,
   q = NULL,
-  t.seg = 0.5,
-  d_max = NULL,
-  p_max = NULL,
-  min.q = 1,
-  q_max = NULL,
   fl = NULL,
   fu = NULL,
-  ar.choose = "residual",
-  var.method = 1,
-  numCores = NULL,
+  ar.aic = TRUE,
+  ar.collector = "median",
   ma.collector = "median",
-  return.mas = FALSE,
+  return.every = FALSE,
   elap.t = FALSE,
   verbose = TRUE
 )
@@ -28,33 +22,23 @@ seqarima(
 \arguments{
 \item{ts}{A time series (`ts`) object.}
 
-\item{d}{An integer. The FIXED order of difference.}
+\item{d}{An integer. The order of difference.}
 
-\item{p}{An integer. The FIXED order of AR.}
+\item{p}{An integer. The order of AR.}
 
-\item{q}{An integer. The FIXED order of MA.}
-
-\item{t.seg}{A numeric (default: 0.5). A time length in each segment.}
-
-\item{d_max}{An integer (default: NULL). If d_max is given, the order d will not exceed d_max.}
-
-\item{p_max}{An integer. The maximum order of AR.}
-
-\item{min.q}{An integer (default: 1). The lower bound of q for MAC.}
-
-\item{q_max}{An integer. The upper bound of q for MAC.}
+\item{q}{An integer. The order of MA.}
 
 \item{fl}{A numeric. The frequency lower bound for the band-pass filter.}
 
 \item{fu}{A numeric. The frequency upper bound for the band-pass filter.}
 
-\item{ar.choose}{A character (default: "residual"). Choose 'residual' or 'fitted'.}
+\item{ar.aic}{A logical (default: TRUE). Whether p is selected by AIC or fixed.}
 
-\item{var.method}{An integer (default: 1). The method to estimate the innovations variance for AR (See `ar.burg`)}
+\item{ar.collector}{A character (default: "median"). A function name for collecting various AR residuals. (one of "mean", "median", or "pca")}
 
-\item{ma.collector}{A character (default: "median"). A function name for collecting various MA models. (one of "mean", "median", or "pca)}
+\item{ma.collector}{A character (default: "median"). A function name for collecting various MA models. (one of "mean", "median", or "pca")}
 
-\item{return.mas}{A logical (default: TRUE). Whether it returns a data frame 'mas' containing various MAs.}
+\item{return.every}{A logical (default: FALSE). Whether returns ts of every stage.}
 
 \item{elap.t}{A logical (default: FALSE). Whether it calculates elapsed time 'elap.t'.}
 
@@ -67,8 +51,7 @@ A list.
      `$DD`: A list of intermediate result of difference,
      `$AR`: A list of intermediate result of AR,
      `$MA`: A ts of intermediate result of MA,
-     `$EOA`: A ts of intermediate result of MAC,
-     `$mas`: A data frame. Various MAs.
+     `$EOA`: A ts of intermediate result of EoA,
      `$NA.times`: A list with
          `$all` : time stamps whose values are NA,
          `$head`: time stamps whose values are NA at the head,
@@ -77,7 +60,8 @@ A list.
          `$d`: The optimal order of difference,
          `$p`: The optimal order of AR,
          `$q`: The order(s) of MA(C),
-         `$ma.collector`: Used collector function for MAC,
+         `$ar.collector`: Used collector function for EAR,
+         `$ma.collector`: Used collector function for EoA,
          `$elap.t`: Elapsed time in second.
          `$suffix`: Final model name, e.g. "ARIMAC(10|1~10|1)"
 }

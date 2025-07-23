@@ -9,7 +9,7 @@
 #' @param set A logical (default: TRUE). Whether automatically set the working directory after creating it.
 #' @return A character. A final working directory path, if 'set=TRUE' (for any use for later).
 #' @export
-create.wd <- function(root, sub, subsub, alternative = F, set = T) {
+create_wd <- function(root, sub, subsub, alternative = F, set = T) {
     dir <- paste(root, sub, subsub, sep = '/')
 
     if (!dir.exists(dir)) {
@@ -46,19 +46,6 @@ create.wd <- function(root, sub, subsub, alternative = F, set = T) {
     }
 }
 
-
-#' Check installation
-#'
-#' @param packages A character or a vector. Package name(s).
-#' @param install A logical (default: TRUE). Whether it automatically install those packages that are not installed yet.
-#' @export
-check.installed <- function(packages, install = TRUE) {
-    installed <- packages %in% rownames(installed.packages())
-    if (!all(installed) & install) {
-        sapply(packages[!installed], install.packages, quite = TRUE)
-    }
-}
-
 #' Copy attributes of 'which's from 'ref' to 'target'
 #'
 #' @export
@@ -84,7 +71,7 @@ uniqdif <- function(x, tol = 1e-8) {
     }
 }
 
-#' Simple initial value point
+#' Simple initial value
 #'
 #' @param x A vector.
 #' @param n A numeric (default: 1). A number of head.
@@ -94,7 +81,7 @@ vi <- function(x, n = 1) {
     head(x, n)
 }
 
-#' Simple final value point
+#' Simple final value
 #'
 #' @param x A vector.
 #' @param n A numeric (default: 1). A number of tail.
@@ -120,4 +107,28 @@ vr <- function(x) {
 #' @export
 vl <- function(x) {
     diff(vr(x))
+}
+
+
+#' Reinstall beacon
+#'
+#' @param beacon.path A character. A beacon package path.
+#' @return reloading
+#' @export
+reinstall.beacon <- function(beacon.path = "~/projects/GW/beacon") {
+    library(devtools)
+    detach(name = package:beacon, unload = T)
+    message("1) Removing 'beacon'...")
+    remove.packages("beacon")
+
+    message("2) Checking 'beacon'...")
+    checked <- check(beacon.path)
+
+    if (length(checked$errors) == 0) {
+        message("3) Re-installing 'beacon'...")
+        install(beacon.path)
+    } else {
+        cat(checked$errors)
+        stop("\nPlease check output")
+    }
 }
