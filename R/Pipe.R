@@ -1713,8 +1713,6 @@ pipe_net <- function(
         prev_batch = prev_batch[[det]],
         res.list = res.net[[det]],
         arch_params = arch_params,
-        P_update = P_update,
-        update = update_model,
         verb = verb
       )
     })
