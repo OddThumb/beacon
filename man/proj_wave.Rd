@@ -2,28 +2,32 @@
 % Please edit documentation in R/use_pycbc.R
 \name{proj_wave}
 \alias{proj_wave}
-\title{The projection process can also take into account the rotation of the Earth using the project wave function.}
+\title{Project GW polarizations onto detector}
 \usage{
 proj_wave(hp, hc, det, ra, dec, pol, t_gps)
 }
 \arguments{
-\item{hp}{A ts object. A plus polarization signal template.}
+\item{hp}{A \code{ts} object. Plus polarization waveform.}
 
-\item{hc}{A ts object. A cross polarization signal template.}
+\item{hc}{A \code{ts} object. Cross polarization waveform.}
 
-\item{ra}{A numeric. RA of the GW source in radian.}
+\item{det}{A character. Detector abbreviation.}
 
-\item{dec}{A numeric. Dec of the GW source in radian.}
+\item{ra}{A numeric. Right Ascension (radians).}
 
-\item{pol}{A numeric. Polarization angle of the GW source in radian.}
+\item{dec}{A numeric. Declination (radians).}
 
-\item{t_gps}{A numeric. Passing time of the GW source to Earth in gps second.}
+\item{pol}{A numeric. Polarization angle (radians).}
 
-\item{dets}{A vector. Characters of detector abbreviations.}
+\item{t_gps}{A numeric. GPS time of source arrival at Earth's center.}
 }
 \value{
-A Python pycbc object. A projected signal template.
+A projected waveform as a \code{ts} object.
 }
 \description{
-The projection process can also take into account the rotation of the Earth using the project wave function.
+Computes detector strain by projecting plus and cross polarizations using Earth rotation and antenna pattern.
+}
+\details{
+This function interfaces with Python's \pkg{pycbc} library using \pkg{reticulate}.
+Please ensure that the required Python packages are available in your environment.
 }

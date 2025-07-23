@@ -2,18 +2,20 @@
 % Please edit documentation in R/TS.R
 \name{ts_df}
 \alias{ts_df}
-\title{Transform to data frame with 'time' column}
+\title{Convert `ts` to data frame with time column}
 \usage{
 ts_df(ts, tzero = 0, val.name = "x")
 }
 \arguments{
-\item{ts}{A time series (`ts`) object.}
+\item{ts}{A `ts` object.}
 
-\item{tzero}{A numeric (default: 0). A zero time. Times will be shifted by '\code{tzero}'.}
+\item{tzero}{A numeric (default: 0). Time shift.}
+
+\item{val.name}{A character. Name for value column (default: "x").}
 }
 \value{
-A data frame with 'time' column at first.
+A data frame with columns \code{time} and value.
 }
 \description{
-Transform to data frame with 'time' column
+Convert `ts` to data frame with time column
 }

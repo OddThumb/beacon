@@ -2,20 +2,20 @@
 % Please edit documentation in R/PLOT.R
 \name{oscillo_option}
 \alias{oscillo_option}
-\title{Common ggplot options for oscillogram}
+\title{Common ggplot Components for Oscillogram Plot}
 \usage{
 oscillo_option(ts, tzero = 0, title = NULL)
 }
 \arguments{
-\item{ts}{A time series (ts) object.}
+\item{ts}{A time series object.}
 
-\item{tzero}{A numeric (default: 0). A zero time. Times will be shifted by 'tzero'.}
+\item{tzero}{A numeric value for time offset.}
 
-\item{title}{A character. A title for the plot.}
+\item{title}{A character string for the plot title.}
 }
 \value{
-A list. This can be added to ggplot object to apply same theme.
+A list of ggplot2 elements.
 }
 \description{
-For applying common theme.
+Generate a list of ggplot2 components for consistent oscillogram theme.
 }

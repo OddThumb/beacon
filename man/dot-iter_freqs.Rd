@@ -2,22 +2,22 @@
 % Please edit documentation in R/QT.R
 \name{.iter_freqs}
 \alias{.iter_freqs}
-\title{Iterate over the frequencies of this 'Qplane'}
+\title{Iterate over tile center frequencies for a given Q}
 \usage{
 .iter_freqs(q, frange, mismatch, duration)
 }
 \arguments{
-\item{q}{A numeric. q value.}
+\item{q}{A numeric. The Q value.}
 
-\item{frange}{A numeric vector. upper and lower bounds of frequency range.}
+\item{frange}{A numeric vector of length 2. Frequency range (Hz).}
 
-\item{mismatch}{A numeric. percentage of desired fractional mismatch.}
+\item{mismatch}{A numeric. Desired mismatch (e.g., 0.2).}
 
-\item{dur}{A numeric. duration of timeseries in seconds.}
+\item{dur}{A numeric. Duration of the input time series in seconds.}
 }
 \value{
-A numeric vector. Q-Tile frequency.
+A numeric vector of center frequencies (Hz).
 }
 \description{
-Iterate over the frequencies of this 'Qplane'
+Determine the central frequencies at which to place tiles, for a fixed Q.
 }

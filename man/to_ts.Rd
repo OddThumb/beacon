@@ -2,16 +2,20 @@
 % Please edit documentation in R/TS.R
 \name{to_ts}
 \alias{to_ts}
-\title{Transform `fs` class to `ts` class}
+\title{Inverse Fourier transform of `fs` object}
 \usage{
 to_ts(fs, start = 0, delta_t = NULL)
 }
 \arguments{
-\item{fs}{A `fs` object}
+\item{fs}{A `fs` object.}
+
+\item{start}{A numeric. Start time (default: 0 or `attr(fs, "ti")`).}
+
+\item{delta_t}{A numeric. Time step. If \code{NULL}, use natural resolution.}
 }
 \value{
-A `ts` object with respect to the given `fs` object.
+A `ts` object in time domain.
 }
 \description{
-Transform `fs` class to `ts` class
+Inverse Fourier transform of `fs` object
 }

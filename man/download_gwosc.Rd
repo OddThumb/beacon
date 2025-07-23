@@ -19,29 +19,31 @@ download_gwosc(
 )
 }
 \arguments{
-\item{destfile}{A character (default: "/tmp/tmp.hdf5"). A file name to download.}
+\item{destfile}{Character. Path to save the downloaded file (default: "/tmp/tmp.hdf5").}
 
-\item{event_name}{A character. A specific event name.}
+\item{event_name}{Character. Name of the event (e.g., "GW150914").}
 
-\item{dur}{An integer (default: 32). A duration in second of the data.}
+\item{det}{Character. Detector name (e.g., "H1", "L1").}
 
-\item{file.format}{A character (default: "hdf5"). A file format. (one of "gwf", "hdf5", or "txt")}
+\item{dur}{Integer. Duration of the data segment in seconds (default: 32).}
 
-\item{sampling.freq}{A numeric (default: 4096). A sampling frequency of the data.}
+\item{file.format}{Character. File format ("gwf", "hdf5", or "txt", default: "hdf5").}
 
-\item{timeout}{An integer (default: 300). To extend timeout for downloading.}
+\item{sampling.freq}{Numeric. Desired sampling frequency (default: 4096).}
 
-\item{load}{A logical (default: FALSE). Whether it assigns the data directly into the R environment. 'file.format' must be "hdf5".}
+\item{version}{Character. Version label (default: "latest").}
 
-\item{remove}{A logical (default: FALSE). Whether it removes data file after loading.}
+\item{timeout}{Integer. Timeout in seconds for download (default: 300).}
 
-\item{direct.url}{A character (default: NULL). The file URL can be directly given.}
+\item{load}{Logical. If TRUE, load the HDF5 data directly into memory as a `ts` object (default: FALSE).}
 
-\item{detector}{A character. A specific detector name.}
+\item{remove}{Logical. If TRUE and `load=TRUE`, remove the downloaded file after loading (default: FALSE).}
+
+\item{direct.url}{Character. Optional direct URL for downloading the file.}
 }
 \value{
-A list. $Data: A vector of strain, $tstart: A numeric of GPS start time, if 'load=TRUE'.
+If `load=TRUE`, returns a `ts` object of the strain data. Otherwise, NULL.
 }
 \description{
-Download strain data from GWOSC
+Downloads a specified strain data file for a given GW event and detector.
 }

@@ -2,18 +2,18 @@
 % Please edit documentation in R/MF.R
 \name{inner}
 \alias{inner}
-\title{Inner product}
+\title{Compute inner product between two vectors}
 \usage{
 inner(x, y)
 }
 \arguments{
-\item{x}{A numeric vector.}
+\item{x}{A complex or numeric vector.}
 
-\item{y}{A numeric vector.}
+\item{y}{A complex or numeric vector.}
 }
 \value{
-An inner product of `x`, `y`.
+Complex scalar. Inner product of `x` and `y`.
 }
 \description{
-This is not constrained as array.
+Compute inner product between two vectors
 }

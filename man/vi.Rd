@@ -2,18 +2,18 @@
 % Please edit documentation in R/Calc.R
 \name{vi}
 \alias{vi}
-\title{Simple initial value}
+\title{Simple initial value extractor}
 \usage{
 vi(x, n = 1)
 }
 \arguments{
 \item{x}{A vector.}
 
-\item{n}{A numeric (default: 1). A number of head.}
+\item{n}{A numeric (default: 1). Number of initial values to extract.}
 }
 \value{
-Numeric(s). n initial times.
+A vector of the first n elements.
 }
 \description{
-Simple initial value
+Simple initial value extractor
 }

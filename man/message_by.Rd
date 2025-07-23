@@ -2,17 +2,20 @@
 % Please edit documentation in R/PLOT.R
 \name{message_by}
 \alias{message_by}
-\title{Message out by each iteration or No verbose}
+\title{Print Message Conditionally by Iteration}
 \usage{
 message_by(i = i, verbose = T, msg)
 }
 \arguments{
-\item{i}{An expression. A iterable arguments in for loop.}
+\item{i}{Integer indicating current iteration index.}
 
-\item{verbose}{A logical or An integer. If 'verbose=TRUE', it message out by every iteration. Else 'verbose=integer()', it message out by every verbose-th iteration.}
+\item{verbose}{Logical or integer; if \code{TRUE}, print every iteration; if integer, print every \code{verbose}-th iteration.}
 
-\item{msg}{A character. A message to print out.}
+\item{msg}{A character string to be printed.}
+}
+\value{
+None.
 }
 \description{
-Message out by each iteration or No verbose
+Print a message every \code{verbose}-th iteration in a loop.
 }

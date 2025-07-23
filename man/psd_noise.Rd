@@ -2,7 +2,7 @@
 % Please edit documentation in R/use_pycbc.R
 \name{psd_noise}
 \alias{psd_noise}
-\title{Gaussian noise from detetctor PSD}
+\title{Simulate Gaussian noise from detector PSD}
 \usage{
 psd_noise(
   det,
@@ -15,24 +15,27 @@ psd_noise(
 )
 }
 \arguments{
-\item{det}{A character. An abbreviation of detector name.
-(this ver., H1, L1, V1, K1, or E1)}
+\item{det}{A character. Detector abbreviation ("H1", "L1", "V1", "K1", or "E1").}
 
-\item{duration}{A numeric. A length of noise in second.}
+\item{duration}{A numeric. Noise duration (in seconds).}
 
-\item{tstart}{A numeric. Starting time of the noise.}
+\item{tstart}{A numeric. Start GPS time of the noise.}
 
-\item{sampling.freq}{A numeric (default: 4096). A sampling rate in Hz.}
+\item{sampling.freq}{A numeric. Sampling frequency (Hz). Default: 4096.}
 
-\item{fl}{A numeric (default: 32). A lower frequency cutoff.}
+\item{fl}{A numeric. Lower frequency cutoff. Default: 15 Hz.}
 
-\item{delta_f}{A numeric (default: 1/32). A frequency resolution.}
+\item{delta_f}{A numeric. Frequency resolution. Default: 1/32.}
 
-\item{seed}{A numeric (default: NULL). Random seed.}
+\item{seed}{Optional numeric. Random seed for reproducibility.}
 }
 \value{
-ts object of Gaussian noise.
+A \code{ts} object of simulated Gaussian noise.
 }
 \description{
-Gaussian noise from detetctor PSD
+Generate colored Gaussian noise with power spectral density of a given detector.
+}
+\details{
+This function interfaces with Python's \pkg{pycbc} library using \pkg{reticulate}.
+Please ensure that the required Python packages are available in your environment.
 }

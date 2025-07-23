@@ -2,26 +2,18 @@
 % Please edit documentation in R/TS.R
 \name{shift}
 \alias{shift}
-\title{Shift time series by time}
+\title{Shift time series by time offset}
 \usage{
 shift(ts, t_shift)
 }
 \arguments{
 \item{ts}{A `ts` object.}
 
-\item{t_shift}{A numeric. Time to be shifted.}
+\item{t_shift}{A numeric. Amount to shift (in seconds).}
 }
 \value{
 A time-shifted `ts`.
 }
 \description{
-Shift time series by time
-}
-\examples{
-# {not run}
-# > xt <- ts(c(1,2,3), start=1, frequency=1)
-# > ti(xt) # >>> 1
-# > xt_shift <- shift(xt, 1)
-# > ti(xt_shift) # >>> 2
-
+Shift time series by time offset
 }

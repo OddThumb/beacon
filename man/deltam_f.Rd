@@ -2,16 +2,16 @@
 % Please edit documentation in R/QT.R
 \name{deltam_f}
 \alias{deltam_f}
-\title{Fractional mismatch between neighbouring tiles}
+\title{Convert mismatch to fractional spacing}
 \usage{
 deltam_f(mismatch)
 }
 \arguments{
-\item{mismatch}{A numeric. percentage of desired fractional mismatch.}
+\item{mismatch}{A numeric. Desired fractional mismatch (e.g., 0.2).}
 }
 \value{
-A numeric.
+A numeric. Fractional spacing.
 }
 \description{
-Fractional mismatch between neighbouring tiles
+Compute the fractional spacing (delta m) between neighboring tiles from mismatch.
 }

@@ -2,18 +2,18 @@
 % Please edit documentation in R/TS.R
 \name{start_time}
 \alias{start_time}
-\title{Print start time or update start time}
+\title{Get or update the start time of a time series}
 \usage{
 start_time(x, tstart = NULL)
 }
 \arguments{
-\item{x}{A time series (`ts`) object.}
+\item{x}{A `ts` object.}
 
-\item{tstart}{A numeric (default: NULL). A start time to be updated.}
+\item{tstart}{A numeric. If provided, updates start time.}
 }
 \value{
-Nothing, but given `ts.`'s start time will be updated.
+If \code{tstart} is \code{NULL}, returns initial time. Otherwise, updates the object in global environment.
 }
 \description{
-Print start time or update start time
+Get or update the start time of a time series
 }

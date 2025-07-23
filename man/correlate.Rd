@@ -2,19 +2,21 @@
 % Please edit documentation in R/MF.R
 \name{correlate}
 \alias{correlate}
-\title{Correlate of two complex vectors}
+\title{Correlate two complex vectors}
 \usage{
 correlate(x, y)
 }
+\arguments{
+\item{x}{A complex vector.}
+
+\item{y}{A complex vector.}
+}
+\value{
+A complex vector, result of conjugate(x) * y.
+}
 \description{
-Reference: https://pycbc.org/pycbc/latest/html/_modules/pycbc/filter/matchedfilter_numpy.html#correlate
+Computes the element-wise product of the conjugate of `x` and `y`, used in matched filtering.
 }
-\details{
-Python \code{correlate} function example
-\code{
-import numpy
-def correlate(x, y, z):
-     z.data[:] = numpy.conjugate(x.data)[:]
-     z *= y
-}
+\references{
+https://pycbc.org/pycbc/latest/html/_modules/pycbc/filter/matchedfilter_numpy.html#correlate
 }

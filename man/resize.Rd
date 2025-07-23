@@ -2,38 +2,18 @@
 % Please edit documentation in R/TS.R
 \name{resize}
 \alias{resize}
-\title{Resize `ts` with given length}
+\title{Resize a `ts` to target length}
 \usage{
 resize(ts, nlen)
 }
 \arguments{
 \item{ts}{A `ts` object.}
 
-\item{nlen}{A numeric. A length to be resized.}
+\item{nlen}{An integer. Desired length.}
 }
 \value{
-A resized `ts` with given `nlen`.
+A resized `ts` object (padded with zeros or truncated).
 }
 \description{
-Resize `ts` with given length
-}
-\examples{
-# {not run}
-# > xt <- ts(c(1,2,3,4,5), start=1, freqyency=1)
-# If nlen > length(ts)
-# > xt_resize1 <- resize(xt, 10)
-# > xt_resize1
-# Time Series:
-# Start = 1
-# End = 10
-# Frequency = 1
-# [1] 1 2 3 4 5 0 0 0 0 0
-# If nlen <= length(ts)
-# > xt_resize2 <- resize(xt, 3)
-# Time Series:
-# Start = 1
-# End = 3
-# Frequency = 1
-# [1] 1 2 3
-
+Resize a `ts` to target length
 }

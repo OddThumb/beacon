@@ -2,16 +2,20 @@
 % Please edit documentation in R/TS.R
 \name{as_tbt}
 \alias{as_tbt}
-\title{Transform to 'tbl_time'}
+\title{Convert `ts` to tibbletime object}
 \usage{
 as_tbt(ts, time_col = "time", val_col = "x")
 }
 \arguments{
-\item{ts}{A time series (`ts`) object.}
+\item{ts}{A `ts` object.}
+
+\item{time_col}{A character. Column name for time (default: "time").}
+
+\item{val_col}{A character. Column name for value (default: "x").}
 }
 \value{
-A tbl_time.
+A \code{tbl_time} object.
 }
 \description{
-Transform to 'tbl_time'
+Convert `ts` to tibbletime object
 }

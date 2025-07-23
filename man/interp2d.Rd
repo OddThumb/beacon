@@ -2,26 +2,26 @@
 % Please edit documentation in R/QT.R
 \name{interp2d}
 \alias{interp2d}
-\title{Surface Interpolation}
+\title{2D Interpolation for Surface Data}
 \usage{
 interp2d(x, y, z, xout, yout, method = "linear")
 }
 \arguments{
-\item{x}{A numeric vector to be interpolated.}
+\item{x}{A numeric vector. Original x-axis grid.}
 
-\item{y}{A numeric vector to be interpolated.}
+\item{y}{A numeric vector. Original y-axis grid.}
 
-\item{z}{A numeric matrix to be interpolated. `dim(z) == c(length(x), length(y))`.}
+\item{z}{A numeric matrix. Original z-values (dim: \code{length(x)} × \code{length(y)}).}
 
-\item{xout}{A numeric vector. The output grid.}
+\item{xout}{A numeric vector. Output x grid.}
 
-\item{yout}{A numeric vector. The output grid.}
+\item{yout}{A numeric vector. Output y grid.}
 
-\item{method}{A character. Available methods is `linear` or `spline`.}
+\item{method}{A character. Interpolation method: \code{"linear"} (default) or \code{"spline"}.}
 }
 \value{
-`zout`, the interpolated 2d matrix.
+A list with \code{x}, \code{y}, and interpolated \code{z} matrix.
 }
 \description{
-A mutated function of `fields::interp.surface` and `fields::interp.surface.grid`. This function is boosted up by `sapply`.
+Interpolate a 2D surface (z-values) across a new grid using bilinear or spline methods.
 }

@@ -10,7 +10,7 @@ se(x)
 \item{x}{A numeric vector.}
 }
 \value{
-A numeric. A sampled standard error.
+A numeric. Sample standard error.
 }
 \description{
 Standard Error for sample

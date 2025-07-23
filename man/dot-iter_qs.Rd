@@ -7,13 +7,13 @@
 .iter_qs(qrange, deltam)
 }
 \arguments{
-\item{qrange}{A numeric vector. upper and lower bounds of q range.}
+\item{qrange}{A numeric vector of length 2. Lower and upper bounds of Q range.}
 
-\item{deltam}{A numeric. Fractional mismatch between neighboring tiles.}
+\item{deltam}{A numeric. Fractional mismatch between neighboring Q tiles.}
 }
 \value{
-A numeric. Q value for Q-tile
+A numeric vector of Q values for Q-planes.
 }
 \description{
-Iterate over the Q values
+Compute Q values to use for Q-tiling, given a range and mismatch tolerance.
 }

@@ -2,20 +2,22 @@
 % Please edit documentation in R/TS.R
 \name{tsfy}
 \alias{tsfy}
-\title{Transform to ts obj with reference ts}
+\title{Convert to `ts` object using a reference}
 \usage{
 tsfy(obj, ref, sampling.freq = NULL, na.rm = T)
 }
 \arguments{
-\item{obj}{A list or a vector.}
+\item{obj}{A vector, list, or data frame.}
 
-\item{ref}{A reference time series.}
+\item{ref}{A `ts` object, time vector, or list specifying reference time.}
 
-\item{na.rm}{A logical (default: TRUE). Whether remove NA values or not.}
+\item{sampling.freq}{Optional frequency if `ref` is numeric.}
+
+\item{na.rm}{Logical. If \code{TRUE}, remove NA values (default: TRUE).}
 }
 \value{
-A time series (`ts`) object with same time stamp of 'ref'.
+A `ts` object or list of `ts` objects.
 }
 \description{
-Transform to ts obj with reference ts
+Convert to `ts` object using a reference
 }

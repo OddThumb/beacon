@@ -2,22 +2,22 @@
 % Please edit documentation in R/QT.R
 \name{qtiling}
 \alias{qtiling}
-\title{Q-tiling}
+\title{Generate Q-tiling scheme}
 \usage{
 qtiling(fseries, qrange, frange, mismatch = 0.2)
 }
 \arguments{
-\item{fseries}{A `fs` object. frequency-series data set.}
+\item{fseries}{An \code{fs} object. Frequency-series representation of the data.}
 
-\item{qrange}{A numeric vector. upper and lower bounds of q range.}
+\item{qrange}{A numeric vector. Range of Q values.}
 
-\item{frange}{A numeric vector. upper and lower bounds of frequency range.}
+\item{frange}{A numeric vector. Frequency range (Hz).}
 
-\item{mismatch}{A numeric. percentage of desired fractional mismatch.}
+\item{mismatch}{A numeric. Mismatch tolerance (default: 0.2).}
 }
 \value{
-A list containing Q-tile vectors for a set of Q-planes.
+A list of Q-planes, each containing a Q value and associated frequency tiles.
 }
 \description{
-Q-tiling
+Generate Q-tiles (Q, f0 pairs) for all Q-planes across a frequency range.
 }

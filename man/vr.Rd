@@ -2,7 +2,7 @@
 % Please edit documentation in R/Calc.R
 \name{vr}
 \alias{vr}
-\title{Simple value range}
+\title{Simple range extractor}
 \usage{
 vr(x)
 }
@@ -10,8 +10,8 @@ vr(x)
 \item{x}{A vector.}
 }
 \value{
-A vector of length 2 which is equivalent to `c(ti(ts), tf(ts))`.
+A vector of length 2, containing the first and last element.
 }
 \description{
-Simple value range
+Simple range extractor
 }

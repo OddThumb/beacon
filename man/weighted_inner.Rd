@@ -7,16 +7,15 @@
 weighted_inner(x, y, wt)
 }
 \arguments{
-\item{x}{A numeric vector.}
+\item{x}{A numeric or complex vector.}
 
-\item{y}{A numeric vector.}
+\item{y}{A numeric or complex vector.}
 
-\item{wt}{A weight vector.}
+\item{wt}{A numeric weight vector (same length as `x`, `y`).}
 }
 \value{
-An inner product of `x`, `y` weighted by `wt`
+Complex scalar. Weighted inner product.
 }
 \description{
-This is not constrained as array.
-`wt` needs to have also same dimension (or length) as x or y.
+Computes the inner product between `x` and `y` with inverse-variance weighting.
 }

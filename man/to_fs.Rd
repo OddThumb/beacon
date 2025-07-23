@@ -2,18 +2,19 @@
 % Please edit documentation in R/FS.R
 \name{to_fs}
 \alias{to_fs}
-\title{Transform `ts` class to `fs` class}
+\title{Convert Time Series (`ts`) to Frequency Series (`fs`)}
 \usage{
 to_fs(ts, delta_f = NULL)
 }
 \arguments{
-\item{ts}{A `ts` object to be transformed to `fs`.}
+\item{ts}{A `ts` object.}
 
-\item{deltaf}{A numeric. A delta frequency.}
+\item{delta_f}{Optional. A numeric value indicating desired frequency resolution.
+If NULL, defaults to `sampling.freq / length(ts)`.}
 }
 \value{
-A `fs` object with respect to the given `ts`.
+An `fs` object containing frequency-domain representation and metadata.
 }
 \description{
-Transform `ts` class to `fs` class
+Transforms a time series object to a frequency series by computing FFT.
 }

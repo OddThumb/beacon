@@ -2,10 +2,18 @@
 % Please edit documentation in R/Calc.R
 \name{uniqdif}
 \alias{uniqdif}
-\title{Wrapper of unique(diff(x))}
+\title{Wrapper of unique(diff(x)) with tolerance check}
 \usage{
 uniqdif(x, tol = 1e-08)
 }
+\arguments{
+\item{x}{A numeric vector.}
+
+\item{tol}{A numeric tolerance for detecting non-uniform spacing. Default is 1e-8.}
+}
+\value{
+A numeric value if uniform, or a vector of unique differences otherwise.
+}
 \description{
-Wrapper of unique(diff(x))
+Wrapper of unique(diff(x)) with tolerance check
 }

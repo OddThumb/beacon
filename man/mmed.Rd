@@ -2,18 +2,18 @@
 % Please edit documentation in R/TS.R
 \name{mmed}
 \alias{mmed}
-\title{Simple Median filter wrapper}
+\title{Apply median filter to a `ts`}
 \usage{
 mmed(ts, order)
 }
 \arguments{
-\item{ts}{A time series (`ts`) object.}
+\item{ts}{A `ts` object.}
 
-\item{order}{An integer. The order of median filter.}
+\item{order}{An integer. Window size of the median filter.}
 }
 \value{
-A median filtered time series (`ts`) object.
+A smoothed `ts` object.
 }
 \description{
-Simple Median filter wrapper
+Apply median filter to a `ts`
 }

@@ -2,20 +2,18 @@
 % Please edit documentation in R/OSC.R
 \name{get_gwosc}
 \alias{get_gwosc}
-\title{Get information from GWOSC!}
+\title{Retrieve metadata from GWOSC}
 \usage{
 get_gwosc(offline = F, csvpath = NULL)
 }
 \arguments{
-\item{offline}{A logical (default: FALSE). Whether it searchs online or gets information from pre-downloaded csv file offline.}
+\item{offline}{Logical. If TRUE, read metadata from a local CSV file instead of querying online.}
 
-\item{csvpath}{A character. A pre-downloaded csv file path. If 'offline=TRUE', this need to be given.}
-
-\item{event_name}{A character (default: "ALL).}
+\item{csvpath}{Character. Required if `offline = TRUE`; path to the local CSV file.}
 }
 \value{
-A data frame.
+A data.frame containing metadata of events.
 }
 \description{
-Get information from GWOSC!
+Download or load offline metadata table of gravitational wave events from GWOSC.
 }

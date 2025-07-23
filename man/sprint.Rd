@@ -2,10 +2,18 @@
 % Please edit documentation in R/PLOT.R
 \name{sprint}
 \alias{sprint}
-\title{Printing with `cat` and `sprintf` for parsing}
+\title{Print Formatted String Using cat and sprintf}
 \usage{
 sprint(..., sep = "")
 }
+\arguments{
+\item{...}{Arguments passed to \code{sprintf}.}
+
+\item{sep}{A character string to separate values (default: "").}
+}
+\value{
+None.
+}
 \description{
-Printing with `cat` and `sprintf` for parsing
+Print a string by combining \code{sprintf()} and \code{cat()}.
 }

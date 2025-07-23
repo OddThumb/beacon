@@ -1,13 +1,14 @@
-# FrequencySeries ----
-
-#' fs: FrequencySeries class
+#' Create a Frequency Series Object (`fs`)
 #'
-#' @param x  A numeric vector.
-#' @param df A numeric. A delta frequency.
+#' Wraps a numeric vector into an `fs` class, assigning appropriate attributes
+#' for frequency-domain analysis.
 #'
+#' @param x A numeric vector representing frequency-domain data.
+#' @param df A numeric scalar. Frequency resolution (`delta_f`).
+#'
+#' @return An object of class `fs`, with additional attributes such as `delta_f` and `flen`.
 #' @examples
-#' # fs(c(1,2,3), df=0.5)
-#'
+#' fs(c(1, 2, 3), df = 0.5)
 #' @export
 fs <- function(x, df) {
     attr(x, "assoc.ts") <- NULL
@@ -18,11 +19,15 @@ fs <- function(x, df) {
     structure(x, class = c("fs", "complex"))
 }
 
-#' Transform `ts` class to `fs` class
+#' Convert Time Series (`ts`) to Frequency Series (`fs`)
 #'
-#' @param ts     A `ts` object to be transformed to `fs`.
-#' @param deltaf A numeric. A delta frequency.
-#' @return A `fs` object with respect to the given `ts`.
+#' Transforms a time series object to a frequency series by computing FFT.
+#'
+#' @param ts A `ts` object.
+#' @param delta_f Optional. A numeric value indicating desired frequency resolution.
+#'                If NULL, defaults to `sampling.freq / length(ts)`.
+#'
+#' @return An `fs` object containing frequency-domain representation and metadata.
 #' @export
 to_fs <- function(ts, delta_f = NULL) {
     # Check deltaf is given
@@ -63,8 +68,13 @@ to_fs <- function(ts, delta_f = NULL) {
     structure(fs.out, class = c("fs", "complex"))
 }
 
-#' Extract delta_f of fs
+#' Extract Frequency Resolution from `fs` Object
 #'
+#' Returns the `delta_f` attribute from an `fs` object.
+#'
+#' @param x An `fs` object.
+#'
+#' @return A numeric scalar representing frequency resolution.
 #' @export
 deltaf <- function(x) {
     if ("fs" %in% class(x)) {
@@ -74,8 +84,16 @@ deltaf <- function(x) {
     }
 }
 
-#' Printing fs class differently
+#' Custom Print Method for `fs` Class
 #'
+#' Prints summary information for an `fs` object, including delta_f, flen,
+#' and associated time-domain metadata if available.
+#'
+#' @param x An `fs` object.
+#' @param ... Additional arguments (ignored).
+#' @param ts.info Logical. Whether to show associated time-series info (default: TRUE).
+#'
+#' @return None. Used for side effects.
 #' @export
 print.fs <- function(x, ..., ts.info = TRUE) {
     # Title of printing
@@ -106,8 +124,13 @@ print.fs <- function(x, ..., ts.info = TRUE) {
 }
 
 
-#' Structure function for fs class
+#' Custom Structure Summary for `fs` Object
 #'
+#' Displays a concise structural summary of an `fs` object, highlighting class and delta_f.
+#'
+#' @param x An `fs` object.
+#'
+#' @return None. Prints structure to console.
 #' @export
 str.fs <- function(x) {
     class.cat <- "Frequency-Series"
@@ -120,8 +143,18 @@ str.fs <- function(x) {
     cat(paste0(class.cat, " (", df.cat, ")", str.default[1], "\n"))
 }
 
-#' Plot function for fs class
+#' Plot a Frequency Series (`fs`)
 #'
+#' Visualizes the amplitude (or PSD) of an `fs` object using ggplot2.
+#'
+#' @param fs An `fs` object.
+#' @param log A character ("x", "y", or "xy") to control log scaling.
+#' @param xlab A character. X-axis label (default: "Frequency (Hz)").
+#' @param ylab A character. Y-axis label (default: "PSD").
+#' @param xlim A numeric vector of length 2 specifying x-axis limits.
+#' @param ylim A numeric vector of length 2 specifying y-axis limits.
+#'
+#' @return A ggplot object.
 #' @export
 plot.fs <- function(
     fs,
@@ -138,7 +171,7 @@ plot.fs <- function(
     }
 
     fs_df <- data.frame('freqs' = freqs(fs), 'PSD' = abs(fs))
-    devtools
+
     # plot
     pl <- ggplot2::ggplot(fs_df, ggplot2::aes(x = freqs, y = PSD)) +
         ggplot2::geom_line()
@@ -171,8 +204,13 @@ plot.fs <- function(
     pl + ggplot2::theme_bw(base_size = 15) + ggplot2::annotation_logticks()
 }
 
-#' Get frequency samples
+#' Get Frequency Samples from `fs`
 #'
+#' Computes the discrete frequency values corresponding to the bins of an `fs` object.
+#'
+#' @param fs An `fs` object.
+#'
+#' @return A numeric vector of frequency values (in Hz).
 #' @export
 freqs <- function(fs) {
     delta_f <- attr(fs, "delta_f")
@@ -180,8 +218,14 @@ freqs <- function(fs) {
     seq(0, flen - 1) * delta_f
 }
 
-#' Get duration
+#' Get Duration of the Original Time Series
 #'
+#' Computes the total duration in seconds of the time-domain signal that
+#' generated the `fs` object.
+#'
+#' @param fs An `fs` object derived from a `ts` object.
+#'
+#' @return A numeric scalar. Duration in seconds.
 #' @export
 dur <- function(fs) {
     if (is.null(attr(fs, "tlen")) | is.null(attr(fs, "sampling.freq"))) {
@@ -190,9 +234,38 @@ dur <- function(fs) {
     attr(fs, "tlen") / attr(fs, "sampling.freq")
 }
 
-#' Transform to the data frame
+#' Convert `fs` to Data Frame
 #'
+#' Converts an `fs` object to a data frame with columns `freqs` and `PSD`.
+#'
+#' @param fs An `fs` object.
+#'
+#' @return A data frame with two columns: `freqs` and `PSD`.
 #' @export
 fs_df <- function(fs) {
     data.frame("freqs" = freqs(fs), "PSD" = fs)
+}
+
+
+#' Crop frequency series to a given range
+#'
+#' @param fs A `fs` object (frequency series).
+#' @param ref A list with elements `min` and `max`, indicating index range.
+#' @return A cropped `fs` object with preserved attributes.
+#' @export
+cutoff_to <- function(fs, ref) {
+    if (!inherits(fs, "fs")) {
+        stop("TypeError: Input must be a fs class")
+    }
+    kmin <- ref$min
+    kmax <- ref$max
+
+    out <- fs[kmin:kmax]
+    out <- copy_attr(
+        out,
+        ref = fs,
+        which = c("sampling.freq", "delta_f", "class", "ti")
+    )
+    attr(out, "flen") <- kmax - kmin + 1
+    out
 }

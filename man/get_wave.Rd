@@ -2,7 +2,7 @@
 % Please edit documentation in R/use_pycbc.R
 \name{get_wave}
 \alias{get_wave}
-\title{Loading waveforms from PyCBC}
+\title{Generate gravitational-wave signal from PyCBC}
 \usage{
 get_wave(
   model.name,
@@ -23,6 +23,50 @@ get_wave(
   proj = FALSE
 )
 }
+\arguments{
+\item{model.name}{A character. Waveform approximant name (e.g., "IMRPhenomPv2").}
+
+\item{sampling.freq}{A numeric. Sampling rate in Hz.}
+
+\item{fl}{A numeric. Lower frequency bound (Hz).}
+
+\item{fu}{A numeric. Upper frequency bound (Hz).}
+
+\item{m1}{A numeric. Mass 1 (solar masses).}
+
+\item{m2}{A numeric. Mass 2 (solar masses).}
+
+\item{d_L}{A numeric. Luminosity distance (Mpc).}
+
+\item{inc}{A numeric. Inclination angle (radians). Default: 0.}
+
+\item{...}{Additional waveform parameters.}
+
+\item{R.ts}{Logical. If \code{TRUE}, return result as R \code{ts} objects.}
+
+\item{det}{A character. Detector abbreviation.}
+
+\item{ra}{A numeric. Right Ascension (radians).}
+
+\item{dec}{A numeric. Declination (radians).}
+
+\item{pol}{A numeric. Polarization angle (radians).}
+
+\item{t_gps}{A numeric. GPS time of signal arrival.}
+
+\item{proj}{Logical. If \code{TRUE}, apply full Earth-rotation-based projection.}
+}
+\value{
+A list with waveform components (\code{hp}, \code{hc}, \code{ht}) and attributes:
+\itemize{
+  \item \code{Params} – generation parameters
+  \item \code{AntPat} – antenna pattern info
+}
+}
 \description{
-Loading waveforms from PyCBC
+Calls PyCBC waveform generator and optionally applies antenna projection and Earth rotation.
+}
+\details{
+This function interfaces with Python's \pkg{pycbc} library using \pkg{reticulate}.
+Please ensure that the required Python packages are available in your environment.
 }

@@ -1,10 +1,8 @@
-# 1. Calculation ----
-
 #' Calculate maximum of absolute values
 #'
-#' @param xA numeric vector.
-#' @param na.rm A logical (default: TRUE). Whether remove NA values or not.
-#' @return A numeric.
+#' @param x A numeric vector.
+#' @param na.rm A logical (default: TRUE). Whether to remove NA values.
+#' @return A numeric. The maximum of absolute values.
 #' @export
 amax <- function(x, na.rm = T) {
     max(abs(x), na.rm = na.rm)
@@ -13,8 +11,8 @@ amax <- function(x, na.rm = T) {
 #' Calculate minimum of absolute values
 #'
 #' @param x A numeric vector.
-#' @param na.rm A logical (default: TRUE). Whether remove NA values or not.
-#' @return A numeric.
+#' @param na.rm A logical (default: TRUE). Whether to remove NA values.
+#' @return A numeric. The minimum of absolute values.
 #' @export
 amin <- function(x, na.rm = T) {
     min(abs(x), na.rm = na.rm)
@@ -23,18 +21,18 @@ amin <- function(x, na.rm = T) {
 #' Calculate the order of magnitude
 #'
 #' @param x A numeric vector.
-#' @return A numeric.
+#' @return A numeric. The order of magnitude of the maximum absolute value.
 #' @export
 get_order <- function(x) {
     10^(floor(log10(amax(x))))
 }
 
 
-#' Get limit range from ts by 110 % of maximum value
+#' Get limit range from ts by scaled maximum value
 #'
 #' @param x A numeric vector.
-#' @param mar.frac A numeric. A margin. This will be multiplied on amax(x).
-#' @return A vector. c(-amax, +amax)*mar.frac.
+#' @param mar.frac A numeric. Scaling factor for the margin. Default is 1.5.
+#' @return A vector. c(-amax, +amax) * mar.frac.
 #' @export
 get_limit <- function(x, mar.frac = 1.5) {
     c(-amax(x), amax(x)) * mar.frac
@@ -43,7 +41,7 @@ get_limit <- function(x, mar.frac = 1.5) {
 #' Standard Error for sample
 #'
 #' @param x A numeric vector.
-#' @return A numeric. A sampled standard error.
+#' @return A numeric. Sample standard error.
 #' @export
 se <- function(x) {
     sd(x) / sqrt(length(x) - 1)
@@ -52,25 +50,30 @@ se <- function(x) {
 #' Median Absolute Error for sample
 #'
 #' @param x A numeric vector.
-#' @return A numeric. A sampled median absolute error.
+#' @return A numeric. Sample median absolute error.
 #' @export
 mae <- function(x) {
     mad(x) / sqrt(length(x) - 1)
 }
 
 #' Mode
+#'
 #' @description
-#' Get the most frequent value.
-#' @param x A numeric vector
-#' @return A numeric. A mode value.
+#' Get the most frequent value in the input vector.
+#' @param x A numeric vector.
+#' @return A numeric. The mode value.
+#' @export
 mode <- function(x) {
     uniqx <- unique(x)
     uniqx[which.max(tabulate(match(x, uniqx)))]
 }
 
 
-#' Wrapper of unique(diff(x))
+#' Wrapper of unique(diff(x)) with tolerance check
 #'
+#' @param x A numeric vector.
+#' @param tol A numeric tolerance for detecting non-uniform spacing. Default is 1e-8.
+#' @return A numeric value if uniform, or a vector of unique differences otherwise.
 #' @export
 uniqdif <- function(x, tol = 1e-8) {
     dx <- diff(x)
@@ -84,39 +87,39 @@ uniqdif <- function(x, tol = 1e-8) {
     }
 }
 
-#' Simple initial value
+#' Simple initial value extractor
 #'
 #' @param x A vector.
-#' @param n A numeric (default: 1). A number of head.
-#' @return Numeric(s). n initial times.
+#' @param n A numeric (default: 1). Number of initial values to extract.
+#' @return A vector of the first n elements.
 #' @export
 vi <- function(x, n = 1) {
     head(x, n)
 }
 
-#' Simple final value
+#' Simple final value extractor
 #'
 #' @param x A vector.
-#' @param n A numeric (default: 1). A number of tail.
-#' @return Numeric(s). n final times.
+#' @param n A numeric (default: 1). Number of final values to extract.
+#' @return A vector of the last n elements.
 #' @export
 vf <- function(x, n = 1) {
     tail(x, n)
 }
 
-#' Simple value range
+#' Simple range extractor
 #'
 #' @param x A vector.
-#' @return A vector of length 2 which is equivalent to `c(ti(ts), tf(ts))`.
+#' @return A vector of length 2, containing the first and last element.
 #' @export
 vr <- function(x) {
     c(vi(x), vf(x))
 }
 
-#' Simple value length from first data point to last.
+#' Length from first to last value
 #'
-#' @param ts A time series (`ts`) object.
-#' @return A vector of length 2 which is equivalent to `c(ti(ts), tf(ts))`.
+#' @param x A vector.
+#' @return A numeric. Difference between last and first element.
 #' @export
 vl <- function(x) {
     diff(vr(x))

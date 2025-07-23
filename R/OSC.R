@@ -1,14 +1,12 @@
-# GWOSC API ----
-
-#' Get information from GWOSC!
+#' Retrieve metadata from GWOSC
 #'
-#' @param event_name A character (default: "ALL).
-#' @param offline A logical (default: FALSE). Whether it searchs online or gets information from pre-downloaded csv file offline.
-#' @param csvpath A character. A pre-downloaded csv file path. If 'offline=TRUE', this need to be given.
-#' @return A data frame.
+#' Download or load offline metadata table of gravitational wave events from GWOSC.
+#'
+#' @param offline Logical. If TRUE, read metadata from a local CSV file instead of querying online.
+#' @param csvpath Character. Required if `offline = TRUE`; path to the local CSV file.
+#' @return A data.frame containing metadata of events.
 #' @export
 get_gwosc <- function(
-    #event_name="ALL", (DEPRECATED FOR A MOMENT)
     offline = F,
     csvpath = NULL
 ) {
@@ -50,15 +48,12 @@ get_gwosc <- function(
     return(return.obj)
 }
 
-#' Get GWTC parameter from the return of get_gwosc()
+#' Extract specific parameters from GWOSC metadata
 #'
-#' @param gwossc.list A data.frame. The return object from get_gwosc()
-#' @param source.names A character vector.
-#'                     Source names need to follow the commonName convention.
-#'                     It can be either one character or a vector of source.names.
-#' @param param A character vector.
-#'              Parameters that want to get.
-#'              It can be either one character or a vector of source.names.
+#' @param gwosc.list A data.frame returned by `get_gwosc()`.
+#' @param source.names Character vector. Names of the events (`commonName`) to extract.
+#' @param param Character or character vector. Column name(s) to extract.
+#' @return A vector or data.frame depending on the number of requested parameters.
 #' @export
 get_gwosc_param <- function(gwosc.list, source.names, param) {
     step1 <- gwosc.list |>
@@ -74,17 +69,20 @@ get_gwosc_param <- function(gwosc.list, source.names, param) {
 
 #' Download strain data from GWOSC
 #'
-#' @param destfile      A character (default: "/tmp/tmp.hdf5"). A file name to download.
-#' @param event_name    A character. A specific event name.
-#' @param detector      A character. A specific detector name.
-#' @param dur           An integer (default: 32). A duration in second of the data.
-#' @param file.format   A character (default: "hdf5"). A file format. (one of "gwf", "hdf5", or "txt")
-#' @param sampling.freq A numeric (default: 4096). A sampling frequency of the data.
-#' @param timeout       An integer (default: 300). To extend timeout for downloading.
-#' @param load          A logical (default: FALSE). Whether it assigns the data directly into the R environment. 'file.format' must be "hdf5".
-#' @param remove        A logical (default: FALSE). Whether it removes data file after loading.
-#' @param direct.url    A character (default: NULL). The file URL can be directly given.
-#' @return A list. $Data: A vector of strain, $tstart: A numeric of GPS start time, if 'load=TRUE'.
+#' Downloads a specified strain data file for a given GW event and detector.
+#'
+#' @param destfile Character. Path to save the downloaded file (default: "/tmp/tmp.hdf5").
+#' @param event_name Character. Name of the event (e.g., "GW150914").
+#' @param det Character. Detector name (e.g., "H1", "L1").
+#' @param dur Integer. Duration of the data segment in seconds (default: 32).
+#' @param file.format Character. File format ("gwf", "hdf5", or "txt", default: "hdf5").
+#' @param sampling.freq Numeric. Desired sampling frequency (default: 4096).
+#' @param version Character. Version label (default: "latest").
+#' @param timeout Integer. Timeout in seconds for download (default: 300).
+#' @param load Logical. If TRUE, load the HDF5 data directly into memory as a `ts` object (default: FALSE).
+#' @param remove Logical. If TRUE and `load=TRUE`, remove the downloaded file after loading (default: FALSE).
+#' @param direct.url Character. Optional direct URL for downloading the file.
+#' @return If `load=TRUE`, returns a `ts` object of the strain data. Otherwise, NULL.
 #' @export
 download_gwosc <- function(
     destfile = "/tmp/tmp.hdf5",

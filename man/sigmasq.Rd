@@ -2,7 +2,7 @@
 % Please edit documentation in R/MF.R
 \name{sigmasq}
 \alias{sigmasq}
-\title{Calculate simga square}
+\title{Estimate signal loudness (sigma squared)}
 \usage{
 sigmasq(
   htilde,
@@ -11,9 +11,21 @@ sigmasq(
   high_frequency_cutoff = NULL
 )
 }
+\arguments{
+\item{htilde}{A `ts` or `fs` object. The waveform.}
+
+\item{psd}{An optional `fs` PSD object.}
+
+\item{low_frequency_cutoff}{Lower frequency bound (Hz).}
+
+\item{high_frequency_cutoff}{Upper frequency bound (Hz).}
+}
+\value{
+Numeric. The unnormalized signal power.
+}
 \description{
-Return the loudness of the waveform. This is defined (see Duncan Brown's
-thesis) as the unnormalized matched-filter of the input waveform, htilde,
-with itself. This quantity is usually referred to as (sigma)^2 and is then
-used to normalize matched-filters with the data.
+Computes the matched-filter self-inner-product of a waveform in frequency domain.
+}
+\references{
+https://pycbc.org/pycbc/latest/html/_modules/pycbc/filter/matchedfilter.html#sigmasq
 }

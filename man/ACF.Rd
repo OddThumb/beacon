@@ -2,10 +2,27 @@
 % Please edit documentation in R/COR.R
 \name{ACF}
 \alias{ACF}
-\title{Plot Auto Correlation Function}
+\title{Plot Auto Correlation Function (ACF)}
 \usage{
 ACF(ts, lag.max = length(ts), plot = TRUE, title = NULL)
 }
+\arguments{
+\item{ts}{A numeric vector or time-series object.}
+
+\item{lag.max}{An integer specifying the maximum lag to compute ACF. Default is the length of `ts`.}
+
+\item{plot}{A logical. If TRUE (default), return a ggplot2 object for visualization.}
+
+\item{title}{An optional string to set as plot title.}
+}
+\value{
+If `plot = TRUE`, a list with:
+\describe{
+  \item{acf}{An object of class "acf" with added element `white95ci` (significance threshold).}
+  \item{plot}{A ggplot2 object showing the autocorrelation function.}
+}
+Otherwise, returns the "acf" object only.
+}
 \description{
-Plot Auto Correlation Function
+Compute and visualize the autocorrelation function of a time series.
 }

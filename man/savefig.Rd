@@ -2,26 +2,28 @@
 % Please edit documentation in R/PLOT.R
 \name{savefig}
 \alias{savefig}
-\title{Save ggplot plot}
+\title{Save a ggplot Object to File}
 \usage{
 savefig(plot, file, width = 8, height = 5, show = T, verbose = F, ...)
 }
 \arguments{
-\item{plot}{A ggplot object.}
+\item{plot}{A ggplot object to save.}
 
-\item{file}{A character. A file path for save.}
+\item{file}{A character string indicating the file path.}
 
-\item{width}{A numeric (default: 8). Width of plot size.}
+\item{width}{A numeric value indicating the width of the plot (default: 8).}
 
-\item{show}{A logical (default: TRUE). Whether it shows and returns the plot on pane after save.}
+\item{height}{A numeric value indicating the height of the plot (default: 5).}
 
-\item{...}{Additional arguments for '\code{ggpubr::ggexport}'.}
+\item{show}{Logical; if \code{TRUE}, display and return the plot after saving.}
 
-\item{heigth}{A numeric (default: 5). Height of plot size.}
+\item{verbose}{Logical; if \code{TRUE}, print saving message.}
+
+\item{...}{Additional arguments passed to \code{ggpubr::ggexport}.}
 }
 \value{
-A ggplot object, if \code{show=TRUE}.
+A ggplot object if \code{show = TRUE}, otherwise \code{NULL}.
 }
 \description{
-Save ggplot plot
+Save a ggplot object to a file using \code{ggpubr::ggexport}.
 }

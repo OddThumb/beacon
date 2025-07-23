@@ -2,10 +2,16 @@
 % Please edit documentation in R/FS.R
 \name{str.fs}
 \alias{str.fs}
-\title{Structure function for fs class}
+\title{Custom Structure Summary for `fs` Object}
 \usage{
 \method{str}{fs}(x)
 }
+\arguments{
+\item{x}{An `fs` object.}
+}
+\value{
+None. Prints structure to console.
+}
 \description{
-Structure function for fs class
+Displays a concise structural summary of an `fs` object, highlighting class and delta_f.
 }

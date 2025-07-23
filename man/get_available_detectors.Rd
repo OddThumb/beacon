@@ -7,8 +7,12 @@
 get_available_detectors()
 }
 \value{
-A data frame. Output includes columns of "Detector name", "Abbreviation" of detector name, latitude and longitude of the detector.
+A data frame with columns: \code{Detector Name}, \code{Abbreviation}, \code{latitude}, \code{longitude}.
 }
 \description{
-Get available GW detectors
+Queries the list of available detectors from PyCBC and returns location info.
+}
+\details{
+This function interfaces with Python's \pkg{pycbc} library using \pkg{reticulate}.
+Please ensure that the required Python packages are available in your environment.
 }

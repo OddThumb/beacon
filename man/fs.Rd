@@ -2,19 +2,22 @@
 % Please edit documentation in R/FS.R
 \name{fs}
 \alias{fs}
-\title{fs: FrequencySeries class}
+\title{Create a Frequency Series Object (`fs`)}
 \usage{
 fs(x, df)
 }
 \arguments{
-\item{x}{A numeric vector.}
+\item{x}{A numeric vector representing frequency-domain data.}
 
-\item{df}{A numeric. A delta frequency.}
+\item{df}{A numeric scalar. Frequency resolution (`delta_f`).}
+}
+\value{
+An object of class `fs`, with additional attributes such as `delta_f` and `flen`.
 }
 \description{
-fs: FrequencySeries class
+Wraps a numeric vector into an `fs` class, assigning appropriate attributes
+for frequency-domain analysis.
 }
 \examples{
-# fs(c(1,2,3), df=0.5)
-
+fs(c(1, 2, 3), df = 0.5)
 }

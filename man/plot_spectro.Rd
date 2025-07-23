@@ -2,7 +2,7 @@
 % Please edit documentation in R/PLOT.R
 \name{plot_spectro}
 \alias{plot_spectro}
-\title{Plot spectrogram}
+\title{Plot Q-Transform Spectrogram with Oscillogram}
 \usage{
 plot_spectro(
   ts,
@@ -32,55 +32,49 @@ plot_spectro(
 )
 }
 \arguments{
-\item{ts}{A time series (\code{ts}) object.}
+\item{ts}{A time series object.}
 
-\item{tzero}{A numeric (default: \code{0}). A zero time. Times will be shifted by \code{tzero}.}
+\item{tzero}{Time offset (default: 0).}
 
-\item{trange}{A vector (default: \code{tr(ts)}). A time range for x axis limit.}
+\item{trange}{Time range for cropping the data.}
 
-\item{frange}{A vector (default: \code{c(32, 512)}). A frequency range of y axis limit.}
+\item{frange}{Frequency range for spectrogram.}
 
-\item{qrange}{A vector (default: \code{c(40, 1)}). A q range as an input to \code{qtransform} function.}
+\item{qrange}{Q-factor range for Q-transform.}
 
-\item{crange}{A vector (default: \code{NULL}). A color range. A z axis range.}
+\item{crange}{Color range (z-axis) for spectrogram.}
 
-\item{tres}{A numeric (default: \code{0.001}). A time resolution.}
+\item{tres}{Time resolution.}
 
-\item{fres}{A numeric (default: \code{1000}). A frequency resolution.}
+\item{fres}{Frequency resolution.}
 
-\item{logf}{A logical (dafault: \code{TRUE}). Whether transform frequency axis to log (base: 10) scale.}
+\item{logf}{Logical; log-scale y-axis (default: TRUE).}
 
-\item{title}{A character. A title for the plot.}
+\item{title}{Title of the plot.}
 
-\item{specScale}{A logical (default: \code{FALSE}). Whether it shows color scale bar for spectrogram.}
+\item{specScale}{Show colorbar for spectrogram.}
 
-\item{specXlabel}{A logical (default: \code{FALSE}). Whether it shows x axis label for spectrogram.}
+\item{specXlabel, }{specYlabel Show axis labels for spectrogram.}
 
-\item{specYlabel}{A logical (default: \code{TRUE}). Whether it shows y axis label for spectrogram.}
+\item{specGrid}{Show grid lines ("x", "y", "xy").}
 
-\item{specGrid}{A character (default: \code{"none"}). Overlay grid on x- ("x"), y-axis ("y"), or both ("xy").}
+\item{specColorPal}{Color palette.}
 
-\item{specColorPal}{A Palette for spectrogram (default: \code{viridis::viridis(256)}).}
+\item{trans}{Transformation function applied to spectrogram values.}
 
-\item{trans}{A function (defualt: \code{NULL}). If function is given, spectrogram will be transformed by a function of \code{trans} (e.g. \code{trans = sqrt} for square-root).}
+\item{specScaleDir}{Direction of colorbar.}
 
-\item{specScaleDir}{A character (default: \code{"vertical"}). If \code{specScale=TRUE}, the direction of color bar. (\code{"vertical"} or \code{"horizontal"})}
+\item{specScalePos}{Position of colorbar ("ul", "ur", "bl", "br").}
 
-\item{specScalePos}{A character (default: \code{"ul"}). If \code{specScale=TRUE}, the position of color bar. (\code{"ul"}, \code{"ur"}, \code{"bl"}, or \code{"br"})}
+\item{osciLegend, }{osciXlabel, osciYlabel Options for oscillogram.}
 
-\item{osciLegend}{A logical (default: \code{FALSE}). Whether it shows a legend for oscillogram.}
+\item{stack}{Logical; stack spectrogram and oscillogram (default: TRUE).}
 
-\item{osciXlabel}{A logical (default: \code{FALSE}). Whether it shows x axis label for oscillogram.}
-
-\item{osciYlabel}{A logical (default: \code{TRUE}). Whether it shows y axis label for oscillogram.}
-
-\item{stack}{A logical (default: \code{TRUE}). Whether it stack spectrogram and oscillogram.}
-
-\item{...}{Additional arguments for \code{ggpubr::ggarrange}.}
+\item{...}{Additional arguments passed to \code{ggarrange}.}
 }
 \value{
-A ggplot object. If \code{stack=FALSE}, A list with \code{$spec.plot}: spectrogram ggplot object, \code{$osci.plot}: oscillogram ggplot object.
+A ggplot object, or a list with \code{spec.plot} and \code{osci.plot} if \code{stack = FALSE}.
 }
 \description{
-Using ggplot2 to generate q-transformed spectrogram & oscillogram together!
+Create a Q-transform spectrogram stacked with its oscillogram using ggplot2.
 }

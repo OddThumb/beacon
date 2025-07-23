@@ -2,25 +2,18 @@
 % Please edit documentation in R/TS.R
 \name{cyclic}
 \alias{cyclic}
-\title{Cyclic-shift a vector}
+\title{Cyclically shift a vector}
 \usage{
 cyclic(x, n)
 }
 \arguments{
 \item{x}{A numeric vector.}
 
-\item{n}{A numeric. length of shift.}
+\item{n}{An integer. Number of elements to shift.}
 }
 \value{
 A cyclic-shifted vector.
 }
 \description{
-Cyclic-shift a vector
-}
-\examples{
-# {not run}
-# > x <- c(1,2,3,4,5)
-# > x_cyc <- cyclic(x, 2)
-# > x_cyc # >>> 3 4 5 1 2
-
+Cyclically shift a vector
 }

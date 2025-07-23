@@ -1,49 +1,47 @@
-# Time Series Analysis ----
-
-#' Simple initial time
+#' Initial timestamp of a time series
 #'
-#' @param ts A time series (`ts`) object.
-#' @param n  A numeric (default: 1). A number of head.
-#' @return Numeric(s). n initial times.
+#' @param ts A `ts` object.
+#' @param n A numeric (default: 1). Number of initial timestamps to return.
+#' @return A numeric vector of length `n`.
 #' @export
 ti <- function(ts, n = 1) {
     head(c(time(ts)), n)
 }
 
-#' Simple final time
+#' Final timestamp of a time series
 #'
-#' @param ts A time series (`ts`) object.
-#' @param n  A numeric (default: 1). A number of tail.
-#' @return Numeric(s). n final times.
+#' @param ts A `ts` object.
+#' @param n A numeric (default: 1). Number of final timestamps to return.
+#' @return A numeric vector of length `n`.
 #' @export
 tf <- function(ts, n = 1) {
     tail(c(time(ts)), n)
 }
 
-#' Simple time range
+#' Time range of a time series
 #'
-#' @param ts A time series (`ts`) object.
-#' @return A vector of length 2 which is equivalent to `c(ti(ts), tf(ts))`.
+#' @param ts A `ts` object.
+#' @return A numeric vector of length 2: \code{c(start, end)}.
 #' @export
 tr <- function(ts) {
     c(ti(ts), tf(ts))
 }
 
-#' Simple time length
+#' Duration of a time series
 #'
-#' @param ts A time series (`ts`) object.
-#' @return A vector of length 2 which is equivalent to `c(ti(ts), tf(ts))`.
+#' @param ts A `ts` object.
+#' @return A numeric value indicating duration in seconds.
 #' @export
 tl <- function(ts) {
     diff(tr(ts)) + deltat(ts)
 }
 
-#' Convert GPS time to UTC time
+#' Convert GPS time to UTC
 #'
-#' @param x          A numeric. A GPS time.
-#' @param origin     A character (default: '1980-01-06'). A GPS time origin (Do not change for GW work).
-#' @param formatting A logical (default: FALSE). Whether it formats with "%Y-%m-%d %H:%M:%OS", otherwise, "YYYYMMDD HH:MM:SS".
-#' @return A character. An UTC time.
+#' @param x A numeric. GPS time.
+#' @param origin A character or Date (default: "1980-01-06"). GPS epoch.
+#' @param out_format A character. Output format string.
+#' @return A character string of UTC time.
 #' @export
 gps2utc <- function(
     x,
@@ -54,12 +52,12 @@ gps2utc <- function(
     format.POSIXct(y, out_format)
 }
 
-#' Convert UTC time to GPS time
+#' Convert UTC to GPS time
 #'
-#' @param y      A character. A UTC time.
-#' @param origin A character (default: '1980-01-06'). A GPS time origin (Do not change for GW work).
-#' @param format A character. A specific format of UTC time, e.g. `"%Y-%m-%d"`, `"%Y-%m-%d %H:%M:%OS"`.
-#' @return A numeric. A GPS time.
+#' @param y A character. UTC time string.
+#' @param origin A character or Date (default: "1980-01-06"). GPS epoch.
+#' @param in_format A character. Format string of the UTC time.
+#' @return A numeric. GPS time.
 #' @export
 utc2gps <- function(
     y,
@@ -71,11 +69,11 @@ utc2gps <- function(
 }
 
 
-#' Print start time or update start time
+#' Get or update the start time of a time series
 #'
-#' @param x     A time series (`ts`) object.
-#' @param tstart  A numeric (default: NULL). A start time to be updated.
-#' @return Nothing, but given `ts.`'s start time will be updated.
+#' @param x A `ts` object.
+#' @param tstart A numeric. If provided, updates start time.
+#' @return If \code{tstart} is \code{NULL}, returns initial time. Otherwise, updates the object in global environment.
 #' @export
 start_time <- function(x, tstart = NULL) {
     if (is.null(tstart)) {
@@ -89,12 +87,13 @@ start_time <- function(x, tstart = NULL) {
     }
 }
 
-#' Transform to ts obj with reference ts
+#' Convert to `ts` object using a reference
 #'
-#' @param obj A list or a vector.
-#' @param ref A reference time series.
-#' @param na.rm A logical (default: TRUE). Whether remove NA values or not.
-#' @return A time series (`ts`) object with same time stamp of 'ref'.
+#' @param obj A vector, list, or data frame.
+#' @param ref A `ts` object, time vector, or list specifying reference time.
+#' @param sampling.freq Optional frequency if `ref` is numeric.
+#' @param na.rm Logical. If \code{TRUE}, remove NA values (default: TRUE).
+#' @return A `ts` object or list of `ts` objects.
 #' @export
 tsfy <- function(obj, ref, sampling.freq = NULL, na.rm = T) {
     # vector to ts
@@ -180,11 +179,12 @@ tsfy <- function(obj, ref, sampling.freq = NULL, na.rm = T) {
     return(out)
 }
 
-#' Transform to data frame with 'time' column
+#' Convert `ts` to data frame with time column
 #'
-#' @param ts A time series (`ts`) object.
-#' @param tzero A numeric (default: 0). A zero time. Times will be shifted by '\code{tzero}'.
-#' @return A data frame with 'time' column at first.
+#' @param ts A `ts` object.
+#' @param tzero A numeric (default: 0). Time shift.
+#' @param val.name A character. Name for value column (default: "x").
+#' @return A data frame with columns \code{time} and value.
 #' @export
 ts_df <- function(ts, tzero = 0, val.name = "x") {
     if (!is.ts(ts)) {
@@ -202,10 +202,12 @@ ts_df <- function(ts, tzero = 0, val.name = "x") {
     }
 }
 
-#' Transform to 'tbl_time'
+#' Convert `ts` to tibbletime object
 #'
-#' @param ts A time series (`ts`) object.
-#' @return A tbl_time.
+#' @param ts A `ts` object.
+#' @param time_col A character. Column name for time (default: "time").
+#' @param val_col A character. Column name for value (default: "x").
+#' @return A \code{tbl_time} object.
 #' @export
 as_tbt <- function(ts, time_col = 'time', val_col = 'x') {
     timerange <- as.POSIXct(
@@ -224,29 +226,15 @@ as_tbt <- function(ts, time_col = 'time', val_col = 'x') {
     tbt
 }
 
-#' Transform `fs` class to `ts` class
+#' Inverse Fourier transform of `fs` object
 #'
-#' @param fs A `fs` object
+#' @param fs A `fs` object.
+#' @param start A numeric. Start time (default: 0 or `attr(fs, "ti")`).
+#' @param delta_t A numeric. Time step. If \code{NULL}, use natural resolution.
 #'
-#' @return A `ts` object with respect to the given `fs` object.
+#' @return A `ts` object in time domain.
 #' @export
 to_ts <- function(fs, start = 0, delta_t = NULL) {
-    " Return the Fourier transform of this time series.
-
-    Note that this assumes even length time series!
-
-    Parameters
-    ----------
-    delta_t : {None, float}, optional
-        The time resolution of the returned series. By default the
-    resolution is determined by length and delta_f of this frequency
-    series.
-
-    Returns
-    -------
-    TimeSeries:
-        The inverse fourier transform of this frequency series.
-    "
     nat_delta_t <- 1.0 / ((length(fs) - 1) * 2) / deltaf(fs)
     if (is.null(delta_t)) {
         delta_t <- nat_delta_t
@@ -317,34 +305,21 @@ crop_to <- function(ts, ind.range) {
 }
 
 
-#' Shift time series by time
+#' Shift time series by time offset
 #'
-#' @param ts      A `ts` object.
-#' @param t_shift A numeric. Time to be shifted.
+#' @param ts A `ts` object.
+#' @param t_shift A numeric. Amount to shift (in seconds).
 #' @return A time-shifted `ts`.
-#' @examples
-#' # {not run}
-#' # > xt <- ts(c(1,2,3), start=1, frequency=1)
-#' # > ti(xt) # >>> 1
-#' # > xt_shift <- shift(xt, 1)
-#' # > ti(xt_shift) # >>> 2
-#'
 #' @export
 shift <- function(ts, t_shift) {
     ts(data = c(ts), start = c(ti(ts)) + t_shift, deltat = deltat(ts))
 }
 
-#' Cyclic-shift a vector
+#' Cyclically shift a vector
 #'
 #' @param x A numeric vector.
-#' @param n A numeric. length of shift.
+#' @param n An integer. Number of elements to shift.
 #' @return A cyclic-shifted vector.
-#' @examples
-#' # {not run}
-#' # > x <- c(1,2,3,4,5)
-#' # > x_cyc <- cyclic(x, 2)
-#' # > x_cyc # >>> 3 4 5 1 2
-#'
 #' @export
 cyclic <- function(x, n) {
     if (n == 0) {
@@ -354,22 +329,11 @@ cyclic <- function(x, n) {
     }
 }
 
-#' Cyclic shift a `ts`
+#' Cyclically shift a `ts`
 #'
-#' @param ts       A `ts` object.
-#' @param t_cyclic A numeric. Time to be cyclic-shifted
-#' @return A cyclic-shifted `ts`.
-#' @examples
-#' # {not run}
-#' # > xt <- ts(c(1,2,3,4,5), start=1, freqyency=1)
-#' # > xt_cyc <- shift.cyclic(xt, t_cyclic=2)
-#' # > xt_cyc
-#' # Time Series:
-#' # Start = 1
-#' # End = 5
-#' # Frequency = 1
-#' # [1] 3 4 5 1 2
-#'
+#' @param ts A `ts` object.
+#' @param t_cyclic A numeric. Time to shift cyclically.
+#' @return A cyclic-shifted `ts` object.
 #' @export
 shift_cyclic <- function(ts, t_cyclic) {
     x <- c(ts)
@@ -378,12 +342,12 @@ shift_cyclic <- function(ts, t_cyclic) {
 }
 
 
-#' Shift phase of ts
+#' Align phase of a `ts` to another
 #'
-#' @param ts    A ts object to be phase-shifted
-#' @param ref   A ts object as a reference (default: NULL).
-#' @param phase A numeric (default: NULL). A specific shifting phase.
-#' @return A phase-shifted phase.
+#' @param ts A `ts` object to be shifted.
+#' @param ref A reference `ts` object (optional).
+#' @param phase A numeric phase shift (optional).
+#' @return A phase-aligned `ts` object with attributes for applied shift.
 #' @export
 shift_phase <- function(ts, ref = NULL, phase = NULL) {
     sampling.freq <- frequency(ts)
@@ -421,30 +385,11 @@ shift_phase <- function(ts, ref = NULL, phase = NULL) {
 }
 
 
-#' Resize `ts` with given length
+#' Resize a `ts` to target length
 #'
-#' @param ts   A `ts` object.
-#' @param nlen A numeric. A length to be resized.
-#' @return A resized `ts` with given `nlen`.
-#' @examples
-#' # {not run}
-#' # > xt <- ts(c(1,2,3,4,5), start=1, freqyency=1)
-#' # If nlen > length(ts)
-#' # > xt_resize1 <- resize(xt, 10)
-#' # > xt_resize1
-#' # Time Series:
-#' # Start = 1
-#' # End = 10
-#' # Frequency = 1
-#' # [1] 1 2 3 4 5 0 0 0 0 0
-#' # If nlen <= length(ts)
-#' # > xt_resize2 <- resize(xt, 3)
-#' # Time Series:
-#' # Start = 1
-#' # End = 3
-#' # Frequency = 1
-#' # [1] 1 2 3
-#'
+#' @param ts A `ts` object.
+#' @param nlen An integer. Desired length.
+#' @return A resized `ts` object (padded with zeros or truncated).
 #' @export
 resize <- function(ts, nlen) {
     if (length(ts) >= nlen) {
@@ -459,13 +404,14 @@ resize <- function(ts, nlen) {
 }
 
 
-#' Padding short ts into longer zeros.
+#' Pad a `ts` with zeros
 #'
-#' @param ts     A time series (`ts`) object.
-#' @param tstart A numeric. Start time of zeros.
-#' @param tend   A numeric. End time of zeros.
-#' @param at     A numeric (default: 0). Time that ts will be injected.
-#' @return A ts object of given ts injected zeros.
+#' @param ts A `ts` object.
+#' @param tstart A numeric. Start time of output.
+#' @param tend A numeric. End time of output.
+#' @param at A numeric. Time to inject original `ts`.
+#'
+#' @return A padded `ts` object.
 #' @export
 pad <- function(ts, tstart, tend, at = 0) {
     sampling_freq <- frequency(ts)
@@ -509,10 +455,10 @@ pad <- function(ts, tstart, tend, at = 0) {
     ts(zerobase, start = tstart, frequency = sampling_freq)
 }
 
-#' If length(Data$data) is odd, cut the last element
+#' Ensure even-length `ts`
 #'
-#' @param ts A time series (`ts`) object.
-#' @return A time series (`ts`) object with even length.
+#' @param ts A `ts` object.
+#' @return A `ts` object with even length (truncates last sample if needed).
 #' @export
 evenify <- function(ts) {
     if (length(ts) %% 2 == 1) {
@@ -523,10 +469,10 @@ evenify <- function(ts) {
     }
 }
 
-#' Scale ts
+#' Normalize a `ts` to unit scale
 #'
-#' @param ts A time series (`ts`) object.
-#' @return A scaled time series. A scale factor is calculated by '`get.order`'. The factor will be stored in '`$order`' attribute.
+#' @param ts A `ts` object.
+#' @return A normalized `ts` object. Scale factor is stored in \code{attr(..., "order")}.
 #' @export
 one_ts <- function(ts) {
     order.val <- get_order(ts)
@@ -535,26 +481,27 @@ one_ts <- function(ts) {
     return(norm)
 }
 
-#' Simple Median filter wrapper
+#' Apply median filter to a `ts`
 #'
-#' @param ts A time series (`ts`) object.
-#' @param order An integer. The order of median filter.
-#' @return A median filtered time series (`ts`) object.
+#' @param ts A `ts` object.
+#' @param order An integer. Window size of the median filter.
+#' @return A smoothed `ts` object.
 #' @export
 mmed <- function(ts, order) {
     meds <- runmed(ts, order)
     tsfy(meds, ts)
 }
 
-#' Band-pass filter
+#' Apply band-pass filter to `ts`
 #'
-#' @param ts A time series (`ts`) object.
-#' @param fl A numeric. The frequency lower bound for the band-pass filter.
-#' @param fu A numeric. The frequency upper bound for the band-pass filter.
-#' @param resp A character. "FIR (Finite Impulse Response)" or "IIR (Infinite Impulse Response)"
-#' @param filt_order A numeric. The order of filter. Default value is 512 (FIR) or 8 (IIR).
+#' @param ts A `ts` object.
+#' @param fl A numeric. Lower cutoff frequency.
+#' @param fu A numeric. Upper cutoff frequency.
+#' @param resp A character. Filter type ("FIR" or "IIR").
+#' @param filt_order A numeric. Filter order (default: 512 for FIR, 8 for IIR).
+#' @param verbose Logical. If \code{TRUE}, print filter info.
 #'
-#' @return A band-pass filtered time series (`ts`) object.
+#' @return A band-pass filtered `ts` object with attributes.
 #' @export
 BandPass <- function(
     ts,

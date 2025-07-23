@@ -2,18 +2,18 @@
 % Please edit documentation in R/TS.R
 \name{tf}
 \alias{tf}
-\title{Simple final time}
+\title{Final timestamp of a time series}
 \usage{
 tf(ts, n = 1)
 }
 \arguments{
-\item{ts}{A time series (`ts`) object.}
+\item{ts}{A `ts` object.}
 
-\item{n}{A numeric (default: 1). A number of tail.}
+\item{n}{A numeric (default: 1). Number of final timestamps to return.}
 }
 \value{
-Numeric(s). n final times.
+A numeric vector of length `n`.
 }
 \description{
-Simple final time
+Final timestamp of a time series
 }

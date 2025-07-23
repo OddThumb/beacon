@@ -2,10 +2,16 @@
 % Please edit documentation in R/FS.R
 \name{deltaf}
 \alias{deltaf}
-\title{Extract delta_f of fs}
+\title{Extract Frequency Resolution from `fs` Object}
 \usage{
 deltaf(x)
 }
+\arguments{
+\item{x}{An `fs` object.}
+}
+\value{
+A numeric scalar representing frequency resolution.
+}
 \description{
-Extract delta_f of fs
+Returns the `delta_f` attribute from an `fs` object.
 }

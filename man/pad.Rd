@@ -2,22 +2,22 @@
 % Please edit documentation in R/TS.R
 \name{pad}
 \alias{pad}
-\title{Padding short ts into longer zeros.}
+\title{Pad a `ts` with zeros}
 \usage{
 pad(ts, tstart, tend, at = 0)
 }
 \arguments{
-\item{ts}{A time series (`ts`) object.}
+\item{ts}{A `ts` object.}
 
-\item{tstart}{A numeric. Start time of zeros.}
+\item{tstart}{A numeric. Start time of output.}
 
-\item{tend}{A numeric. End time of zeros.}
+\item{tend}{A numeric. End time of output.}
 
-\item{at}{A numeric (default: 0). Time that ts will be injected.}
+\item{at}{A numeric. Time to inject original `ts`.}
 }
 \value{
-A ts object of given ts injected zeros.
+A padded `ts` object.
 }
 \description{
-Padding short ts into longer zeros.
+Pad a `ts` with zeros
 }

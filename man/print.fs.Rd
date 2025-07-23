@@ -2,10 +2,21 @@
 % Please edit documentation in R/FS.R
 \name{print.fs}
 \alias{print.fs}
-\title{Printing fs class differently}
+\title{Custom Print Method for `fs` Class}
 \usage{
 \method{print}{fs}(x, ..., ts.info = TRUE)
 }
+\arguments{
+\item{x}{An `fs` object.}
+
+\item{...}{Additional arguments (ignored).}
+
+\item{ts.info}{Logical. Whether to show associated time-series info (default: TRUE).}
+}
+\value{
+None. Used for side effects.
+}
 \description{
-Printing fs class differently
+Prints summary information for an `fs` object, including delta_f, flen,
+and associated time-domain metadata if available.
 }

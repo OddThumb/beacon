@@ -2,24 +2,25 @@
 % Please edit documentation in R/etc.R
 \name{create_wd}
 \alias{create_wd}
-\title{Create WD recursively with alternative option}
+\title{Create Working Directory (WD) Recursively with Optional Suffix}
 \usage{
 create_wd(root, sub, subsub, alternative = F, set = T)
 }
 \arguments{
-\item{root}{A character. A root directory (full path).}
+\item{root}{A character. Root directory (absolute path).}
 
-\item{sub}{A character. A sub-directory (only name).}
+\item{sub}{A character. Sub-directory name (not a path).}
 
-\item{subsub}{A character. A sub-sub-directory (only name).}
+\item{subsub}{A character. Sub-sub-directory name.}
 
-\item{alternative}{A logical (default: FALSE). If directory is already exists, it puts suffix, e.g. _1, _2 ...}
+\item{alternative}{A logical (default: FALSE). If TRUE, appends numeric suffix to avoid overwrite.}
 
-\item{set}{A logical (default: TRUE). Whether automatically set the working directory after creating it.}
+\item{set}{A logical (default: TRUE). If TRUE, sets the created directory as working directory.}
 }
 \value{
-A character. A final working directory path, if 'set=TRUE' (for any use for later).
+A character string of the final working directory path (only if `set = TRUE`).
 }
 \description{
-Create WD recursively with alternative option
+Create a nested directory from root/sub/subsub. If the directory already exists
+and `alternative = TRUE`, a new directory will be created with an appended numeric suffix.
 }

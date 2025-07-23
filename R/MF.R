@@ -1,25 +1,27 @@
-#' Correlate of two complex vectors
+#' Correlate two complex vectors
 #'
-#' Reference: https://pycbc.org/pycbc/latest/html/_modules/pycbc/filter/matchedfilter_numpy.html#correlate
+#' Computes the element-wise product of the conjugate of `x` and `y`, used in matched filtering.
 #'
-#' Python \code{correlate} function example
-#' \code{
-#' import numpy
-#' def correlate(x, y, z):
-#'      z.data[:] = numpy.conjugate(x.data)[:]
-#'      z *= y
-#' }
+#' @references https://pycbc.org/pycbc/latest/html/_modules/pycbc/filter/matchedfilter_numpy.html#correlate
 #'
+#' @param x A complex vector.
+#' @param y A complex vector.
+#' @return A complex vector, result of conjugate(x) * y.
 #' @export
 correlate <- function(x, y) {
     Conj(x) * y
 }
 
 
-#' Get two boundary indices for frequency range cropping
+#' Get frequency cutoff indices for overlap calculation
 #'
-#' Reference: https://pycbc.org/pycbc/latest/html/_modules/pycbc/filter/matchedfilter.html#get_cutoff_indices
+#' @references https://pycbc.org/pycbc/latest/html/_modules/pycbc/filter/matchedfilter.html#get_cutoff_indices
 #'
+#' @param flow Numeric. The lower frequency in Hz.
+#' @param fupp Numeric. The upper frequency in Hz.
+#' @param df Numeric. Frequency resolution (Hz).
+#' @param N Integer. Number of time-domain samples.
+#' @return A list with elements `min` and `max`, indicating cutoff indices.
 #' @export
 get_cutoff_indices <- function(flow, fupp, df, N) {
     # ──────────────────────────────────────────────────────────────────────────
@@ -101,14 +103,11 @@ get_cutoff_indices <- function(flow, fupp, df, N) {
 }
 
 
-#' Inner product
+#' Compute inner product between two vectors
 #'
-#' This is not constrained as array.
-#'
-#' @param x  A numeric vector.
-#' @param y  A numeric vector.
-#' @return An inner product of `x`, `y`.
-#'
+#' @param x A complex or numeric vector.
+#' @param y A complex or numeric vector.
+#' @return Complex scalar. Inner product of `x` and `y`.
 #' @export
 inner <- function(x, y) {
     as.complex(Conj(x) %*% y)
@@ -117,14 +116,12 @@ inner <- function(x, y) {
 
 #' Weighted inner product
 #'
-#' This is not constrained as array.
-#' `wt` needs to have also same dimension (or length) as x or y.
+#' Computes the inner product between `x` and `y` with inverse-variance weighting.
 #'
-#' @param x  A numeric vector.
-#' @param y  A numeric vector.
-#' @param wt A weight vector.
-#' @return An inner product of `x`, `y` weighted by `wt`
-#'
+#' @param x A numeric or complex vector.
+#' @param y A numeric or complex vector.
+#' @param wt A numeric weight vector (same length as `x`, `y`).
+#' @return Complex scalar. Weighted inner product.
 #' @export
 weighted_inner <- function(x, y, wt) {
     if (is.null(dim(x))) {
@@ -139,34 +136,18 @@ weighted_inner <- function(x, y, wt) {
     as.complex(Conj(x) %*% (y / wt))
 }
 
-#' fs version of window_to
-#'
-#' @export
-cutoff_to <- function(fs, ref) {
-    if (!inherits(fs, "fs")) {
-        stop("TypeError: Input must be a fs class")
-    }
-    kmin <- ref$min
-    kmax <- ref$max
 
-    out <- fs[kmin:kmax]
-    out <- copy_attr(
-        out,
-        ref = fs,
-        which = c("sampling.freq", "delta_f", "class", "ti")
-    )
-    attr(out, "flen") <- kmax - kmin + 1
-    out
-}
-
-
-#' Calculate simga square
+#' Estimate signal loudness (sigma squared)
 #'
-#' Return the loudness of the waveform. This is defined (see Duncan Brown's
-#' thesis) as the unnormalized matched-filter of the input waveform, htilde,
-#' with itself. This quantity is usually referred to as (sigma)^2 and is then
-#' used to normalize matched-filters with the data.
+#' Computes the matched-filter self-inner-product of a waveform in frequency domain.
 #'
+#' @references https://pycbc.org/pycbc/latest/html/_modules/pycbc/filter/matchedfilter.html#sigmasq
+#'
+#' @param htilde A `ts` or `fs` object. The waveform.
+#' @param psd An optional `fs` PSD object.
+#' @param low_frequency_cutoff Lower frequency bound (Hz).
+#' @param high_frequency_cutoff Upper frequency bound (Hz).
+#' @return Numeric. The unnormalized signal power.
 #' @export
 sigmasq <- function(
     htilde,
@@ -174,28 +155,6 @@ sigmasq <- function(
     low_frequency_cutoff = NULL,
     high_frequency_cutoff = NULL
 ) {
-    # ──────────────────────────────────────────────────────────────────────────
-    # Return the loudness of the waveform. This is defined (see Duncan Brown's
-    # thesis) as the unnormalized matched-filter of the input waveform, htilde,
-    # with itself. This quantity is usually referred to as (sigma)^2 and is then
-    # used to normalize matched-filters with the data.
-    #
-    # Parameters
-    # ──────────
-    # htilde : ts or fs class
-    #     The input vector containing a waveform.
-    # psd : {NULL, fs}, optional
-    #     The psd used to weight the accumulated power.
-    # low_frequency_cutoff : {NULL, numeric}, optional
-    #     The frequency to begin considering waveform power.
-    # high_frequency_cutoff : {NULL, numeric}, optional
-    #     The frequency to stop considering waveform power.
-    #
-    # Returns
-    # ───────
-    # sigmasq: float
-    # ──────────────────────────────────────────────────────────────────────────
-
     # If htilde is ts, transform to fs.
     if (inherits(htilde, "ts")) {
         htilde <- to.fs(htilde)

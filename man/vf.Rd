@@ -2,18 +2,18 @@
 % Please edit documentation in R/Calc.R
 \name{vf}
 \alias{vf}
-\title{Simple final value}
+\title{Simple final value extractor}
 \usage{
 vf(x, n = 1)
 }
 \arguments{
 \item{x}{A vector.}
 
-\item{n}{A numeric (default: 1). A number of tail.}
+\item{n}{A numeric (default: 1). Number of final values to extract.}
 }
 \value{
-Numeric(s). n final times.
+A vector of the last n elements.
 }
 \description{
-Simple final value
+Simple final value extractor
 }

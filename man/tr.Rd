@@ -2,16 +2,16 @@
 % Please edit documentation in R/TS.R
 \name{tr}
 \alias{tr}
-\title{Simple time range}
+\title{Time range of a time series}
 \usage{
 tr(ts)
 }
 \arguments{
-\item{ts}{A time series (`ts`) object.}
+\item{ts}{A `ts` object.}
 }
 \value{
-A vector of length 2 which is equivalent to `c(ti(ts), tf(ts))`.
+A numeric vector of length 2: \code{c(start, end)}.
 }
 \description{
-Simple time range
+Time range of a time series
 }

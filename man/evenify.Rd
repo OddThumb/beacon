@@ -2,16 +2,16 @@
 % Please edit documentation in R/TS.R
 \name{evenify}
 \alias{evenify}
-\title{If length(Data$data) is odd, cut the last element}
+\title{Ensure even-length `ts`}
 \usage{
 evenify(ts)
 }
 \arguments{
-\item{ts}{A time series (`ts`) object.}
+\item{ts}{A `ts` object.}
 }
 \value{
-A time series (`ts`) object with even length.
+A `ts` object with even length (truncates last sample if needed).
 }
 \description{
-If length(Data$data) is odd, cut the last element
+Ensure even-length `ts`
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/COR.R
 \name{CCF}
 \alias{CCF}
-\title{Calculate Cross Correlation Function and plot it}
+\title{Plot Cross Correlation Function (CCF)}
 \usage{
 CCF(
   ts1,
@@ -17,6 +17,37 @@ CCF(
   times = NULL
 )
 }
+\arguments{
+\item{ts1}{First numeric vector or time-series object.}
+
+\item{ts2}{Second numeric vector or time-series object.}
+
+\item{lag.max}{Maximum lag to compute. Default is length of `ts1`.}
+
+\item{na.action}{NA handling function. Default is `na.fail`.}
+
+\item{title}{Optional plot title.}
+
+\item{plot}{Logical. If TRUE (default), return a ggplot2 object.}
+
+\item{save}{Logical. If TRUE, save plot as 'CCF.pdf'. Default is FALSE.}
+
+\item{dir}{Optional directory to save plot (currently ignored unless customized in `savefig()`).}
+
+\item{prefix}{Optional prefix for filename (currently ignored unless used in `savefig()`).}
+
+\item{times}{Optional numeric vector used to convert inputs into ts objects if not already.}
+}
+\value{
+A list containing:
+\describe{
+  \item{ccf_res}{The CCF computation result with added `white95ci`.}
+  \item{ind_max}{Index of lag with highest absolute cross-correlation.}
+  \item{ccf_max}{Value of maximum absolute cross-correlation.}
+  \item{lag_max}{Lag at which maximum absolute cross-correlation occurs.}
+  \item{plot}{ggplot2 object, only if `plot = TRUE`.}
+}
+}
 \description{
-Calculate Cross Correlation Function and plot it
+Compute and optionally visualize the cross-correlation function between two time series.
 }

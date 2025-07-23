@@ -2,18 +2,29 @@
 % Please edit documentation in R/IO.R
 \name{read_H5}
 \alias{read_H5}
-\title{Read H5 file}
+\title{Read HDF5 Time Series Data with Data Quality Mask}
 \usage{
 read_H5(file, sampling.freq, dq.level = "BURST_CAT2")
 }
 \arguments{
-\item{file}{A character. A file path to read.}
+\item{file}{A character string. Path to the HDF5 file.}
 
-\item{sampling.freq}{A numeric. A sampling frequency.}
+\item{sampling.freq}{A numeric scalar. Sampling frequency (Hz) of the strain data.}
+
+\item{dq.level}{A character string. DQ level to extract (default: "BURST_CAT2").
+Use \code{"all"} to extract all DQ bits.}
 }
 \value{
-A ts object.
+A \code{ts} object containing the strain data with the following attributes:
+\describe{
+  \item{\code{dqmask}}{A \code{ts} object of the same length representing the DQ mask.}
+}
 }
 \description{
-Read H5 file
+Reads a single-channel strain data from an HDF5 file along with its DQ mask.
+}
+\details{
+This function assumes the HDF5 file has the structure: \code{meta/GPSstart},
+\code{strain/Strain}, and \code{quality/simple/DQmask}.
+The extracted strain data will carry \code{dqmask} as an attribute.
 }

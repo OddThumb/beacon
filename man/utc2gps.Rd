@@ -2,7 +2,7 @@
 % Please edit documentation in R/TS.R
 \name{utc2gps}
 \alias{utc2gps}
-\title{Convert UTC time to GPS time}
+\title{Convert UTC to GPS time}
 \usage{
 utc2gps(
   y,
@@ -11,15 +11,15 @@ utc2gps(
 )
 }
 \arguments{
-\item{y}{A character. A UTC time.}
+\item{y}{A character. UTC time string.}
 
-\item{origin}{A character (default: '1980-01-06'). A GPS time origin (Do not change for GW work).}
+\item{origin}{A character or Date (default: "1980-01-06"). GPS epoch.}
 
-\item{format}{A character. A specific format of UTC time, e.g. `"%Y-%m-%d"`, `"%Y-%m-%d %H:%M:%OS"`.}
+\item{in_format}{A character. Format string of the UTC time.}
 }
 \value{
-A numeric. A GPS time.
+A numeric. GPS time.
 }
 \description{
-Convert UTC time to GPS time
+Convert UTC to GPS time
 }

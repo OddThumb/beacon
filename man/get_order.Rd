@@ -10,7 +10,7 @@ get_order(x)
 \item{x}{A numeric vector.}
 }
 \value{
-A numeric.
+A numeric. The order of magnitude of the maximum absolute value.
 }
 \description{
 Calculate the order of magnitude

@@ -2,16 +2,16 @@
 % Please edit documentation in R/Calc.R
 \name{vl}
 \alias{vl}
-\title{Simple value length from first data point to last.}
+\title{Length from first to last value}
 \usage{
 vl(x)
 }
 \arguments{
-\item{ts}{A time series (`ts`) object.}
+\item{x}{A vector.}
 }
 \value{
-A vector of length 2 which is equivalent to `c(ti(ts), tf(ts))`.
+A numeric. Difference between last and first element.
 }
 \description{
-Simple value length from first data point to last.
+Length from first to last value
 }

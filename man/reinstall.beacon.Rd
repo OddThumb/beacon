@@ -2,16 +2,16 @@
 % Please edit documentation in R/etc.R
 \name{reinstall.beacon}
 \alias{reinstall.beacon}
-\title{Reinstall beacon}
+\title{Reinstall the beacon Package from Source}
 \usage{
 reinstall.beacon(beacon.path = "~/projects/GW/beacon")
 }
 \arguments{
-\item{beacon.path}{A character. A beacon package path.}
+\item{beacon.path}{A character string indicating the path to the local beacon package.}
 }
 \value{
-reloading
+None. Performs side effects: unloads, removes, checks, and reinstalls the package.
 }
 \description{
-Reinstall beacon
+Detach, remove, check, and reinstall the beacon package from the specified path.
 }

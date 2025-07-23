@@ -2,18 +2,18 @@
 % Please edit documentation in R/TS.R
 \name{ti}
 \alias{ti}
-\title{Simple initial time}
+\title{Initial timestamp of a time series}
 \usage{
 ti(ts, n = 1)
 }
 \arguments{
-\item{ts}{A time series (`ts`) object.}
+\item{ts}{A `ts` object.}
 
-\item{n}{A numeric (default: 1). A number of head.}
+\item{n}{A numeric (default: 1). Number of initial timestamps to return.}
 }
 \value{
-Numeric(s). n initial times.
+A numeric vector of length `n`.
 }
 \description{
-Simple initial time
+Initial timestamp of a time series
 }

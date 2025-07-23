@@ -1,16 +1,11 @@
-# Detector ----
-
-#' Set astropy.utils.iers runs in online or offline
-#'
-#' @export
-set_iers <- function(online = F) {
-    iers <- reticulate::import("astropy.utils")$iers
-    iers$conf$auto_download <- online
-}
-
 #' Get available GW detectors
 #'
-#' @return A data frame. Output includes columns of "Detector name", "Abbreviation" of detector name, latitude and longitude of the detector.
+#' Queries the list of available detectors from PyCBC and returns location info.
+#' @details
+#' This function interfaces with Python's \pkg{pycbc} library using \pkg{reticulate}.
+#' Please ensure that the required Python packages are available in your environment.
+#'
+#' @return A data frame with columns: \code{Detector Name}, \code{Abbreviation}, \code{latitude}, \code{longitude}.
 #' @export
 get_available_detectors <- function() {
     # functions from external libraries
@@ -35,10 +30,15 @@ get_available_detectors <- function() {
     dplyr::bind_rows(det.df)
 }
 
-#' Light travel time among detectors
+#' Light travel time between detectors
 #'
-#' @param dets  A vector. Charcters of detector abbreviations.
-#' @return A data frame. Light travel time values among detectors are in only upper triangular matrix.
+#' Computes the pairwise light-travel times between gravitational-wave detectors.
+#' @details
+#' This function interfaces with Python's \pkg{pycbc} library using \pkg{reticulate}.
+#' Please ensure that the required Python packages are available in your environment.
+#'
+#' @param dets A character vector of detector abbreviations (e.g., \code{c("H1", "L1")}).
+#' @return A data frame of light-travel times (upper triangular only).
 #' @export
 travel_times <- function(dets = c("H1", "L1", "V1", "K1")) {
     Detector <- reticulate::import("pycbc.detector")$Detector
@@ -57,14 +57,21 @@ travel_times <- function(dets = c("H1", "L1", "V1", "K1")) {
     as.data.frame(ifo.mat)
 }
 
-#' Time source gravitational-wave passes through detector
+#' Relative arrival times of signal at detectors
 #'
-#' @param dets  A vector. Characters of detector abbreviations.
-#' @param ra    A numeric. RA of the GW source in radian.
-#' @param dec   A numeric. Dec of the GW source in radian.
-#' @param t_gps A numeric. Passing time of the GW source to Earth in gps second.
-#' @return A numeric. (If 'dets' has one argument)
-#'         A data frame. (If 'dets' is multiple)
+#' Compute arrival time delays among detectors for a given sky position.
+#' @details
+#' This function interfaces with Python's \pkg{pycbc} library using \pkg{reticulate}.
+#' Please ensure that the required Python packages are available in your environment.
+#'
+#' @param deltat A numeric. Time resolution to round delays (in seconds).
+#' @param dets A character vector of detector abbreviations.
+#' @param ra A numeric. Right Ascension of the source (in radians).
+#' @param dec A numeric. Declination of the source (in radians).
+#' @param t_gps A numeric. GPS time of signal arrival at Earth's center.
+#' @param verbose Logical. If \code{TRUE}, print intermediate results.
+#'
+#' @return If single detector, a list with \code{time_rel} and \code{remainder}. If multiple detectors, a list with matrix \code{dt_rel}, absolute delays \code{dt_earth}, and \code{remainder}.
 #' @export
 relpass_time <- function(deltat, dets, ra, dec, t_gps, verbose = T) {
     Detector <- reticulate::import("pycbc.detector")$Detector
@@ -137,16 +144,30 @@ relpass_time <- function(deltat, dets, ra, dec, t_gps, verbose = T) {
     }
 }
 
-#' Calculate Antenna Pattern
+#' Compute antenna pattern for a detector
 #'
-#' @param dets  A vector. Characters of detector abbreviations.
-#' @param ra    A numeric. RA of the GW source in radian.
-#' @param dec   A numeric. Dec of the GW source in radian.
-#' @param pol   A numeric. Polarization angle of the GW source in radian.
-#' @param t_gps A numeric. Passing time of the GW source to Earth in gps second.
-#' @return A list. It has two elements of factors for the plus (+) polarization and the cross (x) polarization.
+#' @details
+#' This function interfaces with Python's \pkg{pycbc} library using \pkg{reticulate}.
+#' Please ensure that the required Python packages are available in your environment.
+#'
+#' @param det A character. Detector abbreviation (e.g., "H1").
+#' @param ra A numeric. Right Ascension (radians).
+#' @param dec A numeric. Declination (radians).
+#' @param pol A numeric. Polarization angle (radians).
+#' @param t_gps A numeric. GPS time of signal arrival at Earth's center.
+#' @param online Logical. Whether to use online IERS data (default: FALSE).
+#'
+#' @return A named list with \code{fp} and \code{fc} antenna pattern coefficients.
 #' @export
 get_antpatt <- function(det, ra, dec, pol, t_gps, online = F) {
+    #' Set astropy IERS (Earth rotation) mode to online or offline
+    #'
+    #' Controls whether PyCBC's astropy backend is allowed to auto-download IERS tables.
+    set_iers <- function(online = F) {
+        iers <- reticulate::import("astropy.utils")$iers
+        iers$conf$auto_download <- online
+    }
+
     # If online=T, it takes quite long
     set_iers(online)
     if (
@@ -176,16 +197,23 @@ get_antpatt <- function(det, ra, dec, pol, t_gps, online = F) {
     return(ap)
 }
 
-#' The projection process can also take into account the rotation of the Earth using the project wave function.
+#' Project GW polarizations onto detector
 #'
-#' @param hp    A ts object. A plus polarization signal template.
-#' @param hc    A ts object. A cross polarization signal template.
-#' @param dets  A vector. Characters of detector abbreviations.
-#' @param ra    A numeric. RA of the GW source in radian.
-#' @param dec   A numeric. Dec of the GW source in radian.
-#' @param pol   A numeric. Polarization angle of the GW source in radian.
-#' @param t_gps A numeric. Passing time of the GW source to Earth in gps second.
-#' @return A Python pycbc object. A projected signal template.
+#' Computes detector strain by projecting plus and cross polarizations using Earth rotation and antenna pattern.
+#'
+#' @details
+#' This function interfaces with Python's \pkg{pycbc} library using \pkg{reticulate}.
+#' Please ensure that the required Python packages are available in your environment.
+#'
+#' @param hp A \code{ts} object. Plus polarization waveform.
+#' @param hc A \code{ts} object. Cross polarization waveform.
+#' @param det A character. Detector abbreviation.
+#' @param ra A numeric. Right Ascension (radians).
+#' @param dec A numeric. Declination (radians).
+#' @param pol A numeric. Polarization angle (radians).
+#' @param t_gps A numeric. GPS time of source arrival at Earth's center.
+#'
+#' @return A projected waveform as a \code{ts} object.
 #' @export
 proj_wave <- function(hp, hc, det, ra, dec, pol, t_gps) {
     TimeSeries <- reticulate::import("pycbc.types", convert = F)$TimeSeries
@@ -211,17 +239,23 @@ proj_wave <- function(hp, hc, det, ra, dec, pol, t_gps) {
     )
 }
 
-#' Gaussian noise from detetctor PSD
+#' Simulate Gaussian noise from detector PSD
 #'
-#' @param det           A character. An abbreviation of detector name.
-#'                      (this ver., H1, L1, V1, K1, or E1)
-#' @param duration      A numeric. A length of noise in second.
-#' @param tstart        A numeric. Starting time of the noise.
-#' @param sampling.freq A numeric (default: 4096). A sampling rate in Hz.
-#' @param fl            A numeric (default: 32). A lower frequency cutoff.
-#' @param delta_f       A numeric (default: 1/32). A frequency resolution.
-#' @param seed          A numeric (default: NULL). Random seed.
-#' @return ts object of Gaussian noise.
+#' Generate colored Gaussian noise with power spectral density of a given detector.
+#'
+#' @details
+#' This function interfaces with Python's \pkg{pycbc} library using \pkg{reticulate}.
+#' Please ensure that the required Python packages are available in your environment.
+#'
+#' @param det A character. Detector abbreviation ("H1", "L1", "V1", "K1", or "E1").
+#' @param duration A numeric. Noise duration (in seconds).
+#' @param tstart A numeric. Start GPS time of the noise.
+#' @param sampling.freq A numeric. Sampling frequency (Hz). Default: 4096.
+#' @param fl A numeric. Lower frequency cutoff. Default: 15 Hz.
+#' @param delta_f A numeric. Frequency resolution. Default: 1/32.
+#' @param seed Optional numeric. Random seed for reproducibility.
+#'
+#' @return A \code{ts} object of simulated Gaussian noise.
 #' @export
 psd_noise <- function(
     det,
@@ -279,8 +313,36 @@ psd_noise <- function(
 }
 
 
-#' Loading waveforms from PyCBC
+#' Generate gravitational-wave signal from PyCBC
 #'
+#' Calls PyCBC waveform generator and optionally applies antenna projection and Earth rotation.
+#'
+#' @details
+#' This function interfaces with Python's \pkg{pycbc} library using \pkg{reticulate}.
+#' Please ensure that the required Python packages are available in your environment.
+#'
+#' @param model.name A character. Waveform approximant name (e.g., "IMRPhenomPv2").
+#' @param sampling.freq A numeric. Sampling rate in Hz.
+#' @param fl A numeric. Lower frequency bound (Hz).
+#' @param fu A numeric. Upper frequency bound (Hz).
+#' @param m1 A numeric. Mass 1 (solar masses).
+#' @param m2 A numeric. Mass 2 (solar masses).
+#' @param d_L A numeric. Luminosity distance (Mpc).
+#' @param inc A numeric. Inclination angle (radians). Default: 0.
+#' @param ... Additional waveform parameters.
+#' @param R.ts Logical. If \code{TRUE}, return result as R \code{ts} objects.
+#' @param det A character. Detector abbreviation.
+#' @param ra A numeric. Right Ascension (radians).
+#' @param dec A numeric. Declination (radians).
+#' @param pol A numeric. Polarization angle (radians).
+#' @param t_gps A numeric. GPS time of signal arrival.
+#' @param proj Logical. If \code{TRUE}, apply full Earth-rotation-based projection.
+#'
+#' @return A list with waveform components (\code{hp}, \code{hc}, \code{ht}) and attributes:
+#' \itemize{
+#'   \item \code{Params} – generation parameters
+#'   \item \code{AntPat} – antenna pattern info
+#' }
 #' @export
 get_wave <- function(
     model.name,
@@ -300,33 +362,6 @@ get_wave <- function(
     t_gps,
     proj = FALSE
 ) {
-    # Input:
-    # ├─ model.name    : A character. Waveform model name.
-    # ├─ sampling.freq : A numeric. Sampling frequency (Hz).
-    # ├─ fl    : A numeric (default: NULL). Lower frequency bound (Hz).
-    # ├─ fu    : A numeric (default: NULL). Upper frequency bound (Hz).
-    # ├─ m1    : A numeric (default: NULL). Mass 1 (solar mass).
-    # ├─ m2    : A numeric (default: NULL). Mass 2 (solar mass).
-    # ├─ d_L   : A numeric (default: NULL). Luminosity distance (Mpc).
-    # ├─ inc   : A numeric (default: 0). Inclination angle (radian).
-    # ├─ ...   : Other arguments for waveform parameters.
-    # ├─ R.ts  : A logical (default: TRUE). Whether returns in R ts object or
-    # │          pycbc object.
-    # │
-    # │  (For antenna patterns)
-    # ├─ dets  : A vector. Characters of detector abbreviations.
-    # ├─ ra    : A numeric. RA of the GW source (radian).
-    # ├─ dec   : A numeric. Dec of the GW source (radian).
-    # ├─ pol   : A numeric. Polarization angle of the GW source (radian).
-    # ├─ t_gps : A numeric. Passing time of the GW source to Earth (second).
-    # └─ proj  : A logical (default: FALSE). Whether takes Earth rotation into
-    #            account.
-    #Output:
-    # A list.
-    # It has two elements of factors for the plus polarization and the cross
-    # polarization.
-    # If R.ts=TRUE, return list will have attributes
-
     # Generate waveforms
     get_td_waveform <- reticulate::import(
         'pycbc.waveform',

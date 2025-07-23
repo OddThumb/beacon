@@ -2,24 +2,30 @@
 % Please edit documentation in R/use_pycbc.R
 \name{get_antpatt}
 \alias{get_antpatt}
-\title{Calculate Antenna Pattern}
+\title{Compute antenna pattern for a detector}
 \usage{
 get_antpatt(det, ra, dec, pol, t_gps, online = F)
 }
 \arguments{
-\item{ra}{A numeric. RA of the GW source in radian.}
+\item{det}{A character. Detector abbreviation (e.g., "H1").}
 
-\item{dec}{A numeric. Dec of the GW source in radian.}
+\item{ra}{A numeric. Right Ascension (radians).}
 
-\item{pol}{A numeric. Polarization angle of the GW source in radian.}
+\item{dec}{A numeric. Declination (radians).}
 
-\item{t_gps}{A numeric. Passing time of the GW source to Earth in gps second.}
+\item{pol}{A numeric. Polarization angle (radians).}
 
-\item{dets}{A vector. Characters of detector abbreviations.}
+\item{t_gps}{A numeric. GPS time of signal arrival at Earth's center.}
+
+\item{online}{Logical. Whether to use online IERS data (default: FALSE).}
 }
 \value{
-A list. It has two elements of factors for the plus (+) polarization and the cross (x) polarization.
+A named list with \code{fp} and \code{fc} antenna pattern coefficients.
 }
 \description{
-Calculate Antenna Pattern
+Compute antenna pattern for a detector
+}
+\details{
+This function interfaces with Python's \pkg{pycbc} library using \pkg{reticulate}.
+Please ensure that the required Python packages are available in your environment.
 }

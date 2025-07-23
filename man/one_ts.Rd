@@ -2,16 +2,16 @@
 % Please edit documentation in R/TS.R
 \name{one_ts}
 \alias{one_ts}
-\title{Scale ts}
+\title{Normalize a `ts` to unit scale}
 \usage{
 one_ts(ts)
 }
 \arguments{
-\item{ts}{A time series (`ts`) object.}
+\item{ts}{A `ts` object.}
 }
 \value{
-A scaled time series. A scale factor is calculated by '`get.order`'. The factor will be stored in '`$order`' attribute.
+A normalized `ts` object. Scale factor is stored in \code{attr(..., "order")}.
 }
 \description{
-Scale ts
+Normalize a `ts` to unit scale
 }

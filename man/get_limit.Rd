@@ -2,18 +2,18 @@
 % Please edit documentation in R/Calc.R
 \name{get_limit}
 \alias{get_limit}
-\title{Get limit range from ts by 110 % of maximum value}
+\title{Get limit range from ts by scaled maximum value}
 \usage{
 get_limit(x, mar.frac = 1.5)
 }
 \arguments{
 \item{x}{A numeric vector.}
 
-\item{mar.frac}{A numeric. A margin. This will be multiplied on amax(x).}
+\item{mar.frac}{A numeric. Scaling factor for the margin. Default is 1.5.}
 }
 \value{
-A vector. c(-amax, +amax)*mar.frac.
+A vector. c(-amax, +amax) * mar.frac.
 }
 \description{
-Get limit range from ts by 110 % of maximum value
+Get limit range from ts by scaled maximum value
 }

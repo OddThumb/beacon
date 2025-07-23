@@ -2,17 +2,20 @@
 % Please edit documentation in R/PLOT.R
 \name{append.line}
 \alias{append.line}
-\title{Append line in txt file}
+\title{Append a Line to an Existing File}
 \usage{
 append.line(x, file, show = T)
 }
 \arguments{
-\item{x}{ANY.}
+\item{x}{A character or object to write.}
 
-\item{file}{A character. An existing file path to append.}
+\item{file}{A character string specifying the file path.}
 
-\item{show}{A logical (default: TRUE). Whether it prints the file on console.}
+\item{show}{Logical; if \code{TRUE}, print the file content (default: TRUE).}
+}
+\value{
+None.
 }
 \description{
-Append line in txt file
+Append content to a file and optionally print it.
 }

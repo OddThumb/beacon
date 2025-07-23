@@ -2,16 +2,20 @@
 % Please edit documentation in R/use_pycbc.R
 \name{travel_times}
 \alias{travel_times}
-\title{Light travel time among detectors}
+\title{Light travel time between detectors}
 \usage{
 travel_times(dets = c("H1", "L1", "V1", "K1"))
 }
 \arguments{
-\item{dets}{A vector. Charcters of detector abbreviations.}
+\item{dets}{A character vector of detector abbreviations (e.g., \code{c("H1", "L1")}).}
 }
 \value{
-A data frame. Light travel time values among detectors are in only upper triangular matrix.
+A data frame of light-travel times (upper triangular only).
 }
 \description{
-Light travel time among detectors
+Computes the pairwise light-travel times between gravitational-wave detectors.
+}
+\details{
+This function interfaces with Python's \pkg{pycbc} library using \pkg{reticulate}.
+Please ensure that the required Python packages are available in your environment.
 }

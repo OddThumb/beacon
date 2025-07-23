@@ -2,10 +2,16 @@
 % Please edit documentation in R/FS.R
 \name{freqs}
 \alias{freqs}
-\title{Get frequency samples}
+\title{Get Frequency Samples from `fs`}
 \usage{
 freqs(fs)
 }
+\arguments{
+\item{fs}{An `fs` object.}
+}
+\value{
+A numeric vector of frequency values (in Hz).
+}
 \description{
-Get frequency samples
+Computes the discrete frequency values corresponding to the bins of an `fs` object.
 }

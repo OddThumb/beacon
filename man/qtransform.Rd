@@ -2,7 +2,7 @@
 % Please edit documentation in R/QT.R
 \name{qtransform}
 \alias{qtransform}
-\title{Q-transform (R ver.)}
+\title{Q-transform of time series}
 \usage{
 qtransform(
   ts,
@@ -16,25 +16,38 @@ qtransform(
 )
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{ts}{A \code{ts} object. Input time series.}
 
-\item{delta_t}{A numeric. The time resolution to interpolate to.}
+\item{delta_t}{A numeric. Time resolution (optional).}
 
-\item{delta_f}{A numeric. The frequency resolution to interpolate to.}
+\item{delta_f}{A numeric. Frequency resolution (optional, mutually exclusive with \code{logfsteps}).}
 
-\item{logfsteps}{A numeric. Do a log interpolation (incompatible with delta_f option) and set the number of steps to take.}
+\item{logfsteps}{A numeric. Number of log-spaced frequency bins (mutually exclusive with \code{delta_f}).}
 
-\item{frange}{A numeric vector. frequency range.}
+\item{frange}{A numeric vector. Frequency range (Hz). Default: \code{c(30, Nyquist × 8)}.}
 
-\item{qrange}{A numeric vector. q range.}
+\item{qrange}{A numeric vector. Q value range (default: \code{c(4, 64)}).}
 
-\item{mismatch}{A numeric (default: 0.2). Mismatch between frequency tiles.}
+\item{mismatch}{A numeric. Mismatch between tiles (default: 0.2).}
 
-\item{return_complex}{A logical (default: FALSE). return the raw complex series instead of the normalized power.}
+\item{return_complex}{Logical. Whether to return complex data instead of power (default: FALSE).}
 }
 \value{
-A list containing times: The time that the qtransform is sampled, freqs: The frequencies that the qtransform is sampled, and qplane (2d): The two dimensional interpolated qtransform of this time series.
+A list with:
+\describe{
+  \item{times}{Time axis (s)}
+  \item{freqs}{Frequency axis (Hz)}
+  \item{q_plane}{2D matrix of interpolated Q-transform (power or complex)}
+}
 }
 \description{
-Q-transform (R ver.)
+Perform a Q-transform over a time series and interpolate to desired resolution.
+}
+\details{
+This is a ported implementation based on the original
+\code{pycbc.filter.qtransform} function from the PyCBC library.
+}
+\references{
+PyCBC source:
+\url{https://pycbc.org/pycbc/latest/html/_modules/pycbc/filter/qtransform.html}
 }

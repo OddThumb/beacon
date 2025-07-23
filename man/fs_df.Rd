@@ -2,10 +2,16 @@
 % Please edit documentation in R/FS.R
 \name{fs_df}
 \alias{fs_df}
-\title{Transform to the data frame}
+\title{Convert `fs` to Data Frame}
 \usage{
 fs_df(fs)
 }
+\arguments{
+\item{fs}{An `fs` object.}
+}
+\value{
+A data frame with two columns: `freqs` and `PSD`.
+}
 \description{
-Transform to the data frame
+Converts an `fs` object to a data frame with columns `freqs` and `PSD`.
 }

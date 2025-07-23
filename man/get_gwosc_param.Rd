@@ -2,21 +2,20 @@
 % Please edit documentation in R/OSC.R
 \name{get_gwosc_param}
 \alias{get_gwosc_param}
-\title{Get GWTC parameter from the return of get_gwosc()}
+\title{Extract specific parameters from GWOSC metadata}
 \usage{
 get_gwosc_param(gwosc.list, source.names, param)
 }
 \arguments{
-\item{source.names}{A character vector.
-Source names need to follow the commonName convention.
-It can be either one character or a vector of source.names.}
+\item{gwosc.list}{A data.frame returned by `get_gwosc()`.}
 
-\item{param}{A character vector.
-Parameters that want to get.
-It can be either one character or a vector of source.names.}
+\item{source.names}{Character vector. Names of the events (`commonName`) to extract.}
 
-\item{gwossc.list}{A data.frame. The return object from get_gwosc()}
+\item{param}{Character or character vector. Column name(s) to extract.}
+}
+\value{
+A vector or data.frame depending on the number of requested parameters.
 }
 \description{
-Get GWTC parameter from the return of get_gwosc()
+Extract specific parameters from GWOSC metadata
 }

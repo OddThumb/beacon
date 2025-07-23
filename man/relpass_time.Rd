@@ -2,23 +2,30 @@
 % Please edit documentation in R/use_pycbc.R
 \name{relpass_time}
 \alias{relpass_time}
-\title{Time source gravitational-wave passes through detector}
+\title{Relative arrival times of signal at detectors}
 \usage{
 relpass_time(deltat, dets, ra, dec, t_gps, verbose = T)
 }
 \arguments{
-\item{dets}{A vector. Characters of detector abbreviations.}
+\item{deltat}{A numeric. Time resolution to round delays (in seconds).}
 
-\item{ra}{A numeric. RA of the GW source in radian.}
+\item{dets}{A character vector of detector abbreviations.}
 
-\item{dec}{A numeric. Dec of the GW source in radian.}
+\item{ra}{A numeric. Right Ascension of the source (in radians).}
 
-\item{t_gps}{A numeric. Passing time of the GW source to Earth in gps second.}
+\item{dec}{A numeric. Declination of the source (in radians).}
+
+\item{t_gps}{A numeric. GPS time of signal arrival at Earth's center.}
+
+\item{verbose}{Logical. If \code{TRUE}, print intermediate results.}
 }
 \value{
-A numeric. (If 'dets' has one argument)
-        A data frame. (If 'dets' is multiple)
+If single detector, a list with \code{time_rel} and \code{remainder}. If multiple detectors, a list with matrix \code{dt_rel}, absolute delays \code{dt_earth}, and \code{remainder}.
 }
 \description{
-Time source gravitational-wave passes through detector
+Compute arrival time delays among detectors for a given sky position.
+}
+\details{
+This function interfaces with Python's \pkg{pycbc} library using \pkg{reticulate}.
+Please ensure that the required Python packages are available in your environment.
 }

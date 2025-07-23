@@ -1,10 +1,11 @@
-# Translated from pycbc.filter.qtransform
-
 #' Iterate over the Q values
 #'
-#' @param qrange A numeric vector. upper and lower bounds of q range.
-#' @param deltam A numeric. Fractional mismatch between neighboring tiles.
-#' @return A numeric. Q value for Q-tile
+#' Compute Q values to use for Q-tiling, given a range and mismatch tolerance.
+#'
+#' @param qrange A numeric vector of length 2. Lower and upper bounds of Q range.
+#' @param deltam A numeric. Fractional mismatch between neighboring Q tiles.
+#'
+#' @return A numeric vector of Q values for Q-planes.
 .iter_qs <- function(qrange, deltam) {
     # work out how many Qs we need
     cumum <- log(qrange[2] / qrange[1]) / 2^(1 / 2)
@@ -18,22 +19,28 @@
     return(qs)
 }
 
-#' Fractional mismatch between neighbouring tiles
+#' Convert mismatch to fractional spacing
 #'
-#' @param mismatch A numeric. percentage of desired fractional mismatch.
-#' @return A numeric.
+#' Compute the fractional spacing (delta m) between neighboring tiles from mismatch.
+#'
+#' @param mismatch A numeric. Desired fractional mismatch (e.g., 0.2).
+#'
+#' @return A numeric. Fractional spacing.
 #' @export
 deltam_f <- function(mismatch) {
     2 * (mismatch / 3.)^(1 / 2.)
 }
 
-#' Iterate over the frequencies of this 'Qplane'
+#' Iterate over tile center frequencies for a given Q
 #'
-#' @param q        A numeric. q value.
-#' @param frange   A numeric vector. upper and lower bounds of frequency range.
-#' @param mismatch A numeric. percentage of desired fractional mismatch.
-#' @param dur      A numeric. duration of timeseries in seconds.
-#' @return A numeric vector. Q-Tile frequency.
+#' Determine the central frequencies at which to place tiles, for a fixed Q.
+#'
+#' @param q A numeric. The Q value.
+#' @param frange A numeric vector of length 2. Frequency range (Hz).
+#' @param mismatch A numeric. Desired mismatch (e.g., 0.2).
+#' @param dur A numeric. Duration of the input time series in seconds.
+#'
+#' @return A numeric vector of center frequencies (Hz).
 .iter_freqs <- function(q, frange, mismatch, duration) {
     minf <- frange[1]
     maxf <- frange[2]
@@ -51,13 +58,16 @@ deltam_f <- function(mismatch) {
     return(qfrq)
 }
 
-#' Q-tiling
+#' Generate Q-tiling scheme
 #'
-#' @param fseries  A `fs` object. frequency-series data set.
-#' @param qrange   A numeric vector. upper and lower bounds of q range.
-#' @param frange   A numeric vector. upper and lower bounds of frequency range.
-#' @param mismatch A numeric. percentage of desired fractional mismatch.
-#' @return A list containing Q-tile vectors for a set of Q-planes.
+#' Generate Q-tiles (Q, f0 pairs) for all Q-planes across a frequency range.
+#'
+#' @param fseries An \code{fs} object. Frequency-series representation of the data.
+#' @param qrange A numeric vector. Range of Q values.
+#' @param frange A numeric vector. Frequency range (Hz).
+#' @param mismatch A numeric. Mismatch tolerance (default: 0.2).
+#'
+#' @return A list of Q-planes, each containing a Q value and associated frequency tiles.
 #' @export
 qtiling <- function(fseries, qrange, frange, mismatch = 0.2) {
     qplane.tile.list <- list()
@@ -72,13 +82,16 @@ qtiling <- function(fseries, qrange, frange, mismatch = 0.2) {
     return(qplane.tile.list)
 }
 
-#' Q-series
+#' Perform Q-transform on a single tile
 #'
-#' @param fseries        A `fs` object. frequency-series data set.
-#' @param Q              A numeric. q value.
-#' @param f0             A numeric. central frequency.
-#' @param return_complex A logical (default: FALSE). Return the raw complex series instead of the normalized power.
-#' @return A `ts` of the normalized energy from the Q-transform of this tile against the data.
+#' Compute Q-transform for a single Q and center frequency tile.
+#'
+#' @param fseries An \code{fs} object. Frequency-series representation of the data.
+#' @param Q A numeric. Q value of the tile.
+#' @param f0 A numeric. Center frequency of the tile.
+#' @param return_complex Logical (default: FALSE). If \code{TRUE}, return complex time series instead of normalized energy.
+#'
+#' @return A \code{ts} object representing either normalized energy or complex waveform.
 #' @export
 qseries <- function(fseries, Q, f0, return_complex = FALSE) {
     # normalize and generate bi-square window
@@ -128,12 +141,20 @@ qseries <- function(fseries, Q, f0, return_complex = FALSE) {
     }
 }
 
-#' Q-plane
+#' Compute Q-plane across all Q and f0 tiles
 #'
-#' @param qplane.tile.list A list containing a vector of q-tile for each q-plane.
-#' @param fseries          A `fs` object. frequency-series data set.
-#' @param return_complex   A logical. Return the raw complex series instead of the normalized power.
-#' @return A list containing q: The q of the maximum q plane, times: The time that the qtransform is sampled, freqs: The frequencies that the qtransform is sampled, and qplane (2d): The two dimensional interpolated qtransform of this time series.
+#' Evaluate all Q-tiles and construct the Q-transform energy (or complex) plane.
+#'
+#' @param qplane.tile.list A list of Q-tiles (from \code{qtiling}).
+#' @param fseries An \code{fs} object. Frequency-series representation of the data.
+#' @param return_complex Logical. If \code{TRUE}, return complex-valued transform.
+#'
+#' @return A list with:
+#' \describe{
+#'   \item{times}{Time axis (s)}
+#'   \item{freqs}{Frequency axis (Hz)}
+#'   \item{plane}{Q-transform output (matrix)}
+#' }
 #' @export
 qplane <- function(qplane.tile.list, fseries, return_complex = FALSE) {
     # store q-transforms for each q in a list
@@ -170,18 +191,18 @@ qplane <- function(qplane.tile.list, fseries, return_complex = FALSE) {
     return(ret.list)
 }
 
-#' Surface Interpolation
+#' 2D Interpolation for Surface Data
 #'
-#' @description
-#' A mutated function of `fields::interp.surface` and `fields::interp.surface.grid`. This function is boosted up by `sapply`.
+#' Interpolate a 2D surface (z-values) across a new grid using bilinear or spline methods.
 #'
-#' @param x A numeric vector to be interpolated.
-#' @param y A numeric vector to be interpolated.
-#' @param z A numeric matrix to be interpolated. `dim(z) == c(length(x), length(y))`.
-#' @param xout A numeric vector. The output grid.
-#' @param yout A numeric vector. The output grid.
-#' @param method A character. Available methods is `linear` or `spline`.
-#' @return `zout`, the interpolated 2d matrix.
+#' @param x A numeric vector. Original x-axis grid.
+#' @param y A numeric vector. Original y-axis grid.
+#' @param z A numeric matrix. Original z-values (dim: \code{length(x)} × \code{length(y)}).
+#' @param xout A numeric vector. Output x grid.
+#' @param yout A numeric vector. Output y grid.
+#' @param method A character. Interpolation method: \code{"linear"} (default) or \code{"spline"}.
+#'
+#' @return A list with \code{x}, \code{y}, and interpolated \code{z} matrix.
 #' @export
 interp2d <- function(x, y, z, xout, yout, method = "linear") {
     interp.surface <- function(x, y, z, loc, method = "linear") {
@@ -225,17 +246,33 @@ interp2d <- function(x, y, z, xout, yout, method = "linear") {
     list(x = xout, y = yout, z = zout)
 }
 
-#' Q-transform (R ver.)
+#' Q-transform of time series
 #'
-#' @param ts        A `ts` object.
-#' @param delta_t   A numeric. The time resolution to interpolate to.
-#' @param delta_f   A numeric. The frequency resolution to interpolate to.
-#' @param logfsteps A numeric. Do a log interpolation (incompatible with delta_f option) and set the number of steps to take.
-#' @param frange    A numeric vector. frequency range.
-#' @param qrange    A numeric vector. q range.
-#' @param mismatch  A numeric (default: 0.2). Mismatch between frequency tiles.
-#' @param return_complex A logical (default: FALSE). return the raw complex series instead of the normalized power.
-#' @return A list containing times: The time that the qtransform is sampled, freqs: The frequencies that the qtransform is sampled, and qplane (2d): The two dimensional interpolated qtransform of this time series.
+#' Perform a Q-transform over a time series and interpolate to desired resolution.
+#'
+#' @details
+#' This is a ported implementation based on the original
+#' \code{pycbc.filter.qtransform} function from the PyCBC library.
+#'
+#' @references
+#' PyCBC source:
+#' \url{https://pycbc.org/pycbc/latest/html/_modules/pycbc/filter/qtransform.html}
+#'
+#' @param ts A \code{ts} object. Input time series.
+#' @param delta_t A numeric. Time resolution (optional).
+#' @param delta_f A numeric. Frequency resolution (optional, mutually exclusive with \code{logfsteps}).
+#' @param logfsteps A numeric. Number of log-spaced frequency bins (mutually exclusive with \code{delta_f}).
+#' @param frange A numeric vector. Frequency range (Hz). Default: \code{c(30, Nyquist × 8)}.
+#' @param qrange A numeric vector. Q value range (default: \code{c(4, 64)}).
+#' @param mismatch A numeric. Mismatch between tiles (default: 0.2).
+#' @param return_complex Logical. Whether to return complex data instead of power (default: FALSE).
+#'
+#' @return A list with:
+#' \describe{
+#'   \item{times}{Time axis (s)}
+#'   \item{freqs}{Frequency axis (Hz)}
+#'   \item{q_plane}{2D matrix of interpolated Q-transform (power or complex)}
+#' }
 #' @export
 qtransform <- function(
     ts,

@@ -2,7 +2,7 @@
 % Please edit documentation in R/PLOT.R
 \name{savetab}
 \alias{savetab}
-\title{Save table as txt file}
+\title{Save a Data Frame as a Markdown-Formatted Table}
 \usage{
 savetab(
   x,
@@ -18,26 +18,29 @@ savetab(
 )
 }
 \arguments{
-\item{x}{A data frame.}
+\item{x}{A data.frame to save.}
 
-\item{file}{A character. A file path for save.}
+\item{file}{A character string indicating the file path.}
 
-\item{signif}{An integer (default: 3). A significant digits.}
+\item{signif}{Integer; number of significant digits (default: 3).}
 
-\item{col.names}{A logical (default: FALSE). Whether it saves column names together.}
+\item{col.names}{Logical; whether to include column names (default: FALSE).}
 
-\item{quote}{A logical (default: FALSE). Whether it saves each elements with quote.}
+\item{row.names}{Logical; whether to include row names (default: FALSE).}
 
-\item{show}{A logical (default: TRUE). Whether it prints the table on console.}
+\item{quote}{Logical; whether to quote each value (default: FALSE).}
 
-\item{append}{A logical (default: FALSE). Whether it appends on an existing file.}
+\item{show}{Logical; if \code{TRUE}, print the table content (default: TRUE).}
 
-\item{nsep}{An integer (default: 30). If '\code{append=TRUE}', it adds separation dashed line with the length of 'nsep' before adding.}
+\item{append}{Logical; if \code{TRUE}, append to the file (default: FALSE).}
 
-\item{...}{Additional arguments for '\code{insight::export_table}'.}
+\item{nsep}{Integer; number of dashes used to separate appended tables (default: 30).}
 
-\item{row.naems}{A logical (default: FALSE). Whether it saves row names together.}
+\item{...}{Additional arguments for \code{insight::export_table}.}
+}
+\value{
+None.
 }
 \description{
-This uses 'insight' package to convert a data frame to neat "Markdown" version of table.
+Save a data frame in markdown format using \code{insight::export_table}.
 }

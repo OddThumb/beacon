@@ -2,10 +2,17 @@
 % Please edit documentation in R/FS.R
 \name{dur}
 \alias{dur}
-\title{Get duration}
+\title{Get Duration of the Original Time Series}
 \usage{
 dur(fs)
 }
+\arguments{
+\item{fs}{An `fs` object derived from a `ts` object.}
+}
+\value{
+A numeric scalar. Duration in seconds.
+}
 \description{
-Get duration
+Computes the total duration in seconds of the time-domain signal that
+generated the `fs` object.
 }

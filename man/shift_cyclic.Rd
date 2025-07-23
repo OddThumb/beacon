@@ -2,30 +2,18 @@
 % Please edit documentation in R/TS.R
 \name{shift_cyclic}
 \alias{shift_cyclic}
-\title{Cyclic shift a `ts`}
+\title{Cyclically shift a `ts`}
 \usage{
 shift_cyclic(ts, t_cyclic)
 }
 \arguments{
 \item{ts}{A `ts` object.}
 
-\item{t_cyclic}{A numeric. Time to be cyclic-shifted}
+\item{t_cyclic}{A numeric. Time to shift cyclically.}
 }
 \value{
-A cyclic-shifted `ts`.
+A cyclic-shifted `ts` object.
 }
 \description{
-Cyclic shift a `ts`
-}
-\examples{
-# {not run}
-# > xt <- ts(c(1,2,3,4,5), start=1, freqyency=1)
-# > xt_cyc <- shift.cyclic(xt, t_cyclic=2)
-# > xt_cyc
-# Time Series:
-# Start = 1
-# End = 5
-# Frequency = 1
-# [1] 3 4 5 1 2
-
+Cyclically shift a `ts`
 }

@@ -2,20 +2,20 @@
 % Please edit documentation in R/etc.R
 \name{paste_wd}
 \alias{paste_wd}
-\title{Paste WD to file name}
+\title{Combine Working Directory Path with File Name}
 \usage{
 paste_wd(file, prefix = NULL, dir = getwd())
 }
 \arguments{
-\item{file}{A character. File name.}
+\item{file}{A character. File name (with or without extension).}
 
-\item{prefix}{A character. '{prefix}_file' will be the final file name.}
+\item{prefix}{A character (optional). If provided, result becomes "{prefix}_{file}".}
 
-\item{dir}{A character (default: getwd()). Working directory will be pasted.}
+\item{dir}{A character. Working directory path (default: current working directory).}
 }
 \value{
-A character.
+A character string representing the full file path.
 }
 \description{
-Paste WD to file name
+Concatenate a working directory with a file name and optional prefix.
 }

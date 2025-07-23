@@ -2,19 +2,22 @@
 % Please edit documentation in R/PLOT.R
 \name{savemsg}
 \alias{savemsg}
-\title{Save message to txt file}
+\title{Save a Message to a Text File}
 \usage{
 savemsg(msg, ..., file, show = T)
 }
 \arguments{
-\item{msg}{A character. A message to save.}
+\item{msg}{A character string representing the message to save.}
 
-\item{...}{A character. Additional messages to save.}
+\item{...}{Additional character strings to be saved.}
 
-\item{file}{A character. A file path for save.}
+\item{file}{A character string specifying the file path.}
 
-\item{show}{A logical (default: TRUE). Whether it prints the messages on console.}
+\item{show}{Logical; if \code{TRUE}, print the message on console.}
+}
+\value{
+None.
 }
 \description{
-Save message to txt file
+Append a message (or multiple messages) to a text file.
 }

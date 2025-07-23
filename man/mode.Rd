@@ -7,11 +7,11 @@
 mode(x)
 }
 \arguments{
-\item{x}{A numeric vector}
+\item{x}{A numeric vector.}
 }
 \value{
-A numeric. A mode value.
+A numeric. The mode value.
 }
 \description{
-Get the most frequent value.
+Get the most frequent value in the input vector.
 }

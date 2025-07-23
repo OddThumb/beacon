@@ -1,44 +1,15 @@
-# Saving ----
+# Messaging ----
 
-#' Save ggplot plot
+#' Save a Message to a Text File
 #'
-#' @param plot A ggplot object.
-#' @param file A character. A file path for save.
-#' @param width A numeric (default: 8). Width of plot size.
-#' @param heigth A numeric (default: 5). Height of plot size.
-#' @param show A logical (default: TRUE). Whether it shows and returns the plot on pane after save.
-#' @param ... Additional arguments for '\code{ggpubr::ggexport}'.
-#' @return A ggplot object, if \code{show=TRUE}.
-#' @export
-savefig <- function(
-    plot,
-    file,
-    width = 8,
-    height = 5,
-    show = T,
-    verbose = F,
-    ...
-) {
-    message_verb(' >>> Saving...', v = verbose)
-    ggpubr::ggexport(
-        plot,
-        filename = paste_wd(file),
-        width = width,
-        height = height,
-        verbose = verbose,
-        ...
-    )
-    if (show) {
-        return(plot)
-    }
-}
-
-#' Save message to txt file
+#' Append a message (or multiple messages) to a text file.
 #'
-#' @param msg A character. A message to save.
-#' @param ... A character. Additional messages to save.
-#' @param file A character. A file path for save.
-#' @param show A logical (default: TRUE). Whether it prints the messages on console.
+#' @param msg A character string representing the message to save.
+#' @param ... Additional character strings to be saved.
+#' @param file A character string specifying the file path.
+#' @param show Logical; if \code{TRUE}, print the message on console.
+#'
+#' @return None.
 #' @export
 savemsg <- function(msg, ..., file, show = T) {
     write.table(
@@ -54,11 +25,15 @@ savemsg <- function(msg, ..., file, show = T) {
     }
 }
 
-#' Message out by each iteration or No verbose
+#' Print Message Conditionally by Iteration
 #'
-#' @param i An expression. A iterable arguments in for loop.
-#' @param verbose A logical or An integer. If 'verbose=TRUE', it message out by every iteration. Else 'verbose=integer()', it message out by every verbose-th iteration.
-#' @param msg A character. A message to print out.
+#' Print a message every \code{verbose}-th iteration in a loop.
+#'
+#' @param i Integer indicating current iteration index.
+#' @param verbose Logical or integer; if \code{TRUE}, print every iteration; if integer, print every \code{verbose}-th iteration.
+#' @param msg A character string to be printed.
+#'
+#' @return None.
 #' @export
 message_by <- function(i = i, verbose = T, msg) {
     if (verbose) {
@@ -74,6 +49,14 @@ message_by <- function(i = i, verbose = T, msg) {
     }
 }
 
+#' Conditionally Print Message
+#'
+#' Print message only when \code{v = TRUE}.
+#'
+#' @param ... Character strings to print.
+#' @param v Logical; whether to print the message.
+#'
+#' @return None.
 #' @export
 message_verb <- function(..., v = TRUE) {
     if (v) {
@@ -83,38 +66,48 @@ message_verb <- function(..., v = TRUE) {
     }
 }
 
-#' Show file contents on console
+#' Print Contents of a File to Console
 #'
-#' This uses unix command '\code{cat}'
+#' Print the contents of a file using system \code{cat}.
 #'
-#' @param file A character. A file path for print.
+#' @param file A character string specifying the file path.
+#'
+#' @return None.
 #' @export
 sys_cat <- function(file) {
     system(paste("cat", paste_wd(file)))
 }
 
-#' Printing with `cat` and `sprintf` for parsing
+#' Print Formatted String Using cat and sprintf
 #'
+#' Print a string by combining \code{sprintf()} and \code{cat()}.
+#'
+#' @param ... Arguments passed to \code{sprintf}.
+#' @param sep A character string to separate values (default: "").
+#'
+#' @return None.
 #' @export
 sprint <- function(..., sep = "") {
     cat(sprintf(paste(..., sep = sep)))
 }
 
 
-#' Save table as txt file
+#' Save a Data Frame as a Markdown-Formatted Table
 #'
-#' This uses 'insight' package to convert a data frame to neat "Markdown" version of table.
+#' Save a data frame in markdown format using \code{insight::export_table}.
 #'
-#' @param x A data frame.
-#' @param file A character. A file path for save.
-#' @param signif An integer (default: 3). A significant digits.
-#' @param col.names A logical (default: FALSE). Whether it saves column names together.
-#' @param row.naems A logical (default: FALSE). Whether it saves row names together.
-#' @param quote A logical (default: FALSE). Whether it saves each elements with quote.
-#' @param show A logical (default: TRUE). Whether it prints the table on console.
-#' @param append A logical (default: FALSE). Whether it appends on an existing file.
-#' @param nsep An integer (default: 30). If '\code{append=TRUE}', it adds separation dashed line with the length of 'nsep' before adding.
-#' @param ... Additional arguments for '\code{insight::export_table}'.
+#' @param x A data.frame to save.
+#' @param file A character string indicating the file path.
+#' @param signif Integer; number of significant digits (default: 3).
+#' @param col.names Logical; whether to include column names (default: FALSE).
+#' @param row.names Logical; whether to include row names (default: FALSE).
+#' @param quote Logical; whether to quote each value (default: FALSE).
+#' @param show Logical; if \code{TRUE}, print the table content (default: TRUE).
+#' @param append Logical; if \code{TRUE}, append to the file (default: FALSE).
+#' @param nsep Integer; number of dashes used to separate appended tables (default: 30).
+#' @param ... Additional arguments for \code{insight::export_table}.
+#'
+#' @return None.
 #' @export
 savetab <- function(
     x,
@@ -161,11 +154,15 @@ savetab <- function(
     if (show) sys_cat(file)
 }
 
-#' Append line in txt file
+#' Append a Line to an Existing File
 #'
-#' @param x ANY.
-#' @param file A character. An existing file path to append.
-#' @param show A logical (default: TRUE). Whether it prints the file on console.
+#' Append content to a file and optionally print it.
+#'
+#' @param x A character or object to write.
+#' @param file A character string specifying the file path.
+#' @param show Logical; if \code{TRUE}, print the file content (default: TRUE).
+#'
+#' @return None.
 #' @export
 append.line <- function(x, file, show = T) {
     message(' >>> Appending lines in a file...')
@@ -181,17 +178,55 @@ append.line <- function(x, file, show = T) {
 }
 
 # Plotting ----
-
-#' Plot oscillogram
+#' Save a ggplot Object to File
 #'
-#' @param ts A time series (ts) object.
-#' @param tzero  A numeric (default: 0). A zero time. Times will be shifted by 'tzero'.
-#' @param trange A vector. A time range for x axis limit.
-#' @param ylim A character of "pm" (default) or A vector. "pm": from \code{-1.1*max(abs(ts))} to \code{1.1*max(abs(ts))}. \code{c(lwr, upr)}: from lwr to upr.
-#' @param title A character. A title for the plot.
-#' @param color A character. A line color.
-#' @param width A numeric. A line width.
-#' @param ... Additional arguments for '\code{ggplot2::geom_line}'.
+#' Save a ggplot object to a file using \code{ggpubr::ggexport}.
+#'
+#' @param plot A ggplot object to save.
+#' @param file A character string indicating the file path.
+#' @param width A numeric value indicating the width of the plot (default: 8).
+#' @param height A numeric value indicating the height of the plot (default: 5).
+#' @param show Logical; if \code{TRUE}, display and return the plot after saving.
+#' @param verbose Logical; if \code{TRUE}, print saving message.
+#' @param ... Additional arguments passed to \code{ggpubr::ggexport}.
+#'
+#' @return A ggplot object if \code{show = TRUE}, otherwise \code{NULL}.
+#' @export
+savefig <- function(
+    plot,
+    file,
+    width = 8,
+    height = 5,
+    show = T,
+    verbose = F,
+    ...
+) {
+    message_verb(' >>> Saving...', v = verbose)
+    ggpubr::ggexport(
+        plot,
+        filename = paste_wd(file),
+        width = width,
+        height = height,
+        verbose = verbose,
+        ...
+    )
+    if (show) {
+        return(plot)
+    }
+}
+
+#' Plot a Single Oscillogram
+#'
+#' Generate a line plot of a single time series (oscillogram).
+#'
+#' @param ts A numeric time series object.
+#' @param tzero A numeric value indicating time shift (default: NULL).
+#' @param trange A numeric vector specifying time range to display.
+#' @param ylim Either 'pm' or a numeric vector of length 2.
+#' @param title A character string specifying the plot title.
+#' @param size A numeric value for line width (default: 0.3).
+#' @param ... Additional arguments for \code{ggplot2::geom_line}.
+#'
 #' @return A ggplot object.
 #' @export
 plot_oscillo <- function(
@@ -247,17 +282,21 @@ plot_oscillo <- function(
     return(plot)
 }
 
-#' Plot multi-panel oscillograms by facet_wrap
+#' Plot Multiple Oscillograms in Facet Layout
 #'
-#' @param ts.df A data frame. This should be generated by 'ts.df' or contains 'time' column.
-#' @param tzero  A numeric (default: 0). A zero time. Times will be shifted by 'tzero'.
-#' @param trange A vector. A time range for x axis limit.
-#' @param facet_scale A character. How to scale each facets. (One of "fixed", "free_y", or "free_x")
-#' @param ylim A character of "pm" (default) or A vector. "pm": from `-1.1*max(abs(ts))` to `1.1*max(abs(ts))`. `c(lwr, upr)`: from lwr to upr.
-#' @param title A character. A title for the plot.
-#' @param color A character. A line color.
-#' @param width A numeric. A line width.
-#' @param ... Additional arguments for `ggplot2::geom_line`.
+#' Plot multiple time series with \code{facet_wrap}.
+#'
+#' @param ts.df A data frame containing time and multiple variables.
+#' @param tzero A numeric value indicating time shift (default: NULL).
+#' @param trange A numeric vector specifying time range to display.
+#' @param facet.scale One of "fixed", "free_y", or "free_x".
+#' @param facet.label Character vector for facet labels.
+#' @param order.of.mag Logical; whether to rescale y-axis using magnitude order.
+#' @param title A character string specifying the plot title.
+#' @param color A character for line color.
+#' @param width A numeric value for line width (default: 0.3).
+#' @param ... Additional arguments for \code{geom_line}.
+#'
 #' @return A ggplot object.
 #' @export
 plot_oscillo_multi <- function(
@@ -340,14 +379,15 @@ plot_oscillo_multi <- function(
     return(plot)
 }
 
-#' Common ggplot options for oscillogram
+#' Common ggplot Components for Oscillogram Plot
 #'
-#' For applying common theme.
+#' Generate a list of ggplot2 components for consistent oscillogram theme.
 #'
-#' @param ts  A time series (ts) object.
-#' @param tzero  A numeric (default: 0). A zero time. Times will be shifted by 'tzero'.
-#' @param title A character. A title for the plot.
-#' @return A list. This can be added to ggplot object to apply same theme.
+#' @param ts A time series object.
+#' @param tzero A numeric value for time offset.
+#' @param title A character string for the plot title.
+#'
+#' @return A list of ggplot2 elements.
 #' @export
 oscillo_option <- function(ts, tzero = 0, title = NULL) {
     value.order <- floor(log10(amax(ts)))
@@ -377,34 +417,32 @@ oscillo_option <- function(ts, tzero = 0, title = NULL) {
     )
 }
 
-#' Plot spectrogram
+#' Plot Q-Transform Spectrogram with Oscillogram
 #'
-#' Using ggplot2 to generate q-transformed spectrogram & oscillogram together!
+#' Create a Q-transform spectrogram stacked with its oscillogram using ggplot2.
 #'
-#' @param ts         A time series (\code{ts}) object.
-#' @param tzero      A numeric (default: \code{0}). A zero time. Times will be shifted by \code{tzero}.
-#' @param trange     A vector (default: \code{tr(ts)}). A time range for x axis limit.
-#' @param frange     A vector (default: \code{c(32, 512)}). A frequency range of y axis limit.
-#' @param qrange     A vector (default: \code{c(40, 1)}). A q range as an input to \code{qtransform} function.
-#' @param crange     A vector (default: \code{NULL}). A color range. A z axis range.
-#' @param tres       A numeric (default: \code{0.001}). A time resolution.
-#' @param fres       A numeric (default: \code{1000}). A frequency resolution.
-#' @param logf       A logical (dafault: \code{TRUE}). Whether transform frequency axis to log (base: 10) scale.
-#' @param title      A character. A title for the plot.
-#' @param specScale  A logical (default: \code{FALSE}). Whether it shows color scale bar for spectrogram.
-#' @param specXlabel A logical (default: \code{FALSE}). Whether it shows x axis label for spectrogram.
-#' @param specYlabel A logical (default: \code{TRUE}). Whether it shows y axis label for spectrogram.
-#' @param specGrid   A character (default: \code{"none"}). Overlay grid on x- ("x"), y-axis ("y"), or both ("xy").
-#' @param specColorPal A Palette for spectrogram (default: \code{viridis::viridis(256)}).
-#' @param trans      A function (defualt: \code{NULL}). If function is given, spectrogram will be transformed by a function of \code{trans} (e.g. \code{trans = sqrt} for square-root).
-#' @param specScaleDir A character (default: \code{"vertical"}). If \code{specScale=TRUE}, the direction of color bar. (\code{"vertical"} or \code{"horizontal"})
-#' @param specScalePos A character (default: \code{"ul"}). If \code{specScale=TRUE}, the position of color bar. (\code{"ul"}, \code{"ur"}, \code{"bl"}, or \code{"br"})
-#' @param osciLegend A logical (default: \code{FALSE}). Whether it shows a legend for oscillogram.
-#' @param osciXlabel A logical (default: \code{FALSE}). Whether it shows x axis label for oscillogram.
-#' @param osciYlabel A logical (default: \code{TRUE}). Whether it shows y axis label for oscillogram.
-#' @param stack      A logical (default: \code{TRUE}). Whether it stack spectrogram and oscillogram.
-#' @param ...        Additional arguments for \code{ggpubr::ggarrange}.
-#' @return A ggplot object. If \code{stack=FALSE}, A list with \code{$spec.plot}: spectrogram ggplot object, \code{$osci.plot}: oscillogram ggplot object.
+#' @param ts A time series object.
+#' @param tzero Time offset (default: 0).
+#' @param trange Time range for cropping the data.
+#' @param frange Frequency range for spectrogram.
+#' @param qrange Q-factor range for Q-transform.
+#' @param crange Color range (z-axis) for spectrogram.
+#' @param tres Time resolution.
+#' @param fres Frequency resolution.
+#' @param logf Logical; log-scale y-axis (default: TRUE).
+#' @param title Title of the plot.
+#' @param specScale Show colorbar for spectrogram.
+#' @param specXlabel, specYlabel Show axis labels for spectrogram.
+#' @param specGrid Show grid lines ("x", "y", "xy").
+#' @param specColorPal Color palette.
+#' @param trans Transformation function applied to spectrogram values.
+#' @param specScaleDir Direction of colorbar.
+#' @param specScalePos Position of colorbar ("ul", "ur", "bl", "br").
+#' @param osciLegend, osciXlabel, osciYlabel Options for oscillogram.
+#' @param stack Logical; stack spectrogram and oscillogram (default: TRUE).
+#' @param ... Additional arguments passed to \code{ggarrange}.
+#'
+#' @return A ggplot object, or a list with \code{spec.plot} and \code{osci.plot} if \code{stack = FALSE}.
 #' @export
 plot_spectro <- function(
     ts,

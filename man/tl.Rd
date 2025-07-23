@@ -2,16 +2,16 @@
 % Please edit documentation in R/TS.R
 \name{tl}
 \alias{tl}
-\title{Simple time length}
+\title{Duration of a time series}
 \usage{
 tl(ts)
 }
 \arguments{
-\item{ts}{A time series (`ts`) object.}
+\item{ts}{A `ts` object.}
 }
 \value{
-A vector of length 2 which is equivalent to `c(ti(ts), tf(ts))`.
+A numeric value indicating duration in seconds.
 }
 \description{
-Simple time length
+Duration of a time series
 }

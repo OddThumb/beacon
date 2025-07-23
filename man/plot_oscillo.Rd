@@ -2,7 +2,7 @@
 % Please edit documentation in R/PLOT.R
 \name{plot_oscillo}
 \alias{plot_oscillo}
-\title{Plot oscillogram}
+\title{Plot a Single Oscillogram}
 \usage{
 plot_oscillo(
   ts,
@@ -15,25 +15,23 @@ plot_oscillo(
 )
 }
 \arguments{
-\item{ts}{A time series (ts) object.}
+\item{ts}{A numeric time series object.}
 
-\item{tzero}{A numeric (default: 0). A zero time. Times will be shifted by 'tzero'.}
+\item{tzero}{A numeric value indicating time shift (default: NULL).}
 
-\item{trange}{A vector. A time range for x axis limit.}
+\item{trange}{A numeric vector specifying time range to display.}
 
-\item{ylim}{A character of "pm" (default) or A vector. "pm": from \code{-1.1*max(abs(ts))} to \code{1.1*max(abs(ts))}. \code{c(lwr, upr)}: from lwr to upr.}
+\item{ylim}{Either 'pm' or a numeric vector of length 2.}
 
-\item{title}{A character. A title for the plot.}
+\item{title}{A character string specifying the plot title.}
 
-\item{...}{Additional arguments for '\code{ggplot2::geom_line}'.}
+\item{size}{A numeric value for line width (default: 0.3).}
 
-\item{color}{A character. A line color.}
-
-\item{width}{A numeric. A line width.}
+\item{...}{Additional arguments for \code{ggplot2::geom_line}.}
 }
 \value{
 A ggplot object.
 }
 \description{
-Plot oscillogram
+Generate a line plot of a single time series (oscillogram).
 }

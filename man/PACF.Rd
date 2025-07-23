@@ -2,10 +2,27 @@
 % Please edit documentation in R/COR.R
 \name{PACF}
 \alias{PACF}
-\title{Plot Partial Auto Correlation Function}
+\title{Plot Partial Auto Correlation Function (PACF)}
 \usage{
 PACF(ts, lag.max = length(ts), plot = TRUE, title = NULL)
 }
+\arguments{
+\item{ts}{A numeric vector or time-series object.}
+
+\item{lag.max}{An integer specifying the maximum lag to compute PACF. Default is the length of `ts`.}
+
+\item{plot}{A logical. If TRUE (default), return a ggplot2 object for visualization.}
+
+\item{title}{An optional string to set as plot title.}
+}
+\value{
+If `plot = TRUE`, a list with:
+\describe{
+  \item{pacf}{An object of class "acf" with type "partial", including `white95ci`.}
+  \item{plot}{A ggplot2 object showing the partial autocorrelation function.}
+}
+Otherwise, returns the PACF object only.
+}
 \description{
-Plot Partial Auto Correlation Function
+Compute and visualize the partial autocorrelation function of a time series.
 }

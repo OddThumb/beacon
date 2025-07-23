@@ -10,7 +10,7 @@ mae(x)
 \item{x}{A numeric vector.}
 }
 \value{
-A numeric. A sampled median absolute error.
+A numeric. Sample median absolute error.
 }
 \description{
 Median Absolute Error for sample

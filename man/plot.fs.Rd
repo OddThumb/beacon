@@ -2,7 +2,7 @@
 % Please edit documentation in R/FS.R
 \name{plot.fs}
 \alias{plot.fs}
-\title{Plot function for fs class}
+\title{Plot a Frequency Series (`fs`)}
 \usage{
 \method{plot}{fs}(
   fs,
@@ -13,6 +13,22 @@
   ylim = NULL
 )
 }
+\arguments{
+\item{fs}{An `fs` object.}
+
+\item{log}{A character ("x", "y", or "xy") to control log scaling.}
+
+\item{xlab}{A character. X-axis label (default: "Frequency (Hz)").}
+
+\item{ylab}{A character. Y-axis label (default: "PSD").}
+
+\item{xlim}{A numeric vector of length 2 specifying x-axis limits.}
+
+\item{ylim}{A numeric vector of length 2 specifying y-axis limits.}
+}
+\value{
+A ggplot object.
+}
 \description{
-Plot function for fs class
+Visualizes the amplitude (or PSD) of an `fs` object using ggplot2.
 }

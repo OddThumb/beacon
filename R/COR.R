@@ -1,6 +1,18 @@
-# Correlation ----
-
-#' Plot Auto Correlation Function
+#' Plot Auto Correlation Function (ACF)
+#'
+#' Compute and visualize the autocorrelation function of a time series.
+#'
+#' @param ts A numeric vector or time-series object.
+#' @param lag.max An integer specifying the maximum lag to compute ACF. Default is the length of `ts`.
+#' @param plot A logical. If TRUE (default), return a ggplot2 object for visualization.
+#' @param title An optional string to set as plot title.
+#'
+#' @return If `plot = TRUE`, a list with:
+#' \describe{
+#'   \item{acf}{An object of class "acf" with added element `white95ci` (significance threshold).}
+#'   \item{plot}{A ggplot2 object showing the autocorrelation function.}
+#' }
+#' Otherwise, returns the "acf" object only.
 #'
 #' @export
 ACF <- function(ts, lag.max = length(ts), plot = TRUE, title = NULL) {
@@ -54,7 +66,21 @@ ACF <- function(ts, lag.max = length(ts), plot = TRUE, title = NULL) {
     }
 }
 
-#' Plot Partial Auto Correlation Function
+#' Plot Partial Auto Correlation Function (PACF)
+#'
+#' Compute and visualize the partial autocorrelation function of a time series.
+#'
+#' @param ts A numeric vector or time-series object.
+#' @param lag.max An integer specifying the maximum lag to compute PACF. Default is the length of `ts`.
+#' @param plot A logical. If TRUE (default), return a ggplot2 object for visualization.
+#' @param title An optional string to set as plot title.
+#'
+#' @return If `plot = TRUE`, a list with:
+#' \describe{
+#'   \item{pacf}{An object of class "acf" with type "partial", including `white95ci`.}
+#'   \item{plot}{A ggplot2 object showing the partial autocorrelation function.}
+#' }
+#' Otherwise, returns the PACF object only.
 #'
 #' @export
 PACF <- function(ts, lag.max = length(ts), plot = TRUE, title = NULL) {
@@ -109,7 +135,29 @@ PACF <- function(ts, lag.max = length(ts), plot = TRUE, title = NULL) {
     }
 }
 
-#' Calculate Cross Correlation Function and plot it
+#' Plot Cross Correlation Function (CCF)
+#'
+#' Compute and optionally visualize the cross-correlation function between two time series.
+#'
+#' @param ts1 First numeric vector or time-series object.
+#' @param ts2 Second numeric vector or time-series object.
+#' @param lag.max Maximum lag to compute. Default is length of `ts1`.
+#' @param na.action NA handling function. Default is `na.fail`.
+#' @param title Optional plot title.
+#' @param plot Logical. If TRUE (default), return a ggplot2 object.
+#' @param save Logical. If TRUE, save plot as 'CCF.pdf'. Default is FALSE.
+#' @param dir Optional directory to save plot (currently ignored unless customized in `savefig()`).
+#' @param prefix Optional prefix for filename (currently ignored unless used in `savefig()`).
+#' @param times Optional numeric vector used to convert inputs into ts objects if not already.
+#'
+#' @return A list containing:
+#' \describe{
+#'   \item{ccf_res}{The CCF computation result with added `white95ci`.}
+#'   \item{ind_max}{Index of lag with highest absolute cross-correlation.}
+#'   \item{ccf_max}{Value of maximum absolute cross-correlation.}
+#'   \item{lag_max}{Lag at which maximum absolute cross-correlation occurs.}
+#'   \item{plot}{ggplot2 object, only if `plot = TRUE`.}
+#' }
 #'
 #' @export
 CCF <- function(

@@ -2,10 +2,20 @@
 % Please edit documentation in R/etc.R
 \name{copy_attr}
 \alias{copy_attr}
-\title{Copy attributes of 'which's from 'ref' to 'target'}
+\title{Copy Attributes from Reference Object}
 \usage{
 copy_attr(target, ref, which)
 }
+\arguments{
+\item{target}{An object to which attributes will be added.}
+
+\item{ref}{A reference object from which attributes will be copied.}
+
+\item{which}{A character vector specifying the names of attributes to copy.}
+}
+\value{
+The modified `target` object with selected attributes copied from `ref`.
+}
 \description{
-Copy attributes of 'which's from 'ref' to 'target'
+Copy specified attributes from a reference object to a target object.
 }

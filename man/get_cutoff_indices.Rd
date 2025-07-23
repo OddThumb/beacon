@@ -2,10 +2,25 @@
 % Please edit documentation in R/MF.R
 \name{get_cutoff_indices}
 \alias{get_cutoff_indices}
-\title{Get two boundary indices for frequency range cropping}
+\title{Get frequency cutoff indices for overlap calculation}
 \usage{
 get_cutoff_indices(flow, fupp, df, N)
 }
+\arguments{
+\item{flow}{Numeric. The lower frequency in Hz.}
+
+\item{fupp}{Numeric. The upper frequency in Hz.}
+
+\item{df}{Numeric. Frequency resolution (Hz).}
+
+\item{N}{Integer. Number of time-domain samples.}
+}
+\value{
+A list with elements `min` and `max`, indicating cutoff indices.
+}
 \description{
-Reference: https://pycbc.org/pycbc/latest/html/_modules/pycbc/filter/matchedfilter.html#get_cutoff_indices
+Get frequency cutoff indices for overlap calculation
+}
+\references{
+https://pycbc.org/pycbc/latest/html/_modules/pycbc/filter/matchedfilter.html#get_cutoff_indices
 }

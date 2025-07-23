@@ -2,20 +2,20 @@
 % Please edit documentation in R/TS.R
 \name{shift_phase}
 \alias{shift_phase}
-\title{Shift phase of ts}
+\title{Align phase of a `ts` to another}
 \usage{
 shift_phase(ts, ref = NULL, phase = NULL)
 }
 \arguments{
-\item{ts}{A ts object to be phase-shifted}
+\item{ts}{A `ts` object to be shifted.}
 
-\item{ref}{A ts object as a reference (default: NULL).}
+\item{ref}{A reference `ts` object (optional).}
 
-\item{phase}{A numeric (default: NULL). A specific shifting phase.}
+\item{phase}{A numeric phase shift (optional).}
 }
 \value{
-A phase-shifted phase.
+A phase-aligned `ts` object with attributes for applied shift.
 }
 \description{
-Shift phase of ts
+Align phase of a `ts` to another
 }

@@ -2,22 +2,22 @@
 % Please edit documentation in R/QT.R
 \name{qseries}
 \alias{qseries}
-\title{Q-series}
+\title{Perform Q-transform on a single tile}
 \usage{
 qseries(fseries, Q, f0, return_complex = FALSE)
 }
 \arguments{
-\item{fseries}{A `fs` object. frequency-series data set.}
+\item{fseries}{An \code{fs} object. Frequency-series representation of the data.}
 
-\item{Q}{A numeric. q value.}
+\item{Q}{A numeric. Q value of the tile.}
 
-\item{f0}{A numeric. central frequency.}
+\item{f0}{A numeric. Center frequency of the tile.}
 
-\item{return_complex}{A logical (default: FALSE). Return the raw complex series instead of the normalized power.}
+\item{return_complex}{Logical (default: FALSE). If \code{TRUE}, return complex time series instead of normalized energy.}
 }
 \value{
-A `ts` of the normalized energy from the Q-transform of this tile against the data.
+A \code{ts} object representing either normalized energy or complex waveform.
 }
 \description{
-Q-series
+Compute Q-transform for a single Q and center frequency tile.
 }

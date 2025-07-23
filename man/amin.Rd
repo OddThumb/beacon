@@ -9,10 +9,10 @@ amin(x, na.rm = T)
 \arguments{
 \item{x}{A numeric vector.}
 
-\item{na.rm}{A logical (default: TRUE). Whether remove NA values or not.}
+\item{na.rm}{A logical (default: TRUE). Whether to remove NA values.}
 }
 \value{
-A numeric.
+A numeric. The minimum of absolute values.
 }
 \description{
 Calculate minimum of absolute values

@@ -1,13 +1,15 @@
-# MISCELLANEOUS ----
-
-#' Create WD recursively with alternative option
+#' Create Working Directory (WD) Recursively with Optional Suffix
 #'
-#' @param root A character. A root directory (full path).
-#' @param sub A character. A sub-directory (only name).
-#' @param subsub A character. A sub-sub-directory (only name).
-#' @param alternative A logical (default: FALSE). If directory is already exists, it puts suffix, e.g. _1, _2 ...
-#' @param set A logical (default: TRUE). Whether automatically set the working directory after creating it.
-#' @return A character. A final working directory path, if 'set=TRUE' (for any use for later).
+#' Create a nested directory from root/sub/subsub. If the directory already exists
+#' and `alternative = TRUE`, a new directory will be created with an appended numeric suffix.
+#'
+#' @param root A character. Root directory (absolute path).
+#' @param sub A character. Sub-directory name (not a path).
+#' @param subsub A character. Sub-sub-directory name.
+#' @param alternative A logical (default: FALSE). If TRUE, appends numeric suffix to avoid overwrite.
+#' @param set A logical (default: TRUE). If TRUE, sets the created directory as working directory.
+#'
+#' @return A character string of the final working directory path (only if `set = TRUE`).
 #' @export
 create_wd <- function(root, sub, subsub, alternative = F, set = T) {
     dir <- paste(root, sub, subsub, sep = '/')
@@ -46,12 +48,15 @@ create_wd <- function(root, sub, subsub, alternative = F, set = T) {
     }
 }
 
-#' Paste WD to file name
+#' Combine Working Directory Path with File Name
 #'
-#' @param file A character. File name.
-#' @param prefix A character. '{prefix}_file' will be the final file name.
-#' @param dir A character (default: getwd()). Working directory will be pasted.
-#' @return A character.
+#' Concatenate a working directory with a file name and optional prefix.
+#'
+#' @param file A character. File name (with or without extension).
+#' @param prefix A character (optional). If provided, result becomes "{prefix}_{file}".
+#' @param dir A character. Working directory path (default: current working directory).
+#'
+#' @return A character string representing the full file path.
 #' @export
 paste_wd <- function(file, prefix = NULL, dir = getwd()) {
     if (is.null(prefix)) {
@@ -61,8 +66,15 @@ paste_wd <- function(file, prefix = NULL, dir = getwd()) {
     }
 }
 
-#' Copy attributes of 'which's from 'ref' to 'target'
+#' Copy Attributes from Reference Object
 #'
+#' Copy specified attributes from a reference object to a target object.
+#'
+#' @param target An object to which attributes will be added.
+#' @param ref A reference object from which attributes will be copied.
+#' @param which A character vector specifying the names of attributes to copy.
+#'
+#' @return The modified `target` object with selected attributes copied from `ref`.
 #' @export
 copy_attr <- function(target, ref, which) {
     for (att in which) {
@@ -72,10 +84,13 @@ copy_attr <- function(target, ref, which) {
 }
 
 
-#' Reinstall beacon
+#' Reinstall the beacon Package from Source
 #'
-#' @param beacon.path A character. A beacon package path.
-#' @return reloading
+#' Detach, remove, check, and reinstall the beacon package from the specified path.
+#'
+#' @param beacon.path A character string indicating the path to the local beacon package.
+#'
+#' @return None. Performs side effects: unloads, removes, checks, and reinstalls the package.
 #' @export
 reinstall.beacon <- function(beacon.path = "~/projects/GW/beacon") {
     library(devtools)

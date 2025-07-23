@@ -2,13 +2,16 @@
 % Please edit documentation in R/PLOT.R
 \name{sys_cat}
 \alias{sys_cat}
-\title{Show file contents on console}
+\title{Print Contents of a File to Console}
 \usage{
 sys_cat(file)
 }
 \arguments{
-\item{file}{A character. A file path for print.}
+\item{file}{A character string specifying the file path.}
+}
+\value{
+None.
 }
 \description{
-This uses unix command '\code{cat}'
+Print the contents of a file using system \code{cat}.
 }

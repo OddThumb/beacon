@@ -2,20 +2,25 @@
 % Please edit documentation in R/QT.R
 \name{qplane}
 \alias{qplane}
-\title{Q-plane}
+\title{Compute Q-plane across all Q and f0 tiles}
 \usage{
 qplane(qplane.tile.list, fseries, return_complex = FALSE)
 }
 \arguments{
-\item{qplane.tile.list}{A list containing a vector of q-tile for each q-plane.}
+\item{qplane.tile.list}{A list of Q-tiles (from \code{qtiling}).}
 
-\item{fseries}{A `fs` object. frequency-series data set.}
+\item{fseries}{An \code{fs} object. Frequency-series representation of the data.}
 
-\item{return_complex}{A logical. Return the raw complex series instead of the normalized power.}
+\item{return_complex}{Logical. If \code{TRUE}, return complex-valued transform.}
 }
 \value{
-A list containing q: The q of the maximum q plane, times: The time that the qtransform is sampled, freqs: The frequencies that the qtransform is sampled, and qplane (2d): The two dimensional interpolated qtransform of this time series.
+A list with:
+\describe{
+  \item{times}{Time axis (s)}
+  \item{freqs}{Frequency axis (Hz)}
+  \item{plane}{Q-transform output (matrix)}
+}
 }
 \description{
-Q-plane
+Evaluate all Q-tiles and construct the Q-transform energy (or complex) plane.
 }
