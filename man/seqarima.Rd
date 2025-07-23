@@ -48,3 +48,32 @@ A `ts` object with processed output and meta attributes.
 Applies a pipeline of (1) differencing, (2) autoregressive (AR) modeling,
 (3) moving average smoothing, and (4) band-pass filtering.
 }
+\examples{
+# Generate noisy sinusoid
+set.seed(123)
+fs <- 1024
+t <- seq(0, 1, by = 1/fs)
+x <- sin(2 * pi * 60 * t) + rnorm(length(t), sd = 0.5)
+ts_obj <- ts(x, start = t[1], frequency = fs)
+
+# Apply sequential ARIMA pipeline
+out <- seqarima(
+  ts_obj,
+  d = 1,
+  p = c(50, 100, 150),
+  q = 20,
+  fl = 30,
+  fu = 300,
+  ar.collector = "median",
+  ma.collector = "mean",
+  return.step = TRUE,
+  verbose = FALSE
+)
+
+# Plot result
+plot(out, main = "Output of seqarima()")
+
+# View AR model metadata
+attr(out, "meta")$ar_feat
+
+}

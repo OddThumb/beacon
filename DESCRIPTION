@@ -36,4 +36,7 @@ Imports:
     tuneR,
     viridis
 Suggests:
-    reticulate
+    reticulate,
+    gamlss,
+    gamlss.dist,
+    gamlss.add

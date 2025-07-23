@@ -6,6 +6,8 @@
 #' Please ensure that the required Python packages are available in your environment.
 #'
 #' @return A data frame with columns: \code{Detector Name}, \code{Abbreviation}, \code{latitude}, \code{longitude}.
+#'
+#' @importFrom reticulate import
 #' @export
 get_available_detectors <- function() {
     # functions from external libraries
@@ -39,6 +41,8 @@ get_available_detectors <- function() {
 #'
 #' @param dets A character vector of detector abbreviations (e.g., \code{c("H1", "L1")}).
 #' @return A data frame of light-travel times (upper triangular only).
+#'
+#' @importFrom reticulate import
 #' @export
 travel_times <- function(dets = c("H1", "L1", "V1", "K1")) {
     Detector <- reticulate::import("pycbc.detector")$Detector
@@ -57,6 +61,40 @@ travel_times <- function(dets = c("H1", "L1", "V1", "K1")) {
     as.data.frame(ifo.mat)
 }
 
+#' Compute maximum light travel time between detectors
+#'
+#' Given a set of detector names, compute the light travel time between all unique pairs
+#' using PyCBC's Detector geometry.
+#'
+#' @param dets A character vector of detector names (e.g., \code{c("H1", "L1", "V1")}).
+#'
+#' @return A named numeric vector of light travel times (in seconds) between each detector pair.
+#'         The names are formatted as \code{"H1-L1"}, \code{"H1-V1"}, etc.
+#'
+#' @examples
+#' \dontrun{
+#' get_light_travel_time_among_detectors(c("H1", "L1", "V1"))
+#' }
+#'
+#' @importFrom reticulate import
+#' @export
+get_light_travel_time_among_detectors <- function(dets) {
+    Detector <- reticulate::import("pycbc.detector")$Detector
+    det_combn <- t(combn(dets, 2))
+    dt_combn <- c()
+    dt_names <- c()
+    for (ii in 1:nrow(det_combn)) {
+        det1 <- det_combn[ii, 1]
+        det2 <- det_combn[ii, 2]
+        dt_crit <- Detector(det1)$light_travel_time_to_detector(Detector(det2))
+        dt_combn[ii] <- dt_crit
+        dt_names[ii] <- paste0(det1, '-', det2)
+    }
+    names(dt_combn) <- dt_names
+    dt_combn
+}
+
+
 #' Relative arrival times of signal at detectors
 #'
 #' Compute arrival time delays among detectors for a given sky position.
@@ -72,6 +110,8 @@ travel_times <- function(dets = c("H1", "L1", "V1", "K1")) {
 #' @param verbose Logical. If \code{TRUE}, print intermediate results.
 #'
 #' @return If single detector, a list with \code{time_rel} and \code{remainder}. If multiple detectors, a list with matrix \code{dt_rel}, absolute delays \code{dt_earth}, and \code{remainder}.
+#'
+#' @importFrom reticulate import
 #' @export
 relpass_time <- function(deltat, dets, ra, dec, t_gps, verbose = T) {
     Detector <- reticulate::import("pycbc.detector")$Detector
@@ -158,11 +198,12 @@ relpass_time <- function(deltat, dets, ra, dec, t_gps, verbose = T) {
 #' @param online Logical. Whether to use online IERS data (default: FALSE).
 #'
 #' @return A named list with \code{fp} and \code{fc} antenna pattern coefficients.
+#'
+#' @importFrom reticulate import
 #' @export
 get_antpatt <- function(det, ra, dec, pol, t_gps, online = F) {
-    #' Set astropy IERS (Earth rotation) mode to online or offline
-    #'
-    #' Controls whether PyCBC's astropy backend is allowed to auto-download IERS tables.
+    # Set astropy IERS (Earth rotation) mode to online or offline
+    # Controls whether PyCBC's astropy backend is allowed to auto-download IERS tables.
     set_iers <- function(online = F) {
         iers <- reticulate::import("astropy.utils")$iers
         iers$conf$auto_download <- online
@@ -214,6 +255,8 @@ get_antpatt <- function(det, ra, dec, pol, t_gps, online = F) {
 #' @param t_gps A numeric. GPS time of source arrival at Earth's center.
 #'
 #' @return A projected waveform as a \code{ts} object.
+#'
+#' @importFrom reticulate import
 #' @export
 proj_wave <- function(hp, hc, det, ra, dec, pol, t_gps) {
     TimeSeries <- reticulate::import("pycbc.types", convert = F)$TimeSeries
@@ -239,6 +282,81 @@ proj_wave <- function(hp, hc, det, ra, dec, pol, t_gps) {
     )
 }
 
+#' Project GW polarizations onto multiple detectors
+#'
+#' Applies antenna pattern projection to gravitational-wave polarizations (\code{hp}, \code{hc})
+#' for a network of detectors, taking into account relative arrival times due to Earth's rotation.
+#'
+#' @param hp A \code{ts} object. Plus polarization waveform.
+#' @param hc A \code{ts} object. Cross polarization waveform.
+#' @param dets A character vector of detector abbreviations (e.g., \code{c("H1", "L1")}).
+#' @param ra A numeric. Right Ascension of the source (in radians).
+#' @param dec A numeric. Declination of the source (in radians).
+#' @param pol A numeric. Polarization angle (in radians).
+#' @param t_gps A numeric. GPS time of signal arrival at Earth's center.
+#' @param t_ref A character. Reference detector for computing relative arrival times (default: \code{"H1"}). [Currently unused]
+#'
+#' @details
+#' For each detector in \code{dets}, the function computes the relative arrival time of the signal
+#' based on its sky location. It then applies \code{\link{proj_wave}} to project the polarizations
+#' onto each detector using the corresponding time and antenna pattern.
+#'
+#' @return A named list of projected \code{ts} objects for each detector, with the following attributes:
+#' \describe{
+#'   \item{\code{"tgps.net"}}{Vector of GPS arrival times per detector.}
+#'   \item{\code{"dt_rel"}}{Matrix of pairwise relative time delays between detectors.}
+#'   \item{\code{"tgps_remainder"}}{Rounding residuals for each detector’s delay.}
+#' }
+#'
+#' @note Requires Python environment with \pkg{pycbc} available via \pkg{reticulate}.
+#'
+#' @examples
+#' \dontrun{
+#' hp <- ts(sin(seq(0, 1, length.out = 4096)), start = 1000000000, fs = 4096)
+#' hc <- ts(cos(seq(0, 1, length.out = 4096)), start = 1000000000, fs = 4096)
+#' proj <- proj_network(hp, hc, dets = c("H1", "L1"), ra = 1.0, dec = -0.5, pol = 0.0, t_gps = 1126259462)
+#' }
+#'
+#' @export
+proj_network <- function(hp, hc, dets, ra, dec, pol, t_gps, t_ref = "H1") {
+    if (length(dets) == 1L) {
+        stop("InputError: `dets` must have length larger than 1")
+    }
+
+    # Relative passing time on each detector (reference="H1")
+    reltime.net <- relpass_time(
+        deltat = deltat(hp),
+        dets = dets,
+        ra = ra,
+        dec = dec,
+        t_gps = t_gps,
+        verbose = F
+    )
+    tgps.net <- t_gps + reltime.net$dt_earth
+
+    patterned.lis <- mapply(
+        function(det, tgps) {
+            proj_wave(
+                hp = hp,
+                hc = hc,
+                det = det,
+                ra = ra,
+                dec = dec,
+                pol = pol,
+                t_gps = t_gps
+            )
+        },
+        det = dets,
+        tgps = tgps.net,
+        SIMPLIFY = F
+    )
+
+    attr(patterned.lis, "tgps.net") <- tgps.net
+    attr(patterned.lis, "dt_rel") <- reltime.net$dt_rel
+    attr(patterned.lis, "tgps_remainder") <- reltime.net$remainder
+    patterned.lis
+}
+
 #' Simulate Gaussian noise from detector PSD
 #'
 #' Generate colored Gaussian noise with power spectral density of a given detector.
@@ -256,6 +374,8 @@ proj_wave <- function(hp, hc, det, ra, dec, pol, t_gps) {
 #' @param seed Optional numeric. Random seed for reproducibility.
 #'
 #' @return A \code{ts} object of simulated Gaussian noise.
+#'
+#' @importFrom reticulate import
 #' @export
 psd_noise <- function(
     det,
@@ -343,6 +463,8 @@ psd_noise <- function(
 #'   \item \code{Params} – generation parameters
 #'   \item \code{AntPat} – antenna pattern info
 #' }
+#'
+#' @importFrom reticulate import
 #' @export
 get_wave <- function(
     model.name,

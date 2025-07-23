@@ -91,6 +91,47 @@ sprint <- function(..., sep = "") {
     cat(sprintf(paste(..., sep = sep)))
 }
 
+#' Save console output to a file
+#'
+#' Redirects printed output of an expression to a file using \code{sink()}.
+#'
+#' @param expr An R expression to evaluate and capture output from.
+#' @param file A character string. File path to save the console output.
+#'
+#' @return None. The console output of \code{expr} is written to \code{file}.
+#' @examples
+#' \dontrun{
+#' sinking(summary(cars), "summary.txt")
+#' }
+#'
+#' @export
+sinking <- function(expr, file) {
+    sink(file)
+    print(expr)
+    sink()
+}
+
+#' Suppress all output, messages, and warnings
+#'
+#' Executes an expression while suppressing all output, including messages,
+#' warnings, and printed output.
+#'
+#' @param expr An R expression to evaluate.
+#'
+#' @return The (invisible) result of the evaluated expression.
+#' @examples
+#' \dontrun{
+#' suppressALL({
+#'   warning("This is suppressed")
+#'   message("Also suppressed")
+#'   print("This too")
+#' })
+#' }
+#' @export
+suppressALL <- function(expr) {
+    invisible(capture.output(suppressMessages(suppressWarnings(expr))))
+}
+
 
 #' Save a Data Frame as a Markdown-Formatted Table
 #'
@@ -762,4 +803,418 @@ plot_spectro <- function(
         }
         return(list('spec.plot' = spec.plot, 'osci.plot' = osci.plot))
     }
+}
+
+#' Plot anomalies with error bands and significance
+#'
+#' @param anom.df A data.frame with anomaly results.
+#' @param tzero Optional time zero to align the time axis.
+#' @param val_col Column name for the observed signal value.
+#' @param time_col Column name for the time values (usually "GPS").
+#' @param err_lwr Column name for lower error band. If NULL, auto-detect from column names.
+#' @param err_upr Column name for upper error band. If NULL, auto-detect from column names.
+#' @param p_crit Critical p-value threshold (default: 0.05).
+#' @param p_col Column name for p-values.
+#'
+#' @return A ggplot object showing anomalies and uncertainty bands.
+#' @export
+plot_anomalies <- function(
+    anom.df,
+    tzero = NULL,
+    val_col = "observed",
+    time_col = "GPS",
+    err_lwr = NULL,
+    err_upr = NULL,
+    p_crit = 0.05,
+    p_col = "P0"
+) {
+    # tzero
+    if (is.null(tzero)) {
+        tzero <- anom.df[1, time_col, drop = T]
+    }
+
+    # ts for auto-theme
+    ts.recons <- ts(
+        anom.df[, val_col, drop = T],
+        start = anom.df[, time_col, drop = T][1L] - tzero,
+        deltat = uniqdif(anom.df[, time_col, drop = T])[1L]
+    )
+
+    # Error bar
+    if (is.null(err_lwr) | is.null(err_upr)) {
+        err_lwr <- colnames(anom.df)[grepl("_l1", colnames(anom.df))][1L]
+        err_upr <- colnames(anom.df)[grepl("_l2", colnames(anom.df))][1L]
+    }
+    p <- ggplot2::ggplot(
+        anom.df,
+        ggplot2::aes(x = .data[[time_col]] - tzero, y = .data[[val_col]])
+    ) +
+        ggplot2::geom_ribbon(
+            ggplot2::aes(ymin = .data[[err_lwr]], ymax = .data[[err_upr]]),
+            na.rm = F,
+            fill = 'grey50',
+            alpha = 0.5
+        )
+
+    # Line and point
+    p <- p + ggplot2::geom_line(color = 'grey15')
+    if (!is.null(p_crit)) {
+        anom.df <- dplyr::mutate(
+            dplyr::filter(
+                anom.df,
+                anomaly == 1
+            ),
+            lt.p_crit = ifelse(.data[[p_col]] < p_crit, "signif", "lowsig")
+        )
+        p <- p +
+            ggplot2::geom_point(
+                data = anom.df,
+                ggplot2::aes(color = lt.p_crit),
+                shape = 20,
+                size = 2,
+                alpha = 0.35
+            ) +
+            ggplot2::geom_point(
+                data = anom.df,
+                ggplot2::aes(color = lt.p_crit),
+                shape = 21,
+                size = 3,
+                alpha = 0.35
+            ) +
+            ggplot2::scale_color_manual(
+                values = c("signif" = "red", "lowsig" = "grey50")
+            )
+    } else {
+        p <- p +
+            ggplot2::geom_point(
+                data = dplyr::filter(anom.df, anomaly == 1),
+                color = 'red',
+                shape = 20,
+                size = 2,
+                alpha = 0.35
+            ) +
+            ggplot2::geom_point(
+                data = dplyr::filter(anom.df, anomaly == 1),
+                color = 'red',
+                shape = 21,
+                size = 3,
+                alpha = 0.35
+            )
+    }
+
+    p <- p +
+        oscillo_option(ts.recons, tzero) +
+        ggplot2::theme(
+            legend.direction = 'horizontal',
+            legend.position.inside = c(1, 1),
+            legend.justification = c(1, 1),
+            legend.background = ggplot2::element_rect(
+                colour = ggplot2::alpha('black', 0.5),
+                fill = ggplot2::alpha('white', 0.5)
+            )
+        )
+    return(p)
+}
+
+#' Plot anomalies for multiple detectors
+#'
+#' @param anom.det A data.frame with anomaly results that includes detector info in column "det".
+#' @param ... Passed to \code{plot_anomalies()}.
+#'
+#' @return A faceted ggplot object showing anomaly results per detector.
+#' @export
+plot_anomalies_multi <- function(anom.det, ...) {
+    plot_anomalies(anom.det, ...) +
+        ggplot2::labs(y = "strain") +
+        ggplot2::scale_y_continuous(breaks = scales::pretty_breaks()) +
+        ggplot2::geom_text(
+            data = dplyr::filter(
+                dplyr::filter(
+                    dplyr::distinct(
+                        dplyr::arrange(anom.det, P0),
+                        det,
+                        P0,
+                        .keep_all = TRUE
+                    ),
+                    !is.na(P0)
+                ),
+                P0 < 0.05
+            ),
+            ggplot2::aes(label = signif(P0, 3L)),
+            size = 2.5,
+            hjust = -0.2,
+            check_overlap = T,
+            na.rm = T
+        ) +
+        ggplot2::facet_wrap(
+            facets = ggplot2::vars(det),
+            nrow = 4L,
+            strip.position = "right",
+            scales = "free_y"
+        ) +
+        ggplot2::theme(
+            panel.border = ggplot2::element_rect(linewidth = 0.2),
+            strip.background = ggplot2::element_blank(),
+            strip.placement = "outside"
+        ) +
+        ggplot2::coord_cartesian(clip = "off")
+}
+
+#' Plot lambda values over time
+#'
+#' @param res.net A named list of detector results, each including $lamb with lambda statistics.
+#' @param lambda One of "a" or "c", indicating $\lambda_a$ or $\lambda_c$ (default: "a").
+#' @param chunk_len Chunk duration in seconds for time axis.
+#' @param t_from Optional origin time to annotate time axis.
+#' @param ... Additional arguments (currently unused).
+#'
+#' @return A ggplot object showing the update history of lambda values.
+#' @export
+plot_lambda <- function(
+    res.net,
+    lambda = c("a", "c"),
+    chunk_len = 1,
+    t_from = NULL,
+    ...
+) {
+    lambda <- match.arg(lambda)
+    extract_key <- if (lambda == "a") "N" else "c"
+    y_label <- if (lambda == "a") "$\\lambda_a$" else "$\\lambda_c$"
+    title_label <- if (lambda == "a") {
+        "Update history of $\\textit{\\lambda_a}$"
+    } else {
+        "Update history of $\\textit{\\lambda_c}$"
+    }
+
+    tmp1 <- lapply(res.net, function(x) {
+        unlist(lapply(x$lamb, function(lam) lam[[extract_key]]))
+    })
+    tmp2 <- dplyr::bind_cols(tmp1)
+    tmp2$tt <- chunk_len * dplyr::row_number(tmp2)
+    tmp2 <- tmp2[, c("tt", setdiff(names(tmp2), "tt"))]
+    result <- reshape2::melt(tmp2, id.vars = "tt")
+
+    ggplot2::ggplot(result, ggplot2::aes(x = tt, y = value)) +
+        ggplot2::geom_line(ggplot2::aes(
+            color = variable,
+            linetype = variable
+        )) +
+        ggplot2::scale_x_continuous(breaks = scales::pretty_breaks()) +
+        ggplot2::scale_color_manual(values = c('H1' = 'red', 'L1' = 'blue')) +
+        ggplot2::labs(
+            x = if (is.null(t_from)) {
+                latex2exp::TeX("$\\textit{t}~(s)$")
+            } else {
+                latex2exp::TeX(paste0("$\\textit{t}~(s)$ from ", t_from))
+            },
+            y = latex2exp::TeX(y_label, italic = TRUE),
+            color = "Detector",
+            linetype = "Detector",
+            title = latex2exp::TeX(title_label)
+        ) +
+        ggplot2::theme_bw() +
+        ggplot2::theme(
+            plot.title = ggplot2::element_text(hjust = 0.5),
+            panel.grid.minor = ggplot2::element_blank()
+        ) +
+        legend_inside(legend.direction = 'horizontal')
+}
+
+#' Plot coincidence significance values over time
+#'
+#' @param coinc.res A data.frame returned from \code{coincide_P0()}.
+#' @param tzero Optional GPS time to align x-axis (default: first timestamp in \code{coinc.res}).
+#' @param p_crit Critical p-value to draw significance threshold (default: 0.05).
+#' @param a Scaling factor for significance function (default: 3).
+#' @param legend.position Position of legend inside plot. One of "tr", "tl", "br", "bl".
+#'
+#' @return A ggplot object with time-series of coincidence significance.
+#' @export
+plot_coinc <- function(
+    coinc.res,
+    tzero = NULL,
+    p_crit = 0.05,
+    a = 3,
+    legend.position = 'tr'
+) {
+    # Lazy way...
+    P0_names <- c("P0_net", "P0_H1_bin", "P0_L1_bin")
+    new_names <- structure(c("coinc", 'H1', 'L1'), names = P0_names)
+    det_colors <- structure(c('black', 'red', 'blue'), names = P0_names)
+    det_alphas <- structure(c(1, 0.3, 0.3), names = P0_names)
+    det_ltypes <- structure(c(1, 2, 2), names = P0_names)
+    legpos <- switch(
+        legend.position,
+        'tr' = list(pos = c(1, 1), jus = c(1, 1)),
+        'tl' = list(pos = c(0, 1), jus = c(0, 1)),
+        'br' = list(pos = c(1, 0), jus = c(1, 0)),
+        'bl' = list(pos = c(0, 0), jus = c(0, 1))
+    )
+
+    coinc_melt <- reshape2::melt(
+        dplyr::select(coinc.res, "time_bin", dplyr::contains("P0_")),
+        id.vars = 'time_bin'
+    )
+    coinc_melt$variable <- factor(coinc_melt$variable, levels = P0_names)
+    coinc_melt$value[is.nan(coinc_melt$value)] <- 1
+
+    # Set default tzero (if input tzero is NULL)
+    if (is.null(tzero)) {
+        tzero <- utc2gps(coinc.res$time_bin[1])
+    }
+
+    ggplot2::ggplot(coinc_melt, ggplot2::aes(x = utc2gps(time_bin) - tzero)) +
+        ggplot2::geom_line(ggplot2::aes(
+            y = Significance(value, a),
+            color = variable,
+            alpha = variable,
+            linetype = variable
+        )) +
+        ggplot2::geom_point(ggplot2::aes(
+            y = Significance(value, a),
+            color = variable,
+            alpha = variable
+        )) +
+        ggplot2::geom_hline(
+            yintercept = Significance(p_crit, a),
+            linetype = 'dashed'
+        ) +
+        ggplot2::labs(
+            x = paste0("Time (s) from ", tzero),
+            y = expression(italic(S)),
+            color = NULL,
+            linetype = NULL
+        ) +
+
+        ggplot2::scale_color_manual(values = det_colors, labels = new_names) +
+        ggplot2::scale_alpha_manual(
+            values = det_alphas,
+            labels = new_names,
+            guide = 'none'
+        ) +
+        ggplot2::scale_linetype_manual(
+            values = det_ltypes,
+            labels = new_names
+        ) +
+        ggplot2::theme_bw() +
+        legend_inside(
+            pos = legpos$pos,
+            jus = legpos$jus,
+            legend.direction = 'horizontal'
+        )
+}
+
+#' Theme wrapper for legend inside plot area
+#'
+#' @param pos Numeric vector of (x, y) position inside plot area (default: c(1, 1)).
+#' @param jus Numeric vector for justification (default: c(1, 1)).
+#' @param ... Additional theme arguments passed to \code{theme()}.
+#'
+#' @return A list of ggplot2 theme settings for internal legend placement.
+#' @export
+legend_inside <- function(pos = c(1, 1), jus = c(1, 1), ...) {
+    list(
+        theme(
+            legend.position = 'inside',
+            legend.position.inside = pos,
+            legend.justification.inside = jus,
+            legend.background = element_rect(fill = alpha('white', 0.3)),
+            legend.box.background = element_rect(
+                fill = alpha('white', 0.3),
+                linewidth = 0.5
+            ),
+            legend.spacing.y = unit(-0.35, 'cm'),
+            ...
+        )
+    )
+}
+
+
+#' Compute break points with rounded range
+#'
+#' @param x A numeric vector of values to compute breaks for.
+#' @param bin A numeric scalar indicating the bin width (default: 0.2).
+#'
+#' @return A numeric vector of break points from minimum to maximum of \code{x}, rounded to fit the bin width.
+#' @export
+get_break_rngdgt <- function(x, bin = 0.2) {
+    rng <- range.width(x, bin)
+    seq(rng[1], rng[2], bin)
+}
+
+#' Plot on-source detection statistic as discrete points
+#'
+#' @param S.vec A numeric vector of on-source detection statistic (e.g., \eqn{\mathcal{S}} values).
+#' @param color A character string specifying point color (default: "black").
+#' @param shape An integer specifying the ggplot2 point shape (default: 24, triangle).
+#' @param binwidth A numeric scalar indicating the histogram bin width (default: 0.2).
+#'
+#' @return A ggplot object showing discrete histogram-like point distribution.
+#' @export
+plot_onsource <- function(S.vec, color = 'black', shape = 24, binwidth = 0.2) {
+    his <- hist(S.vec, breaks = get_break_rngdgt(S.vec, binwidth), plot = F)
+    df_ons <- dplyr::filter(
+        data.frame(x = his$breaks[-1], y = his$counts),
+        y != 0
+    )
+    ggplot2::ggplot() +
+        ggplot2::geom_point(
+            data = df_ons,
+            ggplot2::aes(x = x, y = y),
+            shape = shape,
+            color = color
+        )
+}
+
+#' Plot histogram of background detection statistic
+#'
+#' @param S.bkg.vec A numeric vector of background detection statistic (e.g., \eqn{\mathcal{S}} values).
+#' @param color A character string specifying histogram color.
+#' @param binwidth Numeric. Width of histogram bins (default: 0.2).
+#' @param xlimit Numeric vector of length 2. Limits of x-axis (default: c(7, 30)).
+#' @param ylimit Numeric vector of length 2. Limits of y-axis (log10 scale, default: c(5e-3, 5e2)).
+#' @param factor Numeric. Rescaling factor for counts (default: 1).
+#'
+#' @return A list of one ggplot object named \code{histogram}.
+#' @export
+plot_background <- function(
+    S.bkg.vec,
+    color = 'black',
+    binwidth = 0.2,
+    xlimit = c(7, 30),
+    ylimit = c(5e-3, 5e2),
+    factor = 1
+) {
+    # Histogram setup
+    rng <- range.width(S.bkg.vec, binwidth)
+    his <- hist(S.bkg.vec, breaks = seq(rng[1], rng[2], binwidth), plot = FALSE)
+
+    # Histogram plot only
+    p <- ggplot2::ggplot() +
+        ggplot2::geom_step(
+            data = data.frame(x = his$breaks[-1], y = his$counts / factor),
+            ggplot2::aes(x = x, y = y),
+            color = color,
+            linewidth = 0.65,
+            alpha = 0.5
+        ) +
+        ggplot2::scale_x_continuous(
+            expand = ggplot2::expansion(mult = c(0, 0.3)),
+            breaks = scales::breaks_pretty(10)
+        ) +
+        ggplot2::scale_y_continuous(
+            trans = 'log10',
+            breaks = scales::breaks_log(7)
+        ) +
+        ggplot2::coord_cartesian(xlim = xlimit, ylim = ylimit) +
+        ggplot2::labs(x = expression(italic(S)), y = 'Number of Triggers') +
+        ggplot2::theme_bw(base_size = 15, base_line_size = 0.3) +
+        ggplot2::annotation_logticks(sides = 'rl') +
+        ggplot2::theme(
+            plot.margin = ggplot2::unit(c(0, 0, 0, 0), "null"),
+            panel.margin = ggplot2::unit(c(0, 0, 0, 0), "null"),
+            panel.grid.minor.x = ggplot2::element_blank(),
+            panel.grid.minor.y = ggplot2::element_blank()
+        )
+    p
 }

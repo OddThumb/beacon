@@ -124,3 +124,228 @@ vr <- function(x) {
 vl <- function(x) {
     diff(vr(x))
 }
+
+#' Weighted Product with Inverse Normalization
+#'
+#' @description
+#' Compute the product of input values with inverse weighting to compensate for missing values.
+#'
+#' @param x A numeric vector or list of numeric values.
+#' @param w Optional numeric scalar. Weight applied to each element. If \code{NULL}, it is automatically set to the ratio \code{length(x) / length(na.omit(x))}.
+#'
+#' @return A numeric value representing the weighted product of non-NA values in \code{x}, capped at 1.
+#'
+#' @details
+#' This function is useful when combining multiple probabilities with missing entries.
+#' It corrects the product by inflating it with an inverse of the missing rate.
+#'
+#' @export
+invweight_prod <- function(x, w = NULL) {
+    x <- unlist(x)
+    x.omit <- na.omit(x)
+    if (is.null(w)) {
+        L <- length(x)
+        w <- L / length(x.omit)
+    }
+    min(prod(w * x.omit), 1)
+}
+
+#' Arithmetic Mean Ignoring NA
+#'
+#' @description
+#' Compute the arithmetic mean of a numeric vector, ignoring \code{NA} values.
+#'
+#' @param x A numeric vector.
+#'
+#' @return A numeric scalar representing the mean.
+#'
+#' @export
+ari_mean <- function(x) {
+    mean(x, na.rm = T)
+}
+
+#' Harmonic Mean Ignoring NA
+#'
+#' @description
+#' Compute the harmonic mean of a numeric vector, ignoring \code{NA} values.
+#'
+#' @param x A numeric vector.
+#' @param na.rm Logical (default \code{TRUE}). Whether to remove \code{NA} values.
+#'
+#' @return A numeric scalar representing the harmonic mean.
+#'
+#' @details
+#' Harmonic mean is useful when averaging rates or reciprocal quantities. It is defined as \code{length(x) / sum(1/x)}.
+#'
+#' @export
+har_mean <- function(x, na.rm = T) {
+    #if (na.rm) x <- na.omit(x)
+    #length(x) / sum(1/x, na.rm = F)
+    x <- x[!is.na(x)]
+    length(x) / sum(1 / x)
+}
+
+#' Geometric Mean Ignoring NA
+#'
+#' @description
+#' Compute the geometric mean of a numeric vector, optionally removing \code{NA} values.
+#'
+#' @param x A numeric vector.
+#' @param na.rm Logical (default \code{TRUE}). Whether to remove \code{NA} values.
+#'
+#' @return A numeric scalar representing the geometric mean.
+#'
+#' @details
+#' Defined as \code{exp(mean(log(x)))}, assuming all \code{x > 0}.
+#' Useful for combining multiplicative factors or log-normal distributions.
+#'
+#' @export
+geo_mean <- function(x, na.rm = T) {
+    #if (na.rm) x <- na.omit(x)
+    if (na.rm) {
+        x <- x[!is.na(x)]
+    }
+    #prod(x, na.rm=F)^(1/length(x))
+    exp(sum(log(x)) / length(x))
+}
+
+#' Floor with Decimal Digits
+#'
+#' Applies the \code{floor()} function to a number with precision controlled by number of digits.
+#'
+#' @param x A numeric value or vector.
+#' @param digits Integer (default: 0). Number of decimal digits to retain.
+#'
+#' @return A numeric vector with values floored to specified digits.
+#' @export
+floor.digit <- function(x, digits = 0) {
+    floor(x * 10^digits) / 10^digits
+}
+
+#' Ceiling with Decimal Digits
+#'
+#' Applies the \code{ceiling()} function to a number with precision controlled by number of digits.
+#'
+#' @param x A numeric value or vector.
+#' @param digits Integer (default: 0). Number of decimal digits to retain.
+#'
+#' @return A numeric vector with values ceiled to specified digits.
+#' @export
+ceiling.digit <- function(x, digits = 0) {
+    ceiling(x * 10^digits) / 10^digits
+}
+
+#' Order of Magnitude
+#'
+#' Computes the order of magnitude (base-10 logarithm floor) of a positive number.
+#'
+#' @param x A positive numeric value or vector.
+#'
+#' @return An integer or vector of integers representing \code{floor(log10(x))}.
+#' @export
+oom <- function(x) {
+    floor(log10(x))
+}
+
+#' Rounded Range with Specified Bin Width
+#'
+#' Computes a range that aligns with a given bin width, rounding outwards to ensure coverage.
+#'
+#' @param x A numeric vector.
+#' @param width Numeric. Desired bin width.
+#'
+#' @return A numeric vector of length 2 indicating start and end of adjusted range.
+#' @export
+range.width <- function(x, width) {
+    rng <- range(x)
+    rng[1] <- floor.digit(
+        floor.digit(rng[1], digits = -oom(width)) / width,
+        digits = 0
+    ) *
+        width
+    rng[2] <- ceiling.digit(
+        ceiling.digit(rng[2], digits = -oom(width)) / width,
+        digits = 0
+    ) *
+        width
+    rng
+}
+
+#' Sample from a fitted distribution based on a population
+#'
+#' Fits an appropriate distribution to the given population using \pkg{gamlss}
+#' and draws samples from the fitted model.
+#'
+#' @param nsample An integer. Number of samples to generate.
+#' @param pop A numeric vector. Population data to fit a distribution to.
+#' @param return_fit Logical (default: TRUE). If \code{TRUE}, return the fitted distribution object.
+#' @param seed An optional numeric. Random seed for reproducibility.
+#'
+#' @details
+#' This function uses \pkg{gamlss} to automatically fit the best candidate distribution
+#' (from the \code{"realAll"} family) to the non-missing values in \code{pop}.
+#' It then draws \code{nsample} values from this distribution.
+#' Values are filtered to ensure they are non-zero and below the maximum of \code{pop}.
+#'
+#' @return A list with elements:
+#' \describe{
+#'   \item{\code{sample}}{A numeric vector of sampled values.}
+#'   \item{\code{fit}}{(Optional) A fitted distribution object from \code{gamlss::fitDist}.}
+#' }
+#'
+#' @examples
+#' \dontrun{
+#' pop_data <- rlnorm(1000, meanlog = 1, sdlog = 0.5)
+#' result <- sample_dist(nsample = 100, pop = pop_data, seed = 42)
+#' hist(result$sample)
+#' }
+#'
+#' @note Requires the \pkg{gamlss} and \pkg{gamlss.dist} packages.
+#' @export
+sample_dist <- function(nsample, pop, return_fit = TRUE, seed = NULL) {
+    # Upper limit by GWTC
+    max.pop <- max(pop, na.rm = T)
+
+    # Fit
+    suppressALL({
+        fit.dist <- gamlss::fitDist(
+            na.omit(pop),
+            pop = 2,
+            type = "realAll",
+            trace = FALSE,
+            try.gamlss = TRUE
+        )
+    })
+
+    # Extract fitted distribution function
+    rfit <- eval(parse(text = paste0("r", fit.dist$family[1L])))
+
+    # Apply the distribution function
+    dist.tmp <- with(set.seed(seed), {
+        do.call(
+            "rfit",
+            c(c(
+                n = nsample * 10,
+                sapply(
+                    fit.dist$parameters,
+                    function(par) {
+                        fit.dist[[par]]
+                    },
+                    simplify = F
+                )
+            ))
+        )
+    })
+
+    # Filter by non-zero and the upper limit
+    # And select the number that is desired
+    dist <- dist.tmp[dist.tmp != 0L & dist.tmp < max.pop][1L:nsample]
+
+    if (return_fit) {
+        fit.res <- fit.dist
+    } else {
+        fit.res <- NULL
+    }
+
+    return(list("sample" = dist, "fit" = fit.res))
+}

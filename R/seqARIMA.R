@@ -867,6 +867,35 @@ MovingAverage <- function(ts, q, verbose = TRUE, ...) {
 #' @param verbose Logical. If TRUE, messages are printed during execution.
 #'
 #' @return A `ts` object with processed output and meta attributes.
+#'
+#' @examples
+#' # Generate noisy sinusoid
+#' set.seed(123)
+#' fs <- 1024
+#' t <- seq(0, 1, by = 1/fs)
+#' x <- sin(2 * pi * 60 * t) + rnorm(length(t), sd = 0.5)
+#' ts_obj <- ts(x, start = t[1], frequency = fs)
+#'
+#' # Apply sequential ARIMA pipeline
+#' out <- seqarima(
+#'   ts_obj,
+#'   d = 1,
+#'   p = c(50, 100, 150),
+#'   q = 20,
+#'   fl = 30,
+#'   fu = 300,
+#'   ar.collector = "median",
+#'   ma.collector = "mean",
+#'   return.step = TRUE,
+#'   verbose = FALSE
+#' )
+#'
+#' # Plot result
+#' plot(out, main = "Output of seqarima()")
+#'
+#' # View AR model metadata
+#' attr(out, "meta")$ar_feat
+#'
 #' @export
 seqarima <- function(
     ts,
@@ -958,7 +987,7 @@ seqarima <- function(
     # Also return missing values caused by ARIMA
     return.list[['NA.times']] <- get_MissingValues(
         ts = out,
-        ref = return.list[['x']]
+        ref = ts
     )
 
     attr(out, 'meta') <- return.list
