@@ -521,13 +521,16 @@ plot_spectro <- function(
     )
 
     # Filter qspecdata.df with time range and shift with tzero
-    qspecdata.df <- qspecdata.df |>
-        dplyr::filter(dplyr::between(t, trange[1], trange[2])) |>
-        dplyr::mutate('t' = t - tzero)
+    qspecdata.df <- dplyr::mutate(
+        dplyr::filter(qspecdata.df, dplyr::between(t, trange[1], trange[2])),
+        't' = t - tzero
+    )
 
     # Save memory
-    qspecdata.df <- qspecdata.df |>
-        dplyr::mutate(dplyr::across(t:S, ~ round(.x, digits = 4)))
+    qspecdata.df <- dplyr::mutate(
+        qspecdata.df,
+        dplyr::across(t:S, ~ round(.x, digits = 4))
+    )
 
     # Spectrogram by GGPLOT2
     spec.plot <- ggplot2::ggplot() +
@@ -734,10 +737,10 @@ plot_spectro <- function(
         )
 
         if (!is.null(title)) {
-            p <- p |>
-                ggpubr::annotate_figure(
-                    top = ggpubr::text_grob(title, face = "bold", size = 14)
-                )
+            p <- ggpubr::annotate_figure(
+                p,
+                top = ggpubr::text_grob(title, face = "bold", size = 14)
+            )
         }
         return(p)
     } else {
@@ -746,16 +749,16 @@ plot_spectro <- function(
         osci.plot <- osci.plot +
             ggplot2::theme(plot.margin = ggplot2::margin(5.5, 5.5, 5.5, 5.5))
         if (!is.null(title)) {
-            spec.plot <- spec.plot |>
-                ggpubr::annotate_figure(
-                    top = ggpubr::text_grob(title, face = "bold", size = 14)
-                )
+            spec.plot <- ggpubr::annotate_figure(
+                spec.plot,
+                top = ggpubr::text_grob(title, face = "bold", size = 14)
+            )
         }
         if (!is.null(title)) {
-            osci.plot <- osci.plot |>
-                ggpubr::annotate_figure(
-                    top = ggpubr::text_grob(title, face = "bold", size = 14)
-                )
+            osci.plot <- ggpubr::annotate_figure(
+                osci.plot,
+                top = ggpubr::text_grob(title, face = "bold", size = 14)
+            )
         }
         return(list('spec.plot' = spec.plot, 'osci.plot' = osci.plot))
     }

@@ -22,32 +22,9 @@ correlate <- function(x, y) {
 #' @param df Numeric. Frequency resolution (Hz).
 #' @param N Integer. Number of time-domain samples.
 #' @return A list with elements `min` and `max`, indicating cutoff indices.
+#'
 #' @export
 get_cutoff_indices <- function(flow, fupp, df, N) {
-    # ──────────────────────────────────────────────────────────────────────────
-    # Gets the indices of a frequency series at which to stop an overlap
-    # calculation.
-    #
-    # Parameters
-    # ──────────
-    # flow: numeric
-    #       The frequency (in Hz) of the lower index.
-    # fupp: numeric
-    #       The frequency (in Hz) of the upper index.
-    # df: numeric
-    #       The frequency step (in Hz) of the frequency series.
-    # N: integer or numeric
-    #       The number of points in the **time** series. Can be odd
-    #       or even.
-    #
-    # Returns
-    # ───────
-    # A list containing two elements of
-    #   - min: int
-    #   - max: int
-    # ──────────────────────────────────────────────────────────────────────────
-
-    # In R, not necessary
     if (inherits(N, "numeric")) {
         N <- as.integer(N)
     }
@@ -342,6 +319,7 @@ matched_filter <- function(
 #' @param high_frequency_cutoff A numeric (default: `NULL`). The frequency to stop the overlap.
 #' @param normalized A logical (default: `TRUE`). Set if the overlap is normalized. If true, it will range from 0 to 1.
 #' @return overlap: complex
+#'
 #' @export
 overlap_cplx <- function(
     vec1,
@@ -421,6 +399,7 @@ overlap_cplx <- function(
 #' @param high_frequency_cutoff A numeric (default: `NULL`). The frequency to stop the overlap.
 #' @param normalized A logical (default: `TRUE`). Set if the overlap is normalized. If true, it will range from 0 to 1.
 #' @return overlap: numeric
+#'
 #' @export
 overlap <- function(
     vec1,

@@ -192,14 +192,19 @@ ts_df <- function(ts, tzero = 0, val.name = "x") {
     }
 
     if (!is.null(dim(ts))) {
-        ts |>
-            as.data.frame() |>
-            dplyr::mutate(time = c(time(ts) - tzero)) |>
-            dplyr::relocate(time, .before = 1)
+        tmp <- dplyr::relocate(
+            dplyr::mutate(
+                as.data.frame(ts),
+                time = c(time(ts) - tzero)
+            ),
+            time,
+            .before = 1
+        )
     } else {
-        data.frame(time = c(time(ts) - tzero), c(ts)) |>
-            `colnames<-`(c("time", val.name))
+        tmp <- data.frame(time = c(time(ts) - tzero), c(ts))
+        colnames(tmp) <- c("time", val.name)
     }
+    return(tmp)
 }
 
 #' Convert `ts` to tibbletime object
@@ -216,12 +221,16 @@ as_tbt <- function(ts, time_col = 'time', val_col = 'x') {
         tz = "UTC",
         format = "%Y-%m-%d %H:%M:%OS"
     )
-    tbt <- tibbletime::create_series(
-        timerange[1] ~ timerange[2],
-        period = paste(as.character(1 / frequency(ts)), "second")
-    ) |>
-        dplyr::mutate('{val_col}' := c(ts)) |>
-        dplyr::rename('{time_col}' := date)
+    tbt <- dplyr::rename(
+        dplyr::mutate(
+            tibbletime::create_series(
+                timerange[1] ~ timerange[2],
+                period = paste(as.character(1 / frequency(ts)), "second")
+            ),
+            '{val_col}' := c(ts)
+        ),
+        '{time_col}' := date
+    )
     attr(tbt, "index_quo") <- dplyr::quo(time)
     tbt
 }
@@ -579,7 +588,10 @@ BandPass <- function(
             v = verbose
         )
     }
-    out <- signal::filtfilt(filt = FiltFun, x = ts) |> tsfy(ref = ts)
+    out <- tsfy(
+        signal::filtfilt(filt = FiltFun, x = ts),
+        ref = ts
+    )
 
     attr(out, "type") <- filter.type
     attr(out, "order") <- n
@@ -601,6 +613,5 @@ BandPass <- function(
 #' @export
 whiten <- function(ts, sl, fl, fu, ...) {
     PSD <- psd(ts, sl, fl)
-    to_ts((to.fs(ts) / (PSD^0.5))) |>
-        BandPass(fl, fu, verbose = F, ...)
+    BandPass(to_ts((to.fs(ts) / (PSD^0.5))), fl, fu, verbose = F, ...)
 }

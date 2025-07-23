@@ -102,7 +102,7 @@ DQlev <- function(dq, level = 'BURST_CAT2') {
         ret <- DQ_Dec2Bits(dq)
         names(ret) <- names(DQ_ShortNames())
     } else {
-        ret <- bitwShiftR(dq, DQ_ShortNames()[level]) |> bitwAnd(1)
+        ret <- bitwAnd(bitwShiftR(dq, DQ_ShortNames()[level]), 1)
     }
     return(ret)
 }
@@ -115,6 +115,7 @@ DQlev <- function(dq, level = 'BURST_CAT2') {
 #'
 #' @return A \code{ts} object representing the DQ mask.
 #'
+#' @import hdf5r
 #' @export
 read_DQ <- function(file, dq.level = "BURST_CAT2") {
     tmp <- hdf5r::h5file(filename = file, mode = "r")

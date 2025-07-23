@@ -108,9 +108,9 @@ check_stationary <- function(ts, t.seg = 0.5) {
     suppressWarnings({
         p.values <- sapply(split.trs, function(tr) {
             kpss.test(window_to(ts, tr))
-        }) |>
-            `colnames<-`(seq_along(split.trs)) |>
-            `rownames<-`(c("Level", "Trend"))
+        })
+        colnames(p.values) <- seq_along(split.trs)
+        rownames(p.values) <- c("Level", "Trend")
     })
 
     return(p.values)
@@ -491,7 +491,7 @@ burgar <- function(
 #' @export
 sar <- function(ts, ...) {
     AR <- burgar(x = ts, ...)
-    resid <- AR$resid |> na.omit()
+    resid <- na.omit(AR$resid)
 
     attr(resid, 'collector') <- 'single'
     attr(resid, 'feature') <- AR$ar
@@ -663,10 +663,18 @@ ear <- function(
         resid.mts <- do.call('ts.intersect', resid.lis)
         resid.ens <- switch(
             collector,
-            pca = extract_pc(resid.mts) |>
-                tsfy(ref = na.omit(resid.mts[, ncol(resid.mts)])),
-            mean = apply(resid.mts, 1, mean) |> tsfy(ref = resid.mts[, 1]),
-            median = apply(resid.mts, 1, median) |> tsfy(ref = resid.mts[, 1])
+            pca = tsfy(
+                extract_pc(resid.mts),
+                ref = na.omit(resid.mts[, ncol(resid.mts)])
+            ),
+            mean = tsfy(
+                apply(resid.mts, 1, mean),
+                ref = resid.mts[, 1]
+            ),
+            median = tsfy(
+                apply(resid.mts, 1, median),
+                ref = resid.mts[, 1]
+            )
         )
     }
 
@@ -775,15 +783,27 @@ ma <- function(ts, order, na.rm = T) {
 #' @return Smoothed `ts` object with MA ensemble metadata.
 #' @export
 eoa <- function(ts, qs, collector = "median") {
-    mas <- sapply(qs, function(q) ma(ts, q, na.rm = F)) |>
-        ts(start = ti(ts), frequency = frequency(ts))
+    mas <- ts(
+        sapply(qs, function(q) ma(ts, q, na.rm = F)),
+        start = ti(ts),
+        frequency = frequency(ts)
+    )
     colnames(mas) <- paste("q", qs, sep = "")
 
     res <- switch(
         collector,
-        "pca" = extract_pc(mas) |> tsfy(ref = na.omit(mas[, ncol(mas)])),
-        "mean" = apply(mas, 1, mean) |> tsfy(ref = mas[, 1]),
-        "median" = apply(mas, 1, median) |> tsfy(ref = mas[, 1])
+        "pca" = tsfy(
+            extract_pc(mas),
+            ref = na.omit(mas[, ncol(mas)])
+        ),
+        "mean" = tsfy(
+            apply(mas, 1, mean),
+            ref = mas[, 1]
+        ),
+        "median" = tsfy(
+            apply(mas, 1, median),
+            ref = mas[, 1]
+        )
     )
     attr(res, 'collector') <- collector
     attr(res, 'q_order') <- qs

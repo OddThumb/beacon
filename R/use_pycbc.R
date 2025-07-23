@@ -112,8 +112,8 @@ relpass_time <- function(deltat, dets, ra, dec, t_gps, verbose = T) {
             quota <- dt %/% deltat
             quota <- ifelse(quota < 0, quota + 1, quota)
             dt_q <- quota * deltat
-            dt_r <- (dt - dt_q) |>
-                `names<-`(paste0("Ref: ", dref, " / Pass: ", dpass))
+            dt_r <- dt - dt_q
+            names(dt_r) <- paste0("Ref: ", dref, " / Pass: ", dpass)
             dt_rs <- append(dt_rs, dt_r)
             det.mat[paste("Ref:", dref), paste("Pass:", dpass)] <- dt_q
         }

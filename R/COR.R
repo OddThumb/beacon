@@ -70,6 +70,7 @@ ACF <- function(ts, lag.max = length(ts), plot = TRUE, title = NULL) {
 #'
 #' Compute and visualize the partial autocorrelation function of a time series.
 #'
+
 #' @param ts A numeric vector or time-series object.
 #' @param lag.max An integer specifying the maximum lag to compute PACF. Default is the length of `ts`.
 #' @param plot A logical. If TRUE (default), return a ggplot2 object for visualization.

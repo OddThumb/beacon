@@ -23,11 +23,13 @@ fs <- function(x, df) {
 #'
 #' Transforms a time series object to a frequency series by computing FFT.
 #'
+
 #' @param ts A `ts` object.
 #' @param delta_f Optional. A numeric value indicating desired frequency resolution.
 #'                If NULL, defaults to `sampling.freq / length(ts)`.
 #'
 #' @return An `fs` object containing frequency-domain representation and metadata.
+#'
 #' @export
 to_fs <- function(ts, delta_f = NULL) {
     # Check deltaf is given
@@ -155,6 +157,7 @@ str.fs <- function(x) {
 #' @param ylim A numeric vector of length 2 specifying y-axis limits.
 #'
 #' @return A ggplot object.
+#'
 #' @export
 plot.fs <- function(
     fs,
@@ -252,6 +255,7 @@ fs_df <- function(fs) {
 #' @param fs A `fs` object (frequency series).
 #' @param ref A list with elements `min` and `max`, indicating index range.
 #' @return A cropped `fs` object with preserved attributes.
+#'
 #' @export
 cutoff_to <- function(fs, ref) {
     if (!inherits(fs, "fs")) {

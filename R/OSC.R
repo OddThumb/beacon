@@ -5,6 +5,7 @@
 #' @param offline Logical. If TRUE, read metadata from a local CSV file instead of querying online.
 #' @param csvpath Character. Required if `offline = TRUE`; path to the local CSV file.
 #' @return A data.frame containing metadata of events.
+#'
 #' @export
 get_gwosc <- function(
     offline = F,
@@ -15,7 +16,6 @@ get_gwosc <- function(
         stopifnot(!is.null(csvpath))
         return.obj <- read.csv(csvpath)
     } else {
-        check.installed(c("curl", "request"))
         # Check internet
         if (!curl::has_internet()) {
             stop("No internet connection")
@@ -30,20 +30,27 @@ get_gwosc <- function(
         # All events info will be stored as a data frame
         full_url <- paste(base_url, "/eventapi/jsonfull/query/show", sep = '')
         query.list <- suppressMessages({
-            full_url |>
-                request::api() |>
-                request::http()
+            request::http(request::api(full_url))
         })
-        query.df <- dplyr::bind_rows(query.list$events, .id = "commonName") |>
-            tidyr::separate(commonName, c("commonName", "v"), "-")
+        query.df <- tidyr::separate(
+            dplyr::bind_rows(query.list$events, .id = "commonName"),
+            commonName,
+            c("commonName", "v"),
+            "-"
+        )
 
         query.df_strain <- rlist::list.rbind(lapply(
             query.df$strain,
             rlist::list.cbind
         ))
-        return.obj <- dplyr::bind_cols(query.df, query.df_strain) |>
-            dplyr::relocate(colnames(query.df_strain), .before = strain) |>
-            dplyr::select(-strain)
+        return.obj <- dplyr::select(
+            dplyr::relocate(
+                dplyr::bind_cols(query.df, query.df_strain),
+                colnames(query.df_strain),
+                .before = strain
+            ),
+            -strain
+        )
     }
     return(return.obj)
 }
@@ -56,14 +63,18 @@ get_gwosc <- function(
 #' @return A vector or data.frame depending on the number of requested parameters.
 #' @export
 get_gwosc_param <- function(gwosc.list, source.names, param) {
-    step1 <- gwosc.list |>
-        dplyr::filter(commonName %in% source.names) |>
-        dplyr::arrange(dplyr::desc(version)) |>
-        dplyr::distinct(commonName, .keep_all = T)
+    step1 <- dplyr::distinct(
+        dplyr::arrange(
+            dplyr::filter(gwosc.list, commonName %in% source.names),
+            dplyr::desc(version)
+        ),
+        commonName,
+        .keep_all = T
+    )
     if (length(param) > 1) {
-        step1 |> dplyr::select(param)
+        dplyr::select(step1, param)
     } else {
-        step1 |> dplyr::pull(param)
+        dplyr::pull(step1, param)
     }
 }
 
@@ -111,20 +122,22 @@ download_gwosc <- function(
         step1 <- get_gwosc()
 
         # Step 2: Filter by commonName
-        step2 <- step1 |> dplyr::filter(commonName == event_name)
+        step2 <- dplyr::filter(step1, commonName == event_name)
 
         # Step 3: Choose version
         if (version == "latest") {
-            step3 <- step2 |>
-                dplyr::arrange(dplyr::desc(version)) |> # [[ LATEST ]]
-                dplyr::distinct(
-                    commonName,
-                    detector,
-                    sampling_rate,
-                    duration,
-                    format,
-                    .keep_all = T
-                )
+            step3 <- dplyr::distinct(
+                dplyr::arrange(
+                    step2,
+                    dplyr::desc(version)
+                ),
+                commonName,
+                detector,
+                sampling_rate,
+                duration,
+                format,
+                .keep_all = T
+            )
         } else {
             if (!(version %in% step2$version)) {
                 stop(paste0(
@@ -134,8 +147,7 @@ download_gwosc <- function(
                     event_name
                 ))
             }
-            step3 <- step2 |>
-                dplyr::filter(version == version)
+            step3 <- dplyr::filter(step2, version == version)
         }
 
         # Step 4: Filter by detector
@@ -149,13 +161,16 @@ download_gwosc <- function(
                 version
             ))
         }
-        step4 <- step3 |> dplyr::filter(detector == det)
+        step4 <- dplyr::filter(step3, detector == det)
 
         # Step 5: Filter by dur, file.format, sampling.freq
-        step5 <- step4 |>
-            dplyr::filter(duration == dur) |>
-            dplyr::filter(format == file.format) |>
-            dplyr::filter(sampling_rate == sampling.freq)
+        step5 <- dplyr::filter(
+            dplyr::filter(
+                dplyr::filter(step4, duration == dur),
+                format == file.format
+            ),
+            sampling_rate == sampling.freq
+        )
 
         # Step 6: Get url
         file.url <- step5$url

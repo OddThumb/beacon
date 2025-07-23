@@ -82,30 +82,3 @@ copy_attr <- function(target, ref, which) {
     }
     target
 }
-
-
-#' Reinstall the beacon Package from Source
-#'
-#' Detach, remove, check, and reinstall the beacon package from the specified path.
-#'
-#' @param beacon.path A character string indicating the path to the local beacon package.
-#'
-#' @return None. Performs side effects: unloads, removes, checks, and reinstalls the package.
-#' @export
-reinstall.beacon <- function(beacon.path = "~/projects/GW/beacon") {
-    library(devtools)
-    detach(name = package:beacon, unload = T)
-    message("1) Removing 'beacon'...")
-    remove.packages("beacon")
-
-    message("2) Checking 'beacon'...")
-    checked <- devtools::check(beacon.path)
-
-    if (length(checked$errors) == 0) {
-        message("3) Re-installing 'beacon'...")
-        devtools::install(beacon.path)
-    } else {
-        cat(checked$errors)
-        stop("\nPlease check output")
-    }
-}
