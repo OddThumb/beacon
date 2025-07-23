@@ -2,16 +2,16 @@
 % Please edit documentation in R/seqARIMA.R
 \name{plot_aic}
 \alias{plot_aic}
-\title{Plot AIC}
+\title{Plot AIC curve for AR model}
 \usage{
 plot_aic(ar)
 }
 \arguments{
-\item{ar}{An AR object.}
+\item{ar}{An `ar` object.}
 }
 \value{
-A ggplot object.
+A ggplot AIC plot with zoomed-in inset.
 }
 \description{
-Plot AIC
+Plot AIC curve for AR model
 }

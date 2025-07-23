@@ -46,6 +46,21 @@ create_wd <- function(root, sub, subsub, alternative = F, set = T) {
     }
 }
 
+#' Paste WD to file name
+#'
+#' @param file A character. File name.
+#' @param prefix A character. '{prefix}_file' will be the final file name.
+#' @param dir A character (default: getwd()). Working directory will be pasted.
+#' @return A character.
+#' @export
+paste_wd <- function(file, prefix = NULL, dir = getwd()) {
+    if (is.null(prefix)) {
+        paste(dir, '/', file, sep = '')
+    } else {
+        paste(dir, '/', paste(prefix, "_", file, sep = ''), sep = '')
+    }
+}
+
 #' Copy attributes of 'which's from 'ref' to 'target'
 #'
 #' @export
@@ -54,59 +69,6 @@ copy_attr <- function(target, ref, which) {
         attr(target, att) <- attr(ref, att)
     }
     target
-}
-
-#' Wrapper of unique(diff(x))
-#'
-#' @export
-uniqdif <- function(x, tol = 1e-8) {
-    dx <- diff(x)
-    ref <- dx[1]
-    unique_dx <- unique(dx[abs(dx - ref) > tol])
-    if (length(unique_dx) == 0) {
-        return(ref)
-    } else {
-        warning("Non-uniform spacing detected.")
-        return(unique(dx))
-    }
-}
-
-#' Simple initial value
-#'
-#' @param x A vector.
-#' @param n A numeric (default: 1). A number of head.
-#' @return Numeric(s). n initial times.
-#' @export
-vi <- function(x, n = 1) {
-    head(x, n)
-}
-
-#' Simple final value
-#'
-#' @param x A vector.
-#' @param n A numeric (default: 1). A number of tail.
-#' @return Numeric(s). n final times.
-#' @export
-vf <- function(x, n = 1) {
-    tail(x, n)
-}
-
-#' Simple value range
-#'
-#' @param x A vector.
-#' @return A vector of length 2 which is equivalent to `c(ti(ts), tf(ts))`.
-#' @export
-vr <- function(x) {
-    c(vi(x), vf(x))
-}
-
-#' Simple value length from first data point to last.
-#'
-#' @param ts A time series (`ts`) object.
-#' @return A vector of length 2 which is equivalent to `c(ti(ts), tf(ts))`.
-#' @export
-vl <- function(x) {
-    diff(vr(x))
 }
 
 
@@ -122,11 +84,11 @@ reinstall.beacon <- function(beacon.path = "~/projects/GW/beacon") {
     remove.packages("beacon")
 
     message("2) Checking 'beacon'...")
-    checked <- check(beacon.path)
+    checked <- devtools::check(beacon.path)
 
     if (length(checked$errors) == 0) {
         message("3) Re-installing 'beacon'...")
-        install(beacon.path)
+        devtools::install(beacon.path)
     } else {
         cat(checked$errors)
         stop("\nPlease check output")

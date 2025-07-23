@@ -1,3 +1,5 @@
+# Translated from pycbc.filter.qtransform
+
 #' Iterate over the Q values
 #'
 #' @param qrange A numeric vector. upper and lower bounds of q range.

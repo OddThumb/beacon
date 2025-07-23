@@ -2,18 +2,18 @@
 % Please edit documentation in R/seqARIMA.R
 \name{check_normality}
 \alias{check_normality}
-\title{Check stationary with AD test}
+\title{Check for normality using the Anderson-Darling test}
 \usage{
 check_normality(ts, t.seg = 0.5)
 }
 \arguments{
-\item{ts}{A time series (`ts`) object.}
+\item{ts}{A `ts` object.}
 
-\item{t.seg}{A numeric (default: 0.5). Time length of each segment in second.}
+\item{t.seg}{Segment duration in seconds.}
 }
 \value{
-A numeric vector of p.values.
+A numeric vector of p-values.
 }
 \description{
-Check stationary with AD test
+Check for normality using the Anderson-Darling test
 }

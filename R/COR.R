@@ -10,18 +10,24 @@ ACF <- function(ts, lag.max = length(ts), plot = TRUE, title = NULL) {
 
     ret.df <- data.frame('lag' = c(ret$lag), 'acf' = c(ret$acf))
     if (plot) {
-        p <- ggplot2::ggplot(ret.df, aes(x = lag, y = acf)) +
+        p <- ggplot2::ggplot(ret.df, ggplot2::aes(x = lag, y = acf)) +
             ggplot2::geom_segment(
                 ggplot2::aes(xend = lag, yend = 0),
                 alpha = 0.6
             ) +
             ggplot2::geom_point(size = 1, alpha = 0.5) +
             ggplot2::geom_hline(
-                aes(linetype = '95% C.I. for white noise', yintercept = sigs),
+                ggplot2::aes(
+                    linetype = '95% C.I. for white noise',
+                    yintercept = sigs
+                ),
                 color = 'blue'
             ) +
             ggplot2::geom_hline(
-                aes(linetype = '95% C.I. for white noise', yintercept = -sigs),
+                ggplot2::aes(
+                    linetype = '95% C.I. for white noise',
+                    yintercept = -sigs
+                ),
                 color = 'blue'
             ) +
             ggplot2::scale_x_continuous(breaks = scales::breaks_pretty()) +

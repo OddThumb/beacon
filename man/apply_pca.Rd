@@ -2,28 +2,18 @@
 % Please edit documentation in R/seqARIMA.R
 \name{apply_pca}
 \alias{apply_pca}
-\title{Apply PCA}
+\title{Perform PCA with fixed sign for interpretability}
 \usage{
 apply_pca(x, retx = T, center = F, scale. = F, tol = NULL, rank. = NULL, ...)
 }
 \arguments{
-\item{x}{A data frame or a matrix.}
+\item{x}{A data frame or matrix.}
 
-\item{retx}{A logical (default: TRUE). See 'prcomp'.}
-
-\item{center}{A logical (default: FALSE). See 'prcomp'.}
-
-\item{scale.}{A logical (default: FALSE). See 'prcomp'.}
-
-\item{tol}{See 'prcomp'.}
-
-\item{rank.}{See 'prcomp'.}
-
-\item{...}{Additional arguments for 'prcomp'.}
+\item{retx, center, scale., tol, rank., ...}{Passed to `prcomp()`.}
 }
 \value{
-PCA object with fixed loadings' sign.
+A modified PCA object with signs adjusted.
 }
 \description{
-This function preserves the sign of loadings
+Perform PCA with fixed sign for interpretability
 }

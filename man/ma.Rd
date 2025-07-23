@@ -2,20 +2,20 @@
 % Please edit documentation in R/seqARIMA.R
 \name{ma}
 \alias{ma}
-\title{Two-sided Moving Average (MA) smoother}
+\title{Two-sided centered Moving Average smoother}
 \usage{
 ma(ts, order, na.rm = T)
 }
 \arguments{
-\item{ts}{A time series (`ts`) object.}
+\item{ts}{A `ts` object.}
 
-\item{order}{An integer for the order of MA.}
+\item{order}{MA order.}
 
-\item{na.rm}{A logical whether remove NA values or not.}
+\item{na.rm}{Remove NAs.}
 }
 \value{
-A MA smoothed time series (`ts`) object.
+Smoothed `ts` object.
 }
 \description{
-Two-sided Moving Average (MA) smoother
+Two-sided centered Moving Average smoother
 }

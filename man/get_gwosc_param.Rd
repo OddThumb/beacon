@@ -2,7 +2,7 @@
 % Please edit documentation in R/OSC.R
 \name{get_gwosc_param}
 \alias{get_gwosc_param}
-\title{Get GWTC parameter from the return of get.gwosc()}
+\title{Get GWTC parameter from the return of get_gwosc()}
 \usage{
 get_gwosc_param(gwosc.list, source.names, param)
 }
@@ -15,8 +15,8 @@ It can be either one character or a vector of source.names.}
 Parameters that want to get.
 It can be either one character or a vector of source.names.}
 
-\item{gwossc.list}{A data.frame. The return object from get.gwosc()}
+\item{gwossc.list}{A data.frame. The return object from get_gwosc()}
 }
 \description{
-Get GWTC parameter from the return of get.gwosc()
+Get GWTC parameter from the return of get_gwosc()
 }

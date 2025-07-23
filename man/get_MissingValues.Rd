@@ -2,21 +2,27 @@
 % Please edit documentation in R/seqARIMA.R
 \name{get_MissingValues}
 \alias{get_MissingValues}
-\title{Get Missing Values (NA) between ts and ref in terms of time stamps}
+\title{Sequential ARIMA pipeline components}
 \usage{
 get_MissingValues(ts, ref)
 }
 \arguments{
-\item{ts}{A time series (`ts`) object who has NA values.}
+\item{ts}{A time series (`ts`) object that may have NA values.}
 
-\item{ref}{A time series (`ts`) object for comparison.}
+\item{ref}{A reference `ts` object used for comparison.}
 }
 \value{
-A list with
-     \code{$all}: time stamps whose values are NA,
-     \code{$head}: time stamps whose values are NA at the head,
-     \code{$tail}: time stamps whose values are NA at the tail.
+A list with:
+\describe{
+  \item{all}{All time stamps with NA in `ts` compared to `ref`}
+  \item{head}{NA timestamps at the start of the series}
+  \item{tail}{NA timestamps at the end of the series}
+}
 }
 \description{
-Get Missing Values (NA) between ts and ref in terms of time stamps
+This file contains all key components used in the seqarima pipeline,
+including differencing, autoregressive (AR) fitting, and moving average (MA) smoothing functions.
+}
+\details{
+Identify missing values in a time series relative to a reference
 }

@@ -2,20 +2,20 @@
 % Please edit documentation in R/seqARIMA.R
 \name{eoa}
 \alias{eoa}
-\title{Ensemble of Averages (EoA)}
+\title{Apply Ensemble of Averages (EoA)}
 \usage{
 eoa(ts, qs, collector = "median")
 }
 \arguments{
-\item{ts}{A time series (`ts`) object.}
+\item{ts}{A `ts` object.}
 
-\item{qs}{A vector of length 2 whose first value is lower bound of q and second is upper bound of q for 'ma'.}
+\item{qs}{MA orders.}
 
-\item{collector}{A character (default: "median"). A function name for collecting various MA models. (one of "mean", "median", or "pca)}
+\item{collector}{Aggregation method.}
 }
 \value{
-A list. \code{$res}: A EoA smoothed time series (`ts`) object. `$df`: A data frame containing various MA(q) along the column.
+Smoothed `ts` object with MA ensemble metadata.
 }
 \description{
-Ensemble of Averages (EoA)
+Apply Ensemble of Averages (EoA)
 }

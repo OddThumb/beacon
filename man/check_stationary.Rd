@@ -2,18 +2,18 @@
 % Please edit documentation in R/seqARIMA.R
 \name{check_stationary}
 \alias{check_stationary}
-\title{Check stationary with KPSS test}
+\title{Check for stationarity using the KPSS test across segments}
 \usage{
 check_stationary(ts, t.seg = 0.5)
 }
 \arguments{
-\item{ts}{A time series (`ts`) object.}
+\item{ts}{A `ts` object.}
 
-\item{t.seg}{A numeric (default: 0.5). Time length of each segment in second.}
+\item{t.seg}{Segment duration in seconds.}
 }
 \value{
-A data frame of p.values for both level and trend.
+A matrix of KPSS p-values for level and trend.
 }
 \description{
-Check stationary with KPSS test
+Check for stationarity using the KPSS test across segments
 }

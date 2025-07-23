@@ -39,13 +39,13 @@ DQ_Dec2Bits <- function(decimal.dq, len = 7) {
 }
 DQ_ShortNames <- function() {
     c(
-        'DATA' = 0,
-        'CBC_CAT1' = 1,
-        'CBC_CAT2' = 2,
-        'CBC_CAT3' = 3,
-        'BURST_CAT1' = 4,
-        'BURST_CAT2' = 5,
-        'BURST_CAT3' = 6
+        'DATA' = 0L,
+        'CBC_CAT1' = 1L,
+        'CBC_CAT2' = 2L,
+        'CBC_CAT3' = 3L,
+        'BURST_CAT1' = 4L,
+        'BURST_CAT2' = 5L,
+        'BURST_CAT3' = 6L
     )
 }
 DQlev <- function(dq, level = 'BURST_CAT2') {

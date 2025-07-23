@@ -19,10 +19,10 @@ savefig <- function(
     verbose = F,
     ...
 ) {
-    message.verb(' >>> Saving...', v = verbose)
+    message_verb(' >>> Saving...', v = verbose)
     ggpubr::ggexport(
         plot,
-        filename = paste.wd(file),
+        filename = paste_wd(file),
         width = width,
         height = height,
         verbose = verbose,
@@ -43,7 +43,7 @@ savefig <- function(
 savemsg <- function(msg, ..., file, show = T) {
     write.table(
         rbind(msg, ...),
-        file = paste.wd(file),
+        file = paste_wd(file),
         quote = F,
         row.names = F,
         col.names = F,
@@ -75,7 +75,7 @@ message_by <- function(i = i, verbose = T, msg) {
 }
 
 #' @export
-message.verb <- function(..., v = TRUE) {
+message_verb <- function(..., v = TRUE) {
     if (v) {
         message(...)
     } else {
@@ -90,7 +90,7 @@ message.verb <- function(..., v = TRUE) {
 #' @param file A character. A file path for print.
 #' @export
 sys_cat <- function(file) {
-    system(paste("cat", paste.wd(file)))
+    system(paste("cat", paste_wd(file)))
 }
 
 #' Printing with `cat` and `sprintf` for parsing
@@ -132,7 +132,7 @@ savetab <- function(
     if (append & !is.null(nsep)) {
         write.table(
             paste(rep("-", nsep), collapse = ''),
-            file = paste.wd(file),
+            file = paste_wd(file),
             quote = F,
             row.names = F,
             col.names = F,
@@ -152,13 +152,13 @@ savetab <- function(
             format = 'md',
             ...
         ),
-        file = paste.wd(file),
+        file = paste_wd(file),
         col.names = col.names,
         row.names = F,
         quote = quote,
         append = append
     )
-    if (show) sys.cat(file)
+    if (show) sys_cat(file)
 }
 
 #' Append line in txt file
@@ -171,13 +171,13 @@ append.line <- function(x, file, show = T) {
     message(' >>> Appending lines in a file...')
     write.table(
         x,
-        file = paste.wd(file),
+        file = paste_wd(file),
         append = T,
         quote = F,
         row.names = F,
         col.names = F
     )
-    if (show) sys.cat(file)
+    if (show) sys_cat(file)
 }
 
 # Plotting ----
@@ -211,7 +211,7 @@ plot_oscillo <- function(
         dplyr::filter(ts.df, time >= trange[1] & time <= trange[2]),
         'time' = time - ifelse(is.null(tzero), 0, tzero)
     )
-    value.order <- floor(log10(max(abs(ts.df$strain))))
+    value.order <- floor(log10(amax(ts.df$strain)))
     plot <- ggplot2::ggplot() +
         ggplot2::geom_line(
             data = ts.df,
@@ -432,12 +432,6 @@ plot_spectro <- function(
     stack = T,
     ...
 ) {
-    #breaks_pretty <- scales::breaks_pretty
-    #log_breaks <- scales::log_breaks
-    #label_number <- scales::label_number
-    #TeX <- latex2exp::TeX
-    #ggarrange <- ggpubr::ggarrange
-
     # Frequency
     sampling.freq <- frequency(ts)
 
@@ -495,7 +489,7 @@ plot_spectro <- function(
 
     # Save memory
     qspecdata.df <- qspecdata.df |>
-        dplyr::mutate(across(t:S, ~ round(.x, digits = 4)))
+        dplyr::mutate(dplyr::across(t:S, ~ round(.x, digits = 4)))
 
     # Spectrogram by GGPLOT2
     spec.plot <- ggplot2::ggplot() +
@@ -638,7 +632,7 @@ plot_spectro <- function(
     }
 
     # Drawing oscillogram by GGPLOT2
-    ts_df <- ts.df(ts.crop, tzero)
+    ts_df <- ts_df(ts.crop, tzero)
 
     limiting <- get_limit(ts_df$x)
     value.order <- floor(log10(amax(ts_df$x)))
@@ -710,9 +704,9 @@ plot_spectro <- function(
         return(p)
     } else {
         spec.plot <- spec.plot +
-            ggplot2::theme(plot.margin = margin(5.5, 5.5, 5.5, 5.5))
+            ggplot2::theme(plot.margin = ggplot2::margin(5.5, 5.5, 5.5, 5.5))
         osci.plot <- osci.plot +
-            ggplot2::theme(plot.margin = margin(5.5, 5.5, 5.5, 5.5))
+            ggplot2::theme(plot.margin = ggplot2::margin(5.5, 5.5, 5.5, 5.5))
         if (!is.null(title)) {
             spec.plot <- spec.plot |>
                 ggpubr::annotate_figure(

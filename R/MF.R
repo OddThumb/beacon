@@ -267,7 +267,7 @@ sigmasq <- function(
 #'
 #'
 #' @export
-matched.filter <- function(
+matched_filter <- function(
     template,
     data,
     psd = NULL,
@@ -482,103 +482,6 @@ overlap <- function(
 }
 
 
-#' Shift time series by time
-#'
-#' @param ts      A `ts` object.
-#' @param t_shift A numeric. Time to be shifted.
-#' @return A time-shifted `ts`.
-#' @examples
-#' # {not run}
-#' # > xt <- ts(c(1,2,3), start=1, frequency=1)
-#' # > ti(xt) # >>> 1
-#' # > xt_shift <- shift(xt, 1)
-#' # > ti(xt_shift) # >>> 2
-#'
-#' @export
-shift <- function(ts, t_shift) {
-    ts(data = c(ts), start = c(ti(ts)) + t_shift, deltat = deltat(ts))
-}
-
-#' Cyclic-shift a vector
-#'
-#' @param x A numeric vector.
-#' @param n A numeric. length of shift.
-#' @return A cyclic-shifted vector.
-#' @examples
-#' # {not run}
-#' # > x <- c(1,2,3,4,5)
-#' # > x_cyc <- cyclic(x, 2)
-#' # > x_cyc # >>> 3 4 5 1 2
-#'
-#' @export
-cyclic <- function(x, n) {
-    if (n == 0) {
-        x
-    } else {
-        c(tail(x, -n), head(x, n))
-    }
-}
-
-#' Cyclic shift a `ts`
-#'
-#' @param ts       A `ts` object.
-#' @param t_cyclic A numeric. Time to be cyclic-shifted
-#' @return A cyclic-shifted `ts`.
-#' @examples
-#' # {not run}
-#' # > xt <- ts(c(1,2,3,4,5), start=1, freqyency=1)
-#' # > xt_cyc <- shift.cyclic(xt, t_cyclic=2)
-#' # > xt_cyc
-#' # Time Series:
-#' # Start = 1
-#' # End = 5
-#' # Frequency = 1
-#' # [1] 3 4 5 1 2
-#'
-#' @export
-shift.cyclic <- function(ts, t_cyclic) {
-    x <- c(ts)
-    n <- trunc(t_cyclic * frequency(ts))
-    ts(cyclic(x, n), start = ti(ts), frequency = frequency(ts))
-}
-
-#' Resize `ts` with given length
-#'
-#' @param ts   A `ts` object.
-#' @param nlen A numeric. A length to be resized.
-#' @return A resized `ts` with given `nlen`.
-#' @examples
-#' # {not run}
-#' # > xt <- ts(c(1,2,3,4,5), start=1, freqyency=1)
-#' # If nlen > length(ts)
-#' # > xt_resize1 <- resize(xt, 10)
-#' # > xt_resize1
-#' # Time Series:
-#' # Start = 1
-#' # End = 10
-#' # Frequency = 1
-#' # [1] 1 2 3 4 5 0 0 0 0 0
-#' # If nlen <= length(ts)
-#' # > xt_resize2 <- resize(xt, 3)
-#' # Time Series:
-#' # Start = 1
-#' # End = 3
-#' # Frequency = 1
-#' # [1] 1 2 3
-#'
-#' @export
-resize <- function(ts, nlen) {
-    if (length(ts) >= nlen) {
-        ts(c(ts)[1:nlen], start = ti(ts), frequency = frequency(ts))
-    } else {
-        ts(
-            c(ts, rep(0, nlen - length(ts))),
-            start = ti(ts),
-            frequency = frequency(ts)
-        )
-    }
-}
-
 #' Interpolate PSD
 #' Return a new PSD that has been interpolated to the desired delta_f
 #'
@@ -586,7 +489,7 @@ resize <- function(ts, nlen) {
 #' @param delta_f A numeric. The desired delta_f of the output
 #'
 #' @export
-interp.psd <- function(fs, delta_f) {
+interp_psd <- function(fs, delta_f) {
     new_n <- (length(fs) - 1) * deltaf(fs) / delta_f + 1
     samples <- 0:(new_n - 1) * delta_f
     interp.fs <- approx(xout = samples, x = freqs(fs), y = fs)
@@ -601,7 +504,7 @@ interp.psd <- function(fs, delta_f) {
 #' @param fl             A numeric. Low-frequency-cutoff.
 #'
 #' @export
-inv_spec_trunc.psd <- function(
+inv_spec_trunc_psd <- function(
     fs,
     max_filter_len,
     fl = NULL,
@@ -671,8 +574,8 @@ psd <- function(
         windowfun = window_func
     )
     first_psd <- fs(welch_psd$power, df = uniqdif(welch_psd$frequency))
-    secon_psd <- interp.psd(first_psd, delf)
-    third_psd <- inv_spec_trunc.psd(
+    secon_psd <- interp_psd(first_psd, delf)
+    third_psd <- inv_spec_trunc_psd(
         secon_psd,
         max_filter_len = sl * frequency(ts),
         fl = fl,
@@ -680,9 +583,3 @@ psd <- function(
     )
     return(third_psd)
 }
-
-#shift.cyclic <- function(ts, t_cyclic){
-#    x <- c(ts)
-#    n <- (t_cyclic-ti(ts)) * frequency(ts)
-#    ts(cyclic(x, n), start=ti(ts), frequency=frequency(ts))
-#}

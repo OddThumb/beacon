@@ -2,10 +2,18 @@
 % Please edit documentation in R/seqARIMA.R
 \name{C_Burg}
 \alias{C_Burg}
-\title{The core function of ar.burg (C++)}
+\title{AR Burg core (C interface)}
 \usage{
 C_Burg(x, order.max)
 }
+\arguments{
+\item{x}{Input series.}
+
+\item{order.max}{Maximum AR order.}
+}
+\value{
+List with AR coefficient matrix and prediction variances.
+}
 \description{
-The core function of ar.burg (C++)
+AR Burg core (C interface)
 }

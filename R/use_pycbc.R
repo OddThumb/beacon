@@ -32,7 +32,7 @@ get_available_detectors <- function() {
             "longitude" = d$longitude
         )
     })
-    bind_rows(det.df)
+    dplyr::bind_rows(det.df)
 }
 
 #' Light travel time among detectors
@@ -276,4 +276,149 @@ psd_noise <- function(
     attr(noise.ts, "deltaf") <- delta_f
 
     return(noise.ts)
+}
+
+
+#' Loading waveforms from PyCBC
+#'
+#' @export
+get_wave <- function(
+    model.name,
+    sampling.freq,
+    fl = NULL,
+    fu = NULL,
+    m1 = NULL,
+    m2 = NULL,
+    d_L = NULL,
+    inc = 0,
+    ...,
+    R.ts = TRUE,
+    det,
+    ra,
+    dec,
+    pol,
+    t_gps,
+    proj = FALSE
+) {
+    # Input:
+    # ├─ model.name    : A character. Waveform model name.
+    # ├─ sampling.freq : A numeric. Sampling frequency (Hz).
+    # ├─ fl    : A numeric (default: NULL). Lower frequency bound (Hz).
+    # ├─ fu    : A numeric (default: NULL). Upper frequency bound (Hz).
+    # ├─ m1    : A numeric (default: NULL). Mass 1 (solar mass).
+    # ├─ m2    : A numeric (default: NULL). Mass 2 (solar mass).
+    # ├─ d_L   : A numeric (default: NULL). Luminosity distance (Mpc).
+    # ├─ inc   : A numeric (default: 0). Inclination angle (radian).
+    # ├─ ...   : Other arguments for waveform parameters.
+    # ├─ R.ts  : A logical (default: TRUE). Whether returns in R ts object or
+    # │          pycbc object.
+    # │
+    # │  (For antenna patterns)
+    # ├─ dets  : A vector. Characters of detector abbreviations.
+    # ├─ ra    : A numeric. RA of the GW source (radian).
+    # ├─ dec   : A numeric. Dec of the GW source (radian).
+    # ├─ pol   : A numeric. Polarization angle of the GW source (radian).
+    # ├─ t_gps : A numeric. Passing time of the GW source to Earth (second).
+    # └─ proj  : A logical (default: FALSE). Whether takes Earth rotation into
+    #            account.
+    #Output:
+    # A list.
+    # It has two elements of factors for the plus polarization and the cross
+    # polarization.
+    # If R.ts=TRUE, return list will have attributes
+
+    # Generate waveforms
+    get_td_waveform <- reticulate::import(
+        'pycbc.waveform',
+        convert = FALSE
+    )$get_td_waveform
+    waveforms <- get_td_waveform(
+        approximant = model.name,
+        mass1 = m1,
+        mass2 = m2,
+        distance = d_L,
+        inclination = inc,
+        ...,
+        f_lower = fl,
+        f_final = fu,
+        delta_t = 1 / sampling.freq
+    )
+    waveforms <- list('hp' = waveforms[[0]], 'hc' = waveforms[[1]])
+
+    # Antenna Pattern
+    if (
+        all(
+            !hasArg(det),
+            !hasArg(ra),
+            !hasArg(dec),
+            !hasArg(pol),
+            !hasArg(t_gps)
+        )
+    ) {
+        message("> Waveform WITHOUT the antenna pattern is calculated")
+        AntPat <- F
+    } else {
+        message("> Antenna pattern is applied")
+
+        if (proj) {
+            message("> and Earth rotation is taken into account")
+            waveforms$ht <- proj_wave(
+                waveforms$hp,
+                waveforms$hc,
+                det,
+                ra,
+                dec,
+                pol,
+                t_gps
+            )
+
+            AntPat <- list(
+                "proj" = TRUE,
+                "det" = det,
+                "ra" = ra,
+                "dec" = dec,
+                "pol" = pol,
+                "t_gps" = t_gps
+            )
+        } else {
+            add <- reticulate::import("operator")$add
+            mul <- reticulate::import("operator")$mul
+            ap <- get_antpatt(det, ra, dec, pol, t_gps)
+            ht <- add(mul(ap$fp, waveforms$hp), mul(ap$fc, waveforms$hc))
+            waveforms$ht <- ht
+
+            AntPat <- list(
+                "ap" = ap,
+                "det" = det,
+                "ra" = ra,
+                "dec" = dec,
+                "pol" = pol,
+                "t_gps" = t_gps
+            )
+        }
+    }
+    Params <- list(
+        "model" = model.name,
+        "m1" = m1,
+        "m2" = m2,
+        "d_L" = d_L,
+        "inc" = inc,
+        "fl" = fl,
+        "fu" = fu,
+        "sampling.freq" = sampling.freq
+    )
+    # Output format
+    if (R.ts) {
+        waveforms <-
+            lapply(waveforms, function(x) {
+                ts(
+                    reticulate::py_to_r(x$data),
+                    start = reticulate::py_to_r(x$sample_times[0]),
+                    frequency = reticulate::py_to_r(x$sample_rate)
+                )
+            })
+    }
+    attr(waveforms, "Params") <- Params
+    attr(waveforms, "AntPat") <- AntPat
+    return(waveforms)
 }

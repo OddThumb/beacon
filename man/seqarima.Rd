@@ -2,7 +2,7 @@
 % Please edit documentation in R/seqARIMA.R
 \name{seqarima}
 \alias{seqarima}
-\title{Sequential ARIMA function}
+\title{Apply sequential ARIMA pipeline}
 \usage{
 seqarima(
   ts,
@@ -14,57 +14,37 @@ seqarima(
   ar.aic = TRUE,
   ar.collector = "median",
   ma.collector = "median",
-  return.every = FALSE,
-  elap.t = FALSE,
+  return.step = FALSE,
   verbose = TRUE
 )
 }
 \arguments{
 \item{ts}{A time series (`ts`) object.}
 
-\item{d}{An integer. The order of difference.}
+\item{d}{Differencing order. Use 0 for no differencing, or 'auto' for KPSS-based auto-differencing.}
 
-\item{p}{An integer. The order of AR.}
+\item{p}{AR order. Can be a single integer or a vector for ensemble.}
 
-\item{q}{An integer. The order of MA.}
+\item{q}{MA order. Can be a single integer or a vector for ensemble.}
 
-\item{fl}{A numeric. The frequency lower bound for the band-pass filter.}
+\item{fl}{Lower frequency bound for band-pass filter.}
 
-\item{fu}{A numeric. The frequency upper bound for the band-pass filter.}
+\item{fu}{Upper frequency bound for band-pass filter.}
 
-\item{ar.aic}{A logical (default: TRUE). Whether p is selected by AIC or fixed.}
+\item{ar.aic}{Logical. Whether to use AIC-based AR model selection.}
 
-\item{ar.collector}{A character (default: "median"). A function name for collecting various AR residuals. (one of "mean", "median", or "pca")}
+\item{ar.collector}{Collector for AR ensemble. One of 'mean', 'median', or 'pca'.}
 
-\item{ma.collector}{A character (default: "median"). A function name for collecting various MA models. (one of "mean", "median", or "pca")}
+\item{ma.collector}{Collector for MA ensemble. One of 'mean', 'median', or 'pca'.}
 
-\item{return.every}{A logical (default: FALSE). Whether returns ts of every stage.}
+\item{return.step}{Logical. If TRUE, intermediate stages are returned.}
 
-\item{elap.t}{A logical (default: FALSE). Whether it calculates elapsed time 'elap.t'.}
-
-\item{verbose}{A logical (default: TRUE). Whether it message out about its processing.}
+\item{verbose}{Logical. If TRUE, messages are printed during execution.}
 }
 \value{
-A list.
-     `$x`: A original ts,
-     `$out`: Final result ts,
-     `$DD`: A list of intermediate result of difference,
-     `$AR`: A list of intermediate result of AR,
-     `$MA`: A ts of intermediate result of MA,
-     `$EOA`: A ts of intermediate result of EoA,
-     `$NA.times`: A list with
-         `$all` : time stamps whose values are NA,
-         `$head`: time stamps whose values are NA at the head,
-         `$tail`: time stamps whose values are NA at the tail,
-     with attributes:
-         `$d`: The optimal order of difference,
-         `$p`: The optimal order of AR,
-         `$q`: The order(s) of MA(C),
-         `$ar.collector`: Used collector function for EAR,
-         `$ma.collector`: Used collector function for EoA,
-         `$elap.t`: Elapsed time in second.
-         `$suffix`: Final model name, e.g. "ARIMAC(10|1~10|1)"
+A `ts` object with processed output and meta attributes.
 }
 \description{
-(Difference -> AR -> MA -> band-pass)
+Applies a pipeline of (1) differencing, (2) autoregressive (AR) modeling,
+(3) moving average smoothing, and (4) band-pass filtering.
 }

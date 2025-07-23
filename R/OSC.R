@@ -26,7 +26,7 @@ get_gwosc <- function(
         }
 
         # Try to get information online
-        # Somehow, around 6 PM (KST), GWOSC server has some maintaining time.
+        # Somehow, around 6 PM (KST), GWOSC server gets some maintaining time.
         base_url <- "https://www.gw-openscience.org"
 
         # All events info will be stored as a data frame
@@ -50,9 +50,9 @@ get_gwosc <- function(
     return(return.obj)
 }
 
-#' Get GWTC parameter from the return of get.gwosc()
+#' Get GWTC parameter from the return of get_gwosc()
 #'
-#' @param gwossc.list A data.frame. The return object from get.gwosc()
+#' @param gwossc.list A data.frame. The return object from get_gwosc()
 #' @param source.names A character vector.
 #'                     Source names need to follow the commonName convention.
 #'                     It can be either one character or a vector of source.names.
@@ -110,7 +110,7 @@ download_gwosc <- function(
 
     if (is.null(direct.url)) {
         # Step 1: Get gwosc list
-        step1 <- get.gwosc()
+        step1 <- get_gwosc()
 
         # Step 2: Filter by commonName
         step2 <- step1 |> dplyr::filter(commonName == event_name)

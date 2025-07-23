@@ -2,11 +2,7 @@
 % Please edit documentation in R/seqARIMA.R
 \name{burgar}
 \alias{burgar}
-\title{AR burg method
- This function does not return "asy.var.coef" which takes long computation time
-when `order.max` is very large.
- Also, for calculating 'residual (resid)', custom embed function written in C++
-will be used for minimizing the running time.}
+\title{Fit AR model using modified Burg method}
 \usage{
 burgar(
   x,
@@ -21,35 +17,25 @@ burgar(
 )
 }
 \arguments{
-\item{ic}{A logical or character. If `ic=TRUE`, default AIC computation method
-will be used. Or if `ic="AIC"`, or `ic="BIC"`, the given information
-criteria will be used as its definition.}
+\item{x}{A `ts` object.}
 
-\item{order.max}{A numeric. The maximum order of AR. If `ic=FALSAE`, the model
-of `order.max` will be chosen.}
+\item{ic}{Information criterion: logical or character.}
 
-\item{na.action}{function to be called to handle missing values. Currently,
-via na.action = na.pass, only Yule-Walker method can handle
-missing values which must be consistent within a time point:
-either all variables must be missing or none.}
+\item{order.max}{Maximum AR order.}
 
-\item{demean}{should a mean be estimated during fitting?}
+\item{na.action}{How to handle NA.}
 
-\item{series}{names for the series. Defaults to deparse1(substitute(x)).}
+\item{demean}{Whether to subtract the mean.}
 
-\item{var.method}{A numeric (default: 2). the method to estimate the innovations variance (see ‘Details’).}
+\item{series}{Series name.}
 
-\item{...}{additional arguments for specific methods.}
+\item{var.method}{Method for innovation variance.}
 
-\item{ts}{A time series (`ts`) object.}
+\item{...}{Additional args.}
 }
 \value{
-A list of AR object.
+An `ar` object.
 }
 \description{
-AR burg method
- This function does not return "asy.var.coef" which takes long computation time
-when `order.max` is very large.
- Also, for calculating 'residual (resid)', custom embed function written in C++
-will be used for minimizing the running time.
+Fit AR model using modified Burg method
 }

@@ -3,11 +3,36 @@ Type: Package
 Title: Concise Summary of What the Package Does
 Version: 0.0.1
 Date: 2025-07-22
-Authors@R: person("Your", "Name", role = c("aut", "cre"), email = "your@email.com")
+Authors@R: person("Sangin", "Kim", role = c("aut", "cre"), email = "astrphscst@gmail.com")
 Description: More about what it does (maybe more than one line).
 License: MIT
-Imports: Rcpp (>= 1.1.0), RcppParallel (>= 5.1.10)
 LinkingTo: Rcpp, RcppParallel
 SystemRequirements: GNU make
 Encoding: UTF-8
 RoxygenNote: 7.3.2
+Imports:
+    bspec,
+    curl,
+    fftw,
+    forecast,
+    ggpubr,
+    gsignal,
+    hdf5r,
+    insight,
+    latex2exp,
+    nortest,
+    parallel,
+    pracma,
+    Rcpp (>= 1.1.0), 
+    RcppParallel (>= 5.1.10),
+    reshape2,
+    rlist,
+    scales,
+    signal,
+    tibbletime,
+    tidyverse,
+    tseries,
+    tuneR,
+    viridis
+Suggests:
+    reticulate

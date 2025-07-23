@@ -2,18 +2,18 @@
 % Please edit documentation in R/seqARIMA.R
 \name{extract_pc}
 \alias{extract_pc}
-\title{Extract PC(s)}
+\title{Extract principal component(s) from input}
 \usage{
 extract_pc(x, pc = "PC1")
 }
 \arguments{
-\item{x}{A data frame or a matrix.}
+\item{x}{A data frame or matrix.}
 
-\item{pc}{A character or a vector. Which PCs need to be extract? Naming convension: "PC#" (e.g. PC1, PC23, ...).}
+\item{pc}{A string or vector of PC names (e.g., "PC1").}
 }
 \value{
-A matrix or a vector.
+A matrix or vector of selected components.
 }
 \description{
-Extract PC(s)
+Extract principal component(s) from input
 }

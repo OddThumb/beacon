@@ -1,13 +1,20 @@
-# Denoise ----
-
-#' Get Missing Values (NA) between ts and ref in terms of time stamps
+#' Sequential ARIMA pipeline components
 #'
-#' @param ts A time series (`ts`) object who has NA values.
-#' @param ref A time series (`ts`) object for comparison.
-#' @return A list with
-#'      \code{$all}: time stamps whose values are NA,
-#'      \code{$head}: time stamps whose values are NA at the head,
-#'      \code{$tail}: time stamps whose values are NA at the tail.
+#' This file contains all key components used in the seqarima pipeline,
+#' including differencing, autoregressive (AR) fitting, and moving average (MA) smoothing functions.
+#'
+
+#' Identify missing values in a time series relative to a reference
+#'
+#' @param ts A time series (`ts`) object that may have NA values.
+#' @param ref A reference `ts` object used for comparison.
+#'
+#' @return A list with:
+#' \describe{
+#'   \item{all}{All time stamps with NA in `ts` compared to `ref`}
+#'   \item{head}{NA timestamps at the start of the series}
+#'   \item{tail}{NA timestamps at the end of the series}
+#' }
 #' @export
 get_MissingValues <- function(ts, ref) {
     NA.idx <- is.na(match(time(ref), time(ts)))
@@ -25,11 +32,61 @@ get_MissingValues <- function(ts, ref) {
     NA.times.list
 }
 
-#' Check stationary with KPSS test
+#' Perform PCA with fixed sign for interpretability
 #'
-#' @param ts A time series (`ts`) object.
-#' @param t.seg A numeric (default: 0.5). Time length of each segment in second.
-#' @return A data frame of p.values for both level and trend.
+#' @param x A data frame or matrix.
+#' @param retx,center,scale.,tol,rank.,... Passed to `prcomp()`.
+#'
+#' @return A modified PCA object with signs adjusted.
+#' @export
+apply_pca <- function(
+    x,
+    retx = T,
+    center = F,
+    scale. = F,
+    tol = NULL,
+    rank. = NULL,
+    ...
+) {
+    # Original prcomp
+    pca <- prcomp(
+        x,
+        retx = retx,
+        center = center,
+        scale. = scale.,
+        tol = tol,
+        rank. = rank.,
+        ...
+    )
+
+    # Find the first-row-negative-element's columns and convert them by multiplying -1
+    pca$rotation[, which(pca$rotation[1, ] < 0)] <- -1 *
+        pca$rotation[, which(pca$rotation[1, ] < 0)]
+
+    # Reproduce pca results
+    pca$x <- as.matrix(x) %*% pca$rotation
+    class(pca) <- c(class(pca), "fix_sign")
+
+    return(pca)
+}
+
+#' Extract principal component(s) from input
+#'
+#' @param x A data frame or matrix.
+#' @param pc A string or vector of PC names (e.g., "PC1").
+#'
+#' @return A matrix or vector of selected components.
+#' @export
+extract_pc <- function(x, pc = "PC1") {
+    unname(apply_pca(na.omit(x))$x[, pc])
+}
+
+#' Check for stationarity using the KPSS test across segments
+#'
+#' @param ts A `ts` object.
+#' @param t.seg Segment duration in seconds.
+#'
+#' @return A matrix of KPSS p-values for level and trend.
 #' @export
 check_stationary <- function(ts, t.seg = 0.5) {
     kpss.test <- function(x) {
@@ -59,11 +116,12 @@ check_stationary <- function(ts, t.seg = 0.5) {
     return(p.values)
 }
 
-#' Check stationary with AD test
+#' Check for normality using the Anderson-Darling test
 #'
-#' @param ts A time series (`ts`) object.
-#' @param t.seg A numeric (default: 0.5). Time length of each segment in second.
-#' @return A numeric vector of p.values.
+#' @param ts A `ts` object.
+#' @param t.seg Segment duration in seconds.
+#'
+#' @return A numeric vector of p-values.
 #' @export
 check_normality <- function(ts, t.seg = 0.5) {
     norm.test <- function(x) {
@@ -85,13 +143,16 @@ check_normality <- function(ts, t.seg = 0.5) {
     return(p.values)
 }
 
-#' Automatic difference by KPSS test
+#' Automatically determine differencing order via KPSS
 #'
-#' @param ts A time series (`ts`) object.
-#' @param t.seg A numeric (default: 0.5). Time length of each segment in second.
-#' @return A list with `$d`: the optimal order of difference, `$out`: A differenced time series (`ts`) object, and `$p.values`: A list containing data frames of p-values for KPSS test result.
+#' @param ts A `ts` object.
+#' @param t.seg Segment duration.
+#' @param d_max Maximum differencing order.
+#' @param verbose Whether to print messages.
+#'
+#' @return A list with selected order, differenced output, and KPSS p-values.
 #' @export
-auto.diff <- function(ts, t.seg = 0.5, d_max = 2, verbose = TRUE) {
+auto_diff <- function(ts, t.seg = 0.5, d_max = 2, verbose = TRUE) {
     ret.list <- list()
     pval.list <- list()
     out <- ts
@@ -128,10 +189,78 @@ auto.diff <- function(ts, t.seg = 0.5, d_max = 2, verbose = TRUE) {
     return(ret.list)
 }
 
-#' Get residual from stats::ar
+#' Difference a time series manually or automatically
 #'
+#' @param ts A `ts` object.
+#' @param d Differencing order. Use 0 for none, integer for fixed, 'auto' for automatic.
+#' @param t.seg Segment duration.
+#' @param return.pvals Return KPSS p-values.
+#' @param verbose Whether to print messages.
+#'
+#' @return A differenced `ts` object with metadata.
 #' @export
-residual <- function(x, ar, order, numCores = parallel::detectCores()) {
+Differencing <- function(
+    ts,
+    d,
+    t.seg = 0.5,
+    return.pvals = FALSE,
+    verbose = TRUE
+) {
+    if (missing(d)) {
+        stop(
+            "Argument 'd' must be specified as either 'auto', 0, or a positive integer."
+        )
+    }
+
+    if (identical(d, "auto")) {
+        # KPSS-based auto differencing (unbounded)
+        diff.res <- auto_diff(ts, t.seg = t.seg, verbose = verbose)
+        message_verb("|> d=", diff.res$d, " selected!", v = verbose)
+
+        out <- diff.res$out
+        d.order <- diff.res$d
+        method <- "auto"
+
+        if (return.pvals) {
+            attr(out, "p_values") <- diff.res$p_values
+        }
+
+        attr(out, "unbounded") <- TRUE
+    } else if (is.numeric(d) && d > 0) {
+        # Fixed-order differencing
+        out <- diff(ts, differences = d)
+        d.order <- d
+        method <- "fixed"
+        diff.res <- NULL
+    } else if (identical(d, 0L) || identical(d, 0)) {
+        # Explicit no differencing
+        out <- ts
+        d.order <- 0
+        method <- NULL
+        diff.res <- NULL
+    } else {
+        stop("Argument 'd' must be 'auto', 0, or a positive integer.")
+    }
+
+    # Attach metadata as individual attributes
+    attr(out, "d_order") <- d.order
+    attr(out, "method") <- method
+    attr(out, "diff_res") <- diff.res
+
+    return(out)
+}
+
+
+#' Compute residuals using AR coefficients
+#'
+#' @param x Time series data.
+#' @param ar AR coefficients.
+#' @param numCores Number of CPU cores to use.
+#'
+#' @return Residual time series.
+#' @export
+residual <- function(x, ar, numCores = parallel::detectCores()) {
+    order <- length(ar)
     ts(
         c(
             rep(NA, order),
@@ -142,8 +271,12 @@ residual <- function(x, ar, order, numCores = parallel::detectCores()) {
     )
 }
 
-#' The core function of ar.burg (C++)
+#' AR Burg core (C interface)
 #'
+#' @param x Input series.
+#' @param order.max Maximum AR order.
+#'
+#' @return List with AR coefficient matrix and prediction variances.
 #' @export
 C_Burg <- function(x, order.max) {
     z <- .Call(stats:::C_Burg, x, order.max)
@@ -154,27 +287,18 @@ C_Burg <- function(x, order.max) {
     )
 }
 
-#' AR burg method
-#'  This function does not return "asy.var.coef" which takes long computation time
-#' when `order.max` is very large.
-#'  Also, for calculating 'residual (resid)', custom embed function written in C++
-#' will be used for minimizing the running time.
+#' Fit AR model using modified Burg method
 #'
-#' @param ts         A time series (`ts`) object.
-#' @param ic         A logical or character. If `ic=TRUE`, default AIC computation method
-#'                   will be used. Or if `ic="AIC"`, or `ic="BIC"`, the given information
-#'                   criteria will be used as its definition.
-#' @param order.max  A numeric. The maximum order of AR. If `ic=FALSAE`, the model
-#'                   of `order.max` will be chosen.
-#' @param na.action  function to be called to handle missing values. Currently,
-#'                   via na.action = na.pass, only Yule-Walker method can handle
-#'                   missing values which must be consistent within a time point:
-#'                   either all variables must be missing or none.
-#' @param demean     should a mean be estimated during fitting?
-#' @param series     names for the series. Defaults to deparse1(substitute(x)).
-#' @param var.method A numeric (default: 2). the method to estimate the innovations variance (see ‘Details’).
-#' @param ...	     additional arguments for specific methods.
-#' @return A list of AR object.
+#' @param x A `ts` object.
+#' @param ic Information criterion: logical or character.
+#' @param order.max Maximum AR order.
+#' @param na.action How to handle NA.
+#' @param demean Whether to subtract the mean.
+#' @param series Series name.
+#' @param var.method Method for innovation variance.
+#' @param ... Additional args.
+#'
+#' @return An `ar` object.
 #' @export
 burgar <- function(
     x,
@@ -187,6 +311,18 @@ burgar <- function(
     numCores = NULL,
     ...
 ) {
+    AIC <- function(order.max, vars.pred, n.used) {
+        2 * (0L:order.max) + n.used * log(vars.pred)
+    }
+    BIC <- function(order.max, vars.pred, n.used) {
+        (0L:order.max) * log(n.used) + n.used * log(vars.pred)
+    }
+    FPE <- function(order.max, vars.pred, n.used) {
+        (n.used + ((0L:order.max) + 1)) /
+            (n.used - ((0L:order.max) + 1)) *
+            vars.pred
+    }
+
     if (is.null(series)) {
         series <- deparse1(substitute(x))
     }
@@ -269,21 +405,8 @@ burgar <- function(
             order.max
         }
     } else {
-        ic.fun <- switch(
-            ic,
-            "AIC" = function(order.max, vars.pred, n.used) {
-                2 * (0L:order.max) + n.used * log(vars.pred)
-            },
-            "BIC" = function(order.max, vars.pred, n.used) {
-                (0L:order.max) * log(n.used) + n.used * log(vars.pred)
-            },
-            "FPE" = function(order.max, vars.pred, n.used) {
-                (n.used + ((0L:order.max) + 1)) /
-                    (n.used - ((0L:order.max) + 1)) *
-                    vars.pred
-            }
-        )
-        xic <- ic.fun(order.max, vars.pred, n.used)
+        ic_fun <- switch(ic, "AIC" = AIC, "BIC" = BIC, "FPE" = FPE)
+        xic <- ic_fun(order.max, vars.pred, n.used)
         attr(xic, "ic") <- ic
 
         mic <- min(xic)
@@ -359,44 +482,56 @@ burgar <- function(
     res
 }
 
-#' Simple AR wrapper
+#' Simple wrapper for AR fitting
 #'
-#' @param ts A time series (`ts`) object.
-#' @param ... Additional arguments for 'ar'.
-#' @return A list with `$res: ar(ts, ...)$resid` and `$AR: ar(ts, ...)` result itself.
+#' @param ts A `ts` object.
+#' @param ... Arguments passed to `burgar()`.
+#'
+#' @return Residual `ts` object with metadata.
 #' @export
-ar_resid <- function(ts, ...) {
+sar <- function(ts, ...) {
     AR <- burgar(x = ts, ...)
-    resid <- AR$resid %>% na.omit()
-    return(list("res" = resid, "AR" = AR))
+    resid <- AR$resid |> na.omit()
+
+    attr(resid, 'collector') <- 'single'
+    attr(resid, 'feature') <- AR$ar
+    attr(resid, 'p_order') <- AR$order
+    return(resid)
 }
 
-#' Plot AIC
+#' Plot AIC curve for AR model
 #'
-#' @param ar An AR object.
-#' @return A ggplot object.
+#' @param ar An `ar` object.
+#'
+#' @return A ggplot AIC plot with zoomed-in inset.
 #' @export
 plot_aic <- function(ar) {
-    check.installed('latex2exp')
-
     ar.aic.df <- data.frame(p = seq(0, length(ar$aic) - 1), AIC = ar$aic)
     ar.order <- filter(ar.aic.df, p == ar$order)
 
-    aic.plot <- ggplot(data = ar.aic.df, aes(x = p, y = AIC)) +
-        geom_line(color = 'blue') +
-        geom_point(aes(alpha = ""), data = ar.order, color = 'red', size = 2) +
-        geom_vline(
+    aic.plot <- ggplot2::ggplot(
+        data = ar.aic.df,
+        ggplot2::aes(x = p, y = AIC)
+    ) +
+        ggplot2::geom_line(color = 'blue') +
+        ggplot2::geom_point(
+            ggplot2::aes(alpha = ""),
+            data = ar.order,
+            color = 'red',
+            size = 2
+        ) +
+        ggplot2::geom_vline(
             xintercept = ar.order$p,
             linetype = 'dashed',
             size = 1,
             color = 'red'
         ) +
-        scale_alpha_manual(values = 1) +
-        labs(x = 'AR orders', y = 'AIC') +
-        theme_bw() +
-        theme(
+        ggplot2::scale_alpha_manual(values = 1) +
+        ggplot2::labs(x = 'AR orders', y = 'AIC') +
+        ggplot2::theme_bw() +
+        ggplot2::theme(
             legend.position = 'none',
-            plot.margin = unit(c(0, 1, 1, 1), "lines")
+            plot.margin = ggplot2::unit(c(0, 1, 1, 1), "lines")
         )
 
     plot.xlim <- c(
@@ -405,9 +540,9 @@ plot_aic <- function(ar) {
     )
     plot.ylim <- c(0, ar.order$AIC + 5)
     aic.plot.zoom <- aic.plot +
-        labs(x = NULL, y = NULL) +
-        coord_cartesian(xlim = plot.xlim, ylim = plot.ylim) +
-        annotate(
+        ggplot2::labs(x = NULL, y = NULL) +
+        ggplot2::coord_cartesian(xlim = plot.xlim, ylim = plot.ylim) +
+        ggplot2::annotate(
             'text',
             x = ar.order$p + 0.2,
             y = plot.ylim[2] / 2,
@@ -420,11 +555,11 @@ plot_aic <- function(ar) {
             hjust = 0,
             size = 5
         ) +
-        theme(legend.position = 'none')
+        ggplot2::theme(legend.position = 'none')
 
     aic.plot.final <- aic.plot +
-        geom_rect(
-            aes(
+        ggplot2::geom_rect(
+            ggplot2::aes(
                 xmin = ar.order$p - 500,
                 xmax = ar.order$p + 500,
                 ymin = ar.order$AIC,
@@ -436,8 +571,8 @@ plot_aic <- function(ar) {
             size = 0.3
         ) +
 
-        geom_segment(
-            aes(
+        ggplot2::geom_segment(
+            ggplot2::aes(
                 x = ar.order$p - 500,
                 xend = 5,
                 y = ar.order$AIC,
@@ -447,8 +582,8 @@ plot_aic <- function(ar) {
             size = 0.3
         ) +
 
-        geom_segment(
-            aes(
+        ggplot2::geom_segment(
+            ggplot2::aes(
                 x = ar.order$p - 500,
                 xend = 500,
                 y = plot.ylim[2] + ar.order$AIC,
@@ -458,16 +593,16 @@ plot_aic <- function(ar) {
             size = 0.3
         ) +
 
-        annotation_custom(
-            grob = ggplotGrob(aic.plot.zoom),
+        ggplot2::annotation_custom(
+            grob = ggplot2::ggplotGrob(aic.plot.zoom),
             xmin = log10(5),
             xmax = log10(500),
             ymin = log10(1e1 + ar.order$AIC),
             ymax = log10(5e3 + ar.order$AIC)
         ) +
 
-        geom_rect(
-            aes(
+        ggplot2::eom_rect(
+            ggplot2::aes(
                 xmin = 5,
                 xmax = 500,
                 ymin = 1e1 + ar.order$AIC,
@@ -479,117 +614,29 @@ plot_aic <- function(ar) {
             size = 0.4
         ) +
 
-        scale_x_continuous(expand = c(0, 0), trans = 'log10') +
-        scale_y_continuous(expand = c(0, 0), trans = 'log10') +
-        annotation_logticks()
+        ggplot2::scale_x_continuous(expand = c(0, 0), trans = 'log10') +
+        ggplot2::scale_y_continuous(expand = c(0, 0), trans = 'log10') +
+        ggplot2::annotation_logticks()
 
     return(aic.plot.final)
 }
 
-#' Two-sided Moving Average (MA) smoother
+#' Ensemble AR model fitting across multiple orders
 #'
-#' @param ts A time series (`ts`) object.
-#' @param order An integer for the order of MA.
-#' @param na.rm A logical whether remove NA values or not.
-#' @return A MA smoothed time series (`ts`) object.
+#' @param ts A `ts` object.
+#' @param ps Vector of AR orders.
+#' @param aic Use AIC selection.
+#' @param return.vec Flatten features.
+#' @param return.var Include prediction variance.
+#' @param return.mean Include series mean.
+#' @param collector Aggregation method.
+#' @param ... Additional args passed to `burgar()`.
+#'
+#' @return Residual `ts` object with ensemble features.
 #' @export
-ma <- function(ts, order, na.rm = T) {
-    check.installed('forecast')
-
-    out <- forecast::ma(ts, order, centre = T)
-    if (na.rm) {
-        out <- na.omit(out)
-    }
-
-    return(out)
-}
-
-
-#' Apply PCA
-#'
-#' This function preserves the sign of loadings
-#'
-#' @param x A data frame or a matrix.
-#' @param retx A logical (default: TRUE). See 'prcomp'.
-#' @param center A logical (default: FALSE). See 'prcomp'.
-#' @param scale. A logical (default: FALSE). See 'prcomp'.
-#' @param tol See 'prcomp'.
-#' @param rank. See 'prcomp'.
-#' @param ... Additional arguments for 'prcomp'.
-#' @return PCA object with fixed loadings' sign.
-#' @export
-apply_pca <- function(
-    x,
-    retx = T,
-    center = F,
-    scale. = F,
-    tol = NULL,
-    rank. = NULL,
-    ...
-) {
-    # Original prcomp
-    pca <- prcomp(
-        x,
-        retx = retx,
-        center = center,
-        scale. = scale.,
-        tol = tol,
-        rank. = rank.,
-        ...
-    )
-
-    # Find the first-row-negative-element's columns and convert them by multiplying -1
-    pca$rotation[, which(pca$rotation[1, ] < 0)] <- -1 *
-        pca$rotation[, which(pca$rotation[1, ] < 0)]
-
-    # Reproduce pca results
-    pca$x <- as.matrix(x) %*% pca$rotation
-    class(pca) <- c(class(pca), "fix_sign")
-
-    return(pca)
-}
-
-#' Extract PC(s)
-#'
-#' @param x A data frame or a matrix.
-#' @param pc A character or a vector. Which PCs need to be extract? Naming convension: "PC#" (e.g. PC1, PC23, ...).
-#' @return A matrix or a vector.
-#' @export
-extract_pc <- function(x, pc = "PC1") {
-    unname(apply_pca(na.omit(x))$x[, pc])
-}
-
-#' Ensemble of Averages (EoA)
-#'
-#' @param ts A time series (`ts`) object.
-#' @param qs A vector of length 2 whose first value is lower bound of q and second is upper bound of q for 'ma'.
-#' @param collector A character (default: "median"). A function name for collecting various MA models. (one of "mean", "median", or "pca)
-#' @return A list. \code{$res}: A EoA smoothed time series (`ts`) object. `$df`: A data frame containing various MA(q) along the column.
-#' @export
-eoa <- function(ts, qs, collector = "median") {
-    ret.list <- list()
-
-    mas <- sapply(qs, function(q) ma(ts, q, na.rm = F)) |>
-        ts(start = ti(ts), frequency = frequency(ts))
-    colnames(mas) <- paste("q", qs, sep = "")
-
-    res <- switch(
-        collector,
-        "pca" = extract_pc(mas) %>% tsfy(ref = na.omit(mas[, ncol(mas)])),
-        "mean" = apply(mas, 1, mean) %>% tsfy(ref = mas[, 1]),
-        "median" = apply(mas, 1, median) %>% tsfy(ref = mas[, 1])
-    )
-    attr(res, "collector") <- collector
-
-    ret.list[["df"]] <- mas
-    ret.list[["res"]] <- res
-    return(ret.list)
-}
-
-# Ensemble of AR
 ear <- function(
     ts,
-    ps = c(100, 500, 1000),
+    ps,
     aic = T,
     return.vec = T,
     return.var = T,
@@ -634,7 +681,7 @@ ear <- function(
         }
         ret
     })
-    feat.lis
+
     # Naming features
     for (i in seq_along(psel)) {
         p <- psel[[i]]
@@ -642,7 +689,7 @@ ear <- function(
             newname <- NULL
         } else {
             prefix <- paste0('ar', p)
-            newname <- paste0(prefix, '_', 1:p) #sum(str_detect(names(feat.lis[[i]]), '^ar')))
+            newname <- paste0(prefix, '_', 1:p)
         }
 
         if (return.var) {
@@ -659,177 +706,164 @@ ear <- function(
     }
 
     attr(resid.ens, 'collector') <- collector
-    list(
-        'res' = resid.ens,
-        'feature' = feat.lis,
-        'p.order' = psel,
-        'selected' = order.lis
-    )
+    attr(resid.ens, 'feature') <- feat.lis
+    attr(resid.ens, 'p_order') <- psel
+    return(resid.ens)
 }
 
-# Differencing
-differencing <- function(ts, d = NULL, t.seg = 0.5, kpss = T, verbose = T) {
-    if (is.null(d)) {
-        # Automatic selection of d
-        message_verb("> (1) Difference stage", v = verbose)
-        diff.res <- auto.diff(ts, t.seg = t.seg, verbose = verbose)
-        message_verb("|> d=", diff.res$d, " is selected!", v = verbose)
-
-        out <- diff.res$out
-        DD <- diff.res
-        d.order <- diff.res$d
-    } else if (d == 0) {
-        out <- ts
-        DD <- NULL
-        d.order <- 0
-    } else {
-        if (kpss) {
-            # d_max limited auto.diff
-            message_verb("> (1) Difference stage with d_max=", d, v = verbose)
-            diff.res <- auto.diff(
-                ts,
-                t.seg = t.seg,
-                d_max = d,
-                verbose = verbose
-            )
-            message_verb("|> d=", diff.res$d, " is selected!", v = verbose)
-
-            out <- diff.res$out
-            DD <- diff.res
-            d.order <- diff.res$d
-        } else {
-            # Specific d
-            message_verb("> (1) Difference stage with d=", d, v = verbose)
-            ts <- diff(ts, diff = d)
-
-            out <- ts
-            DD <- NULL
-            d.order <- d
-        }
-    }
-    list("out" = out, "DD" = DD, "d.order" = d.order)
-}
-
-
-# Autoregressive model fitting
-autoregressive <- function(ts, p = NULL, aic = T, verbose = TRUE, ...) {
-    if (length(p) > 1) {
-        # length(p) > 1 : Ensemble of AR (EAR)
-        message_verb(
-            "> (2) EAR stage with p={",
-            paste(p, collapse = ','),
-            "}",
-            v = verbose
+#' Fit AR model using either single or ensemble approach
+#'
+#' @param ts A `ts` object.
+#' @param p AR order(s).
+#' @param aic Use AIC.
+#' @param verbose Verbose output.
+#' @param ... Additional args.
+#'
+#' @return Residual `ts` object with AR metadata.
+#' @export
+Autoregressive <- function(ts, p, aic = TRUE, verbose = TRUE, ...) {
+    if (missing(p)) {
+        stop(
+            "Argument 'p' must be specified as either a single integer or a vector of candidate orders."
         )
-        ar.fit <- ear(ts, ps = p, aic = aic, ...)
-        p.order <- ar.fit$p.order
+    }
+
+    if (length(p) > 1) {
+        ar_res <- ear(ts, ps = p, aic = aic, ...)
+        p_order <- attr(ar_res, 'p_order')
         message_verb(
             "|> p={",
-            paste(p.order, collapse = ', '),
+            paste(p_order, collapse = ', '),
             "} is selected and aggregated by a collector: ",
-            attr(ar.fit$res, 'collector'),
+            attr(ar_res, 'collector'),
             v = verbose
         )
     } else {
         # length(p) == 1 : Single AR
-        message_verb("> (2) AR stage with p_max=", p, v = verbose)
-        ar.res <- ar_resid(ts, ic = aic, order.max = p, ...)
-        p.order <- ar.res$AR$order
-        feature <- c('ar' = ar.res$AR$ar)
-        ar.fit <- list(
-            'res' = ar.res$res,
-            'feature' = feature,
-            'p.selected' = p.order
-        )
-        message_verb("|> p=", p.order, " is selected!", v = verbose)
+        ar_res <- sar(ts, ic = aic, order.max = p, ...)
+        p_order <- attr(ar_res, 'p_order')
+        message_verb("|> p=", p_order, " is selected!", v = verbose)
     }
-    list("AR" = ar.fit, "p.order" = p.order)
+
+    return(ar_res)
 }
 
+#' Two-sided centered Moving Average smoother
+#'
+#' @param ts A `ts` object.
+#' @param order MA order.
+#' @param na.rm Remove NAs.
+#'
+#' @return Smoothed `ts` object.
+#' @export
+ma <- function(ts, order, na.rm = T) {
+    out <- forecast::ma(ts, order, centre = T)
+    if (na.rm) {
+        out <- na.omit(out)
+    }
+    attr(out, 'collector') <- 'single'
+    attr(out, "q_order") <- order
+    return(out)
+}
 
-# Moving-Average (Ensemble of Average)
-movingaverage <- function(ts, q = NULL, verbose = TRUE, ...) {
+#' Apply Ensemble of Averages (EoA)
+#'
+#' @param ts A `ts` object.
+#' @param qs MA orders.
+#' @param collector Aggregation method.
+#'
+#' @return Smoothed `ts` object with MA ensemble metadata.
+#' @export
+eoa <- function(ts, qs, collector = "median") {
+    mas <- sapply(qs, function(q) ma(ts, q, na.rm = F)) |>
+        ts(start = ti(ts), frequency = frequency(ts))
+    colnames(mas) <- paste("q", qs, sep = "")
+
+    res <- switch(
+        collector,
+        "pca" = extract_pc(mas) |> tsfy(ref = na.omit(mas[, ncol(mas)])),
+        "mean" = apply(mas, 1, mean) |> tsfy(ref = mas[, 1]),
+        "median" = apply(mas, 1, median) |> tsfy(ref = mas[, 1])
+    )
+    attr(res, 'collector') <- collector
+    attr(res, 'q_order') <- qs
+    attr(res, 'mas') <- mas
+    return(res)
+}
+
+#' Apply MA or EoA depending on `q`
+#'
+#' @param ts A `ts` object.
+#' @param q MA order(s).
+#' @param verbose Verbose output.
+#' @param ... Additional args passed to `eoa()`.
+#'
+#' @return Smoothed `ts` object.
+#' @export
+MovingAverage <- function(ts, q, verbose = TRUE, ...) {
+    if (missing(q)) {
+        stop(
+            "Argument 'q' must be specified as either a single integer or a vector of candidate orders."
+        )
+    }
+
     if (length(q) > 1) {
-        # length(p) > 1 : Ensemble of Average (EoA)
+        # Ensemble of Average (EoA)
         message_verb("> (3) EoA (Ensemble of Averages) stage", v = verbose)
-        eoa <- eoa(ts, q, ...)
-        out <- eoa$res
-        q.order <- q
+        ma_res <- eoa(ts, q, ...)
+        q_order <- attr(ma_res, 'q_order')
         message_verb(
             "|> q={",
-            paste(q.order, collapse = ','),
+            paste(q_order, collapse = ','),
             "} by a collector: ",
-            attr(out, "collector"),
+            attr(ma_res, "collector"),
             v = verbose
         )
     } else {
-        # length(q) == 1 : Single MA
+        # Single MA
         message_verb("> (3) MA stage with q=", q, v = verbose)
-        out <- ma(ts, q)
-        q.order <- q
-        message_verb("|> q=", q.order, v = verbose)
+        ma_res <- ma(ts, q)
+        message_verb("|> q=", attr(ma_res, 'q_order'), v = verbose)
     }
-    list("x_eoa" = out, "q.order" = q.order)
+
+    return(ma_res)
 }
 
-#' Sequential ARIMA function
+#' Apply sequential ARIMA pipeline
 #'
-#' (Difference -> AR -> MA -> band-pass)
+#' Applies a pipeline of (1) differencing, (2) autoregressive (AR) modeling,
+#' (3) moving average smoothing, and (4) band-pass filtering.
 #'
-#' @param ts           A time series (`ts`) object.
-#' @param d            An integer. The order of difference.
-#' @param p            An integer. The order of AR.
-#' @param q            An integer. The order of MA.
-#' @param fl           A numeric. The frequency lower bound for the band-pass filter.
-#' @param fu           A numeric. The frequency upper bound for the band-pass filter.
-#' @param ar.aic       A logical (default: TRUE). Whether p is selected by AIC or fixed.
-#' @param ar.collector A character (default: "median"). A function name for collecting various AR residuals. (one of "mean", "median", or "pca")
-#' @param ma.collector A character (default: "median"). A function name for collecting various MA models. (one of "mean", "median", or "pca")
-#' @param return.every A logical (default: FALSE). Whether returns ts of every stage.
-#' @param elap.t       A logical (default: FALSE). Whether it calculates elapsed time 'elap.t'.
-#' @param verbose      A logical (default: TRUE). Whether it message out about its processing.
-#' @return A list.
-#'      `$x`: A original ts,
-#'      `$out`: Final result ts,
-#'      `$DD`: A list of intermediate result of difference,
-#'      `$AR`: A list of intermediate result of AR,
-#'      `$MA`: A ts of intermediate result of MA,
-#'      `$EOA`: A ts of intermediate result of EoA,
-#'      `$NA.times`: A list with
-#'          `$all` : time stamps whose values are NA,
-#'          `$head`: time stamps whose values are NA at the head,
-#'          `$tail`: time stamps whose values are NA at the tail,
-#'      with attributes:
-#'          `$d`: The optimal order of difference,
-#'          `$p`: The optimal order of AR,
-#'          `$q`: The order(s) of MA(C),
-#'          `$ar.collector`: Used collector function for EAR,
-#'          `$ma.collector`: Used collector function for EoA,
-#'          `$elap.t`: Elapsed time in second.
-#'          `$suffix`: Final model name, e.g. "ARIMAC(10|1~10|1)"
+#' @param ts A time series (`ts`) object.
+#' @param d Differencing order. Use 0 for no differencing, or 'auto' for KPSS-based auto-differencing.
+#' @param p AR order. Can be a single integer or a vector for ensemble.
+#' @param q MA order. Can be a single integer or a vector for ensemble.
+#' @param fl Lower frequency bound for band-pass filter.
+#' @param fu Upper frequency bound for band-pass filter.
+#' @param ar.aic Logical. Whether to use AIC-based AR model selection.
+#' @param ar.collector Collector for AR ensemble. One of 'mean', 'median', or 'pca'.
+#' @param ma.collector Collector for MA ensemble. One of 'mean', 'median', or 'pca'.
+#' @param return.step Logical. If TRUE, intermediate stages are returned.
+#' @param verbose Logical. If TRUE, messages are printed during execution.
+#'
+#' @return A `ts` object with processed output and meta attributes.
 #' @export
 seqarima <- function(
-    ts, # Input time series (ts object)
+    ts,
     d = NULL,
     p = NULL,
-    q = NULL, # p, q, d
+    q = NULL,
     fl = NULL,
-    fu = NULL, # For Band-pass filter
-    ar.aic = TRUE, # Select AR model by AIC
-    ar.collector = "median", # PCA, median, mean
-    ma.collector = "median", # PCA, median, mean
-    return.every = FALSE, #
-    elap.t = FALSE, # Miscellaneous options
-    verbose = TRUE # Miscellaneous options
+    fu = NULL,
+    ar.aic = TRUE,
+    ar.collector = "median",
+    ma.collector = "median",
+    return.step = FALSE,
+    verbose = TRUE
 ) {
     # Argument matching
     ar.collector <- match.arg(ar.collector, c("mean", "median", "pca"))
     ma.collector <- match.arg(ma.collector, c("mean", "median", "pca"))
-
-    if (elap.t) {
-        check.installed('tictoc')
-        tictoc::tic() # Start measuring execution time
-    }
 
     message_verb("> Running seqarima...", v = verbose)
 
@@ -838,82 +872,76 @@ seqarima <- function(
         stop("Error) Input object type is not 'ts'")
     }
 
-    # Initializing
     sampling.freq <- frequency(ts)
     return.list <- list()
-    return.list[['x']] <- ts
+    if (return.step) {
+        return.list[['steps']][['input']] <- ts
+    }
+    out <- ts
 
     # 1) Differencing
-    diff.res <- differencing(ts, d = d, verbose = verbose)
-    x_d <- diff.res$out
-    if (return.every) {
-        return.list[['steps']][['DD']] <- diff.res$DD
+    if (!is.null(d)) {
+        message_verb("> (1) Difference stage", v = verbose)
+        x_d <- Differencing(out, d = d, verbose = verbose)
+        return.list[['d']] <- attr(x_d, 'd_order')
+        if (return.step) {
+            return.list[['steps']][['I']] <- x_d
+        }
+        out <- x_d
     }
-    attr(return.list, 'd') <- diff.res$d.order
-    out <- x_d
 
     # 2) Auto-Regressive (EAR)
     if (!is.null(p)) {
-        ar.res <- autoregressive(
+        message_verb("> (2) Autoregressive stage", v = verbose)
+        x_ar <- Autoregressive(
             ts = out,
             p = p,
             aic = ar.aic,
             verbose = verbose,
             collector = ar.collector
         )
-        x_r <- ar.res$AR$res
-        if (return.every) {
-            return.list[['steps']][['AR']] <- ar.res$AR
+        return.list[['ar_feat']] <- attr(x_ar, 'feature')
+        return.list[['p']] <- attr(x_ar, 'p_order')
+        if (return.step) {
+            return.list[['steps']][['AR']] <- x_ar
         }
-        return.list[['feature']] <- ar.res$AR$feature
-        attr(return.list, 'p') <- ar.res$AR$p.order
-        out <- x_r
+        out <- x_ar
     }
 
     # 3) Moving Average (EoA)
     if (!is.null(q)) {
-        ma.res <- movingaverage(
+        x_ma <- MovingAverage(
             ts = out,
             q = q,
             verbose = verbose,
             collector = ma.collector
         )
-        x_eoa <- ma.res$x_eoa
-        if (return.every) {
-            return.list[['steps']][['MA']] <- x_eoa
+        if (return.step) {
+            return.list[['steps']][['MA']] <- x_ma
         }
-        attr(return.list, 'q') <- ma.res$q.order
-        out <- x_eoa
+        return.list[['q']] <- attr(x_ma, 'q_order')
+        out <- x_ma
     }
 
     # 4) Band-pass filter
     if ((fl != 0 || fu != 0) && (!is.null(fl) || !is.null(fu))) {
         message_verb("> (4) Pass filter stage", v = verbose)
 
-        x_bp <- bandpass(out, fl, fu, verb = verbose)
-        attr(x_bp, "type") <- NULL
-        attr(x_bp, "order") <- NULL
-        if (return.every) {
+        x_bp <- BandPass(out, fl, fu, verb = verbose)
+        if (return.step) {
             return.list[['steps']][['BP']] <- x_bp
         }
-        attr(return.list, 'lower.freq') <- fl
-        attr(return.list, 'upper.freq') <- fu
+        return.list[['cutoff']] <- attr(x_bp, 'cutoff')
         out <- x_bp
-    }
-    return.list[['out']] <- out
-
-    # Execution time measuring
-    if (elap.t) {
-        tctc <- tictoc::toc(quiet = T) # Finish measuring execution time
-        attr(return.list, 'elap.t') <- (tctc$toc - tctc$tic)[[1]] # Store elap.t as an attribute
-        message_verb("> ", tctc$callback_msg, v = verbose)
     }
 
     # Also return missing values caused by ARIMA
     return.list[['NA.times']] <- get_MissingValues(
-        ts = return.list[['out']],
+        ts = out,
         ref = return.list[['x']]
     )
 
-    return(return.list)
+    attr(out, 'meta') <- return.list
+
+    return(out)
 }

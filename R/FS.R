@@ -138,9 +138,9 @@ plot.fs <- function(
     }
 
     fs_df <- data.frame('freqs' = freqs(fs), 'PSD' = abs(fs))
-
+    devtools
     # plot
-    pl <- ggplot2::ggplot(fs_df, aes(x = freqs, y = PSD)) +
+    pl <- ggplot2::ggplot(fs_df, ggplot2::aes(x = freqs, y = PSD)) +
         ggplot2::geom_line()
 
     # log axis vs lin axis

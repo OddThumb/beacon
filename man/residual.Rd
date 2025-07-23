@@ -2,10 +2,20 @@
 % Please edit documentation in R/seqARIMA.R
 \name{residual}
 \alias{residual}
-\title{Get residual from stats::ar}
+\title{Compute residuals using AR coefficients}
 \usage{
-residual(x, ar, order, numCores = parallel::detectCores())
+residual(x, ar, numCores = parallel::detectCores())
+}
+\arguments{
+\item{x}{Time series data.}
+
+\item{ar}{AR coefficients.}
+
+\item{numCores}{Number of CPU cores to use.}
+}
+\value{
+Residual time series.
 }
 \description{
-Get residual from stats::ar
+Compute residuals using AR coefficients
 }
