@@ -288,7 +288,7 @@ qtransform <- function(
         frange <- c(30, as.integer(frequency(ts) / 2 * 8))
     }
 
-    fseries <- to.fs(ts)
+    fseries <- to_fs(ts)
     q_base <- qtiling(fseries, qrange, frange, mismatch)
     qpl.res <- qplane(q_base, fseries, return_complex = return_complex)
     times <- qpl.res$times
