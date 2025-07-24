@@ -305,7 +305,11 @@ plot_oscillo <- function(
             labels = scales::label_number(scale = 1 / 10^(value.order))
         ) +
         ggplot2::labs(
-            x = ifelse(is.null(tzero), "Time (s)", TeX('Time - $t_0$ (s)')),
+            x = ifelse(
+                is.null(tzero),
+                "Time (s)",
+                latex2exp::TeX('Time - $t_0$ (s)')
+            ),
             y = latex2exp::TeX(paste('$h~(10^{', value.order, '})$', sep = '')),
             title = title
         ) +
@@ -393,7 +397,11 @@ plot_oscillo_multi <- function(
             scales = facet.scale
         ) +
         ggplot2::labs(
-            x = ifelse(is.null(tzero), "Time (s)", TeX('Time - $t_0$ (s)')),
+            x = ifelse(
+                is.null(tzero),
+                "Time (s)",
+                latex2exp::TeX('Time - $t_0$ (s)')
+            ),
             y = latex2exp::TeX(paste('$h~(10^{', value.order, '})$', sep = '')),
             title = title
         ) +
@@ -596,7 +604,7 @@ plot_spectro <- function(
         ) +
         ggplot2::scale_fill_gradientn(colors = specColorPal) +
         ggplot2::labs(
-            x = TeX('Time - $t_0$ (s)'),
+            x = latex2exp::TeX('Time - $t_0$ (s)'),
             y = 'Frequency (Hz)',
             fill = 'Normalized Power',
             title = NULL
@@ -736,8 +744,8 @@ plot_spectro <- function(
             limits = limiting
         ) +
         ggplot2::labs(
-            x = TeX('Time - $t_0$ (s)'),
-            y = TeX(paste('$h~(10^{', value.order, '})$', sep = '')),
+            x = latex2exp::TeX('Time - $t_0$ (s)'),
+            y = latex2exp::TeX(paste('$h~(10^{', value.order, '})$', sep = '')),
             title = NULL
         ) +
         ggplot2::theme_bw() +
