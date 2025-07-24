@@ -963,7 +963,7 @@ plot_anomalies_multi <- function(anom.det, ...) {
 #' Plot lambda values over time
 #'
 #' @param res.net A named list of detector results, each including $lamb with lambda statistics.
-#' @param lambda One of "a" or "c", indicating $\lambda_a$ or $\lambda_c$ (default: "a").
+#' @param lambda One of "a" or "c", indicating \eqn{\lambda_a} or \eqn{\lambda_c} (default: "a").
 #' @param chunk_len Chunk duration in seconds for time axis.
 #' @param t_from Optional origin time to annotate time axis.
 #' @param ... Additional arguments (currently unused).

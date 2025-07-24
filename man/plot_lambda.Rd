@@ -9,7 +9,7 @@ plot_lambda(res.net, lambda = c("a", "c"), chunk_len = 1, t_from = NULL, ...)
 \arguments{
 \item{res.net}{A named list of detector results, each including $lamb with lambda statistics.}
 
-\item{lambda}{One of "a" or "c", indicating $\lambda_a$ or $\lambda_c$ (default: "a").}
+\item{lambda}{One of "a" or "c", indicating \eqn{\lambda_a} or \eqn{\lambda_c} (default: "a").}
 
 \item{chunk_len}{Chunk duration in seconds for time axis.}
 

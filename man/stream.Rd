@@ -22,7 +22,7 @@ A named list containing:
   \item{\code{coinc.lis}}{List of coincidence analysis results per batch.}
   \item{\code{model}}{Final per-detector accumulated statistics (i.e., last \code{ustat}).}
   \item{\code{arch_params}}{The configuration object used in the run.}
-  \item{\code{lambda_plot}}{List of plots for $\lambda_a$ and $\lambda_c$.}
+  \item{\code{lambda_plot}}{List of plots for \eqn{\lambda_a} and \eqn{\lambda_c}.}
   \item{\code{summary}}{Final per-detector statistical summary as a data.frame.}
   \item{\code{eta}}{List of elapsed times (in seconds) for each batch.}
 }
