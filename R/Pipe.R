@@ -794,9 +794,9 @@ arch <- function(ts, params) {
   # Run seqARIMA
   deno <- seqarima(
     ts,
-    d = params$d_max,
-    p = params$p_max,
-    q = params$q_max,
+    d = params$d,
+    p = params$p,
+    q = params$q,
     fl = params$fl,
     fu = params$fu,
     verbose = F
@@ -816,7 +816,7 @@ arch <- function(ts, params) {
 
   # Run DBSCAN
   anom <- run_dbscan(anom, eps = params$eps)
-  anom <- dplyr::left_join(anom, as_tbt(deno$x, val_col = 'raw'), by = 'time')
+  anom <- dplyr::left_join(anom, as_tbt(deno, val_col = 'raw'), by = 'time')
   anom <- dplyr::relocate(anom, anomaly, .before = cluster)
   anom <- dplyr::relocate(anom, raw, .before = observed)
   return(anom)
@@ -1858,7 +1858,8 @@ stream <- function(
         prev_batch = prev_batch,
         res.net = res.net,
         coinc.lis = coinc.lis,
-        arch_params = arch_params
+        arch_params = arch_params,
+        debug = T
       )
     })
   }
