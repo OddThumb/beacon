@@ -1108,9 +1108,10 @@ init_pipe <- function(dets = c('H1', 'L1')) {
     res.net[[det]] <- res.det
   }
 
-  assign("prev_batch", prev_batch, envir = parent.frame())
-  assign("res.net", res.net, envir = parent.frame())
-  assign("coinc.lis", list(), envir = parent.frame())
+  #assign("prev_batch", prev_batch, envir = parent.frame())
+  #assign("res.net", res.net, envir = parent.frame())
+  #assign("coinc.lis", list(), envir = parent.frame())
+  list(prev_batch, res.net, coinc.lis)
 }
 
 #' Compute anomaly cluster statistics
