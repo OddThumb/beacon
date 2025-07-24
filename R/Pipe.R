@@ -1111,7 +1111,7 @@ init_pipe <- function(dets = c('H1', 'L1')) {
   #assign("prev_batch", prev_batch, envir = parent.frame())
   #assign("res.net", res.net, envir = parent.frame())
   #assign("coinc.lis", list(), envir = parent.frame())
-  list(prev_batch, res.net, coinc.lis)
+  list(prev_batch, res.net, list())
 }
 
 #' Compute anomaly cluster statistics
