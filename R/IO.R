@@ -1,3 +1,41 @@
+#' Custom print method for time series with dqmask
+#'
+#' Prints a time series object that includes a \code{dqmask} attribute,
+#' while suppressing the full output of the \code{dqmask} for clarity.
+#' A summary message is shown instead to indicate its presence and structure.
+#'
+#' This method is triggered automatically for objects with class \code{"dq"},
+#' and is designed to wrap around standard \code{ts} or \code{mts} objects.
+#'
+#' @param x An object of class \code{"dq"}, typically a \code{ts} or \code{mts}
+#'   object with an additional \code{dqmask} attribute attached.
+#' @param ... Additional arguments passed to the default \code{print} method.
+#'
+#' @return Invisibly returns \code{x}, printed to the console with \code{dqmask}
+#'   content hidden.
+print.dq <- function(x, ...) {
+    # remove dqmask for clean printing
+    x2 <- x
+    dqmask <- attr(x2, "dqmask")
+    attr(x2, "dqmask") <- NULL
+
+    # delegate to ts printing
+    NextMethod("print", x2, ...)
+
+    # informative dqmask summary
+    if (!is.null(dqmask)) {
+        if (is.matrix(dqmask)) {
+            d <- dim(dqmask)
+            cat(sprintf(
+                "\n[dqmask: mts object with %d series × %d time points — hidden]\n",
+                d[2], d[1]
+            ))
+        } else {
+            cat(sprintf("\n[dqmask: ts object with %d time points — hidden]\n", length(dqmask)))
+        }
+    }
+}
+
 #' Read HDF5 Time Series Data with Data Quality Mask
 #'
 #' Reads a single-channel strain data from an HDF5 file along with its DQ mask.
@@ -41,6 +79,7 @@ read_H5 <- function(file, sampling.freq, dq.level = "BURST_CAT2") {
         }
         attr(dqmask, "level") <- dq.level
         attr(res, "dqmask") <- dqmask
+        class(res) <- c(class(res), "dq")
     }
     tmp$close_all()
 
