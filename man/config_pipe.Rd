@@ -4,7 +4,7 @@
 \alias{config_pipe}
 \title{Get default pipeline configuration}
 \usage{
-config_pipe(replace = NULL)
+config_pipe(t_batch = 1L, replace = NULL)
 }
 \arguments{
 \item{replace}{Optional named list to override default values.}

@@ -39,8 +39,8 @@ anomaly detection via \code{anomaly()}, and clustering of anomalies via \code{ru
 \examples{
 # Generate synthetic time series
 fs <- 1024
-t <- seq(0, 1, by = 1/fs)
-x <- sin(2*pi*60*t) + rnorm(length(t), sd = 0.5)
+t <- seq(0, 1, by = 1 / fs)
+x <- sin(2 * pi * 60 * t) + rnorm(length(t), sd = 0.5)
 ts_obj <- ts(x, start = t[1], frequency = fs)
 
 # Get default parameter set

@@ -31,8 +31,8 @@ and aligned with the corresponding time range of each batch.
 \examples{
 \dontrun{
 batched <- batching(my_ts, t_bch = 2)
-length(batched)  # number of batches
-attr(batched[[1]], "dqmask")  # DQ mask for first batch
+length(batched) # number of batches
+attr(batched[[1]], "dqmask") # DQ mask for first batch
 }
 
 }

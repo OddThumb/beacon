@@ -48,12 +48,12 @@ The pipeline includes:
 \examples{
 \dontrun{
 # Assume you have curr_batch and prev_batch as ts objects
-dets <- c('H1', 'L1')
+dets <- c("H1", "L1")
 arch_params <- config_pipe()
 init <- init_pipe(dets = dets)
 prev_batch <- init[[1]]
 res.net <- init[[2]]
 
-result <- pipe(curr_batch, prev_batch[['H1']], res.net[['H1']], arch_params)
+result <- pipe(curr_batch, prev_batch[["H1"]], res.net[["H1"]], arch_params)
 }
 }

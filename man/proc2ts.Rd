@@ -23,7 +23,7 @@ Constructs a \code{ts} object from a data frame containing time and value column
 }
 \examples{
 \dontrun{
-df <- data.frame(GPS = 1000000000 + 0:(4095)/4096, observed = rnorm(4096))
+df <- data.frame(GPS = 1000000000 + 0:(4095) / 4096, observed = rnorm(4096))
 ts_obj <- proc2ts(df)
 }
 

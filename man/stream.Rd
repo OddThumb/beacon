@@ -45,10 +45,10 @@ The output \code{model} can be reused as \code{use_model} for transfer learning.
 }
 \examples{
 \dontrun{
-  # Assume batch_set and arch_params are prepared
-  result <- stream(batch_set, arch_params)
-  result$summary   # Show summary statistics
-  result$model     # Save model for reuse
+# Assume batch_set and arch_params are prepared
+result <- stream(batch_set, arch_params)
+result$summary # Show summary statistics
+result$model # Save model for reuse
 }
 
 }

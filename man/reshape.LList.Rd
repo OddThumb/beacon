@@ -19,8 +19,8 @@ but implemented in base R with minimal code.
 }
 \examples{
 x <- list(
-  list(a = 1, b = 2),
-  list(a = 3, b = 4)
+    list(a = 1, b = 2),
+    list(a = 3, b = 4)
 )
 reshape.LList(x)
 # Returns: list(a = list(1, 3), b = list(2, 4))
