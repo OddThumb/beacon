@@ -11,23 +11,22 @@
 #'
 #' @examples
 #' \dontrun{
-#' df <- data.frame(GPS = 1000000000 + 0:(4095)/4096, observed = rnorm(4096))
+#' df <- data.frame(GPS = 1000000000 + 0:(4095) / 4096, observed = rnorm(4096))
 #' ts_obj <- proc2ts(df)
 #' }
 #'
 #' @seealso \code{\link{ts}}
 #' @export
 proc2ts <- function(
-  proc.df,
-  val_col = 'observed',
-  time_col = 'GPS',
-  frequency = 4096
-) {
-  ts(
-    proc.df[, val_col, drop = T],
-    start = proc.df[1, time_col],
-    frequency = 4096
-  )
+    proc.df,
+    val_col = "observed",
+    time_col = "GPS",
+    frequency = 4096) {
+    ts(
+        proc.df[, val_col, drop = T],
+        start = proc.df[1, time_col],
+        frequency = 4096
+    )
 }
 
 #' Reshape a list-of-lists (LList) by transposing elements
@@ -42,18 +41,18 @@ proc2ts <- function(
 #'
 #' @examples
 #' x <- list(
-#'   list(a = 1, b = 2),
-#'   list(a = 3, b = 4)
+#'     list(a = 1, b = 2),
+#'     list(a = 3, b = 4)
 #' )
 #' reshape.LList(x)
 #' # Returns: list(a = list(1, 3), b = list(2, 4))
 #'
 #' @export
 reshape.LList <- function(list) {
-  # Same result as purrr::list_transpose()
-  # But shorter codes
-  nm <- el(lapply(list, names))
-  setNames(lapply(nm, \(i) lapply(list, '[[', i)), nm)
+    # Same result as purrr::list_transpose()
+    # But shorter codes
+    nm <- el(lapply(list, names))
+    setNames(lapply(nm, \(i) lapply(list, "[[", i)), nm)
 }
 
 #' Compute temporal overlap for ARIMA-based filtering
@@ -80,23 +79,23 @@ reshape.LList <- function(list) {
 #'
 #' @export
 tr_overlap <- function(d, p, q, split = F) {
-  max.d <- max(d)
-  max.p <- max(p)
-  max.q <- max(q)
-  if ((max.q %% 2) == 0) {
-    # Even case
-    Mh <- max.d + max.p + max.q / 2
-    Mt <- max.q / 2
-  } else {
-    # Odd case
-    Mh <- max.d + max.p + (max.q - 1) / 2
-    Mt <- (max.q - 1) / 2
-  }
-  if (split) {
-    return(c('Mh' = Mh, 'Mt' = Mt))
-  } else {
-    return(Mh + Mt)
-  }
+    max.d <- max(d)
+    max.p <- max(p)
+    max.q <- max(q)
+    if ((max.q %% 2) == 0) {
+        # Even case
+        Mh <- max.d + max.p + max.q / 2
+        Mt <- max.q / 2
+    } else {
+        # Odd case
+        Mh <- max.d + max.p + (max.q - 1) / 2
+        Mt <- (max.q - 1) / 2
+    }
+    if (split) {
+        return(c("Mh" = Mh, "Mt" = Mt))
+    } else {
+        return(Mh + Mt)
+    }
 }
 
 #' Split a time series into fixed-length batches
@@ -121,59 +120,59 @@ tr_overlap <- function(d, p, q, split = F) {
 #' @examples
 #' \dontrun{
 #' batched <- batching(my_ts, t_bch = 2)
-#' length(batched)  # number of batches
-#' attr(batched[[1]], "dqmask")  # DQ mask for first batch
+#' length(batched) # number of batches
+#' attr(batched[[1]], "dqmask") # DQ mask for first batch
 #' }
 #'
 #' @seealso \code{\link{window_to}}, \code{\link{tl}}
 #' @export
 batching <- function(ts, t_bch = 1, has.DQ = T) {
-  batching.dq <- function(dqmask, n_bch, dq.level) {
-    if (is.null(dim(dqmask))) {
-      ind.split <- split(
-        seq_along(dqmask),
-        cut(seq_along(dqmask), breaks = n_bch, labels = F)
-      )
-    } else {
-      ind.split <- split(
-        seq(nrow(dqmask)),
-        cut(seq(nrow(dqmask)), breaks = n_bch, labels = F)
-      )
+    batching.dq <- function(dqmask, n_bch, dq.level) {
+        if (is.null(dim(dqmask))) {
+            ind.split <- split(
+                seq_along(dqmask),
+                cut(seq_along(dqmask), breaks = n_bch, labels = F)
+            )
+        } else {
+            ind.split <- split(
+                seq(nrow(dqmask)),
+                cut(seq(nrow(dqmask)), breaks = n_bch, labels = F)
+            )
+        }
+
+        invisible(lapply(seq(n_bch), function(ind) {
+            ind.dq <- ind.split[[ind]]
+            if (length(ind.dq) == 1) {
+                time_dqmask <- time(dqmask)[c(ind.dq, ind.dq)]
+            } else {
+                time_dqmask <- time(dqmask)[ind.dq]
+            }
+            window_to(dqmask, vr(time_dqmask))
+        }))
     }
+    n_bch <- round(tl(ts) / t_bch)
+    ind.split <- split(
+        seq_along(ts),
+        cut(seq_along(ts), breaks = n_bch, labels = F)
+    )
+    time.stamp <- time(ts)
+    batch <- lapply(ind.split, function(ind) {
+        ts(ts[ind], start = time.stamp[ind[1]], frequency = frequency(ts))
+    })
+    names(batch) <- paste0("batch", sprintf("%04d", seq(n_bch)))
 
-    invisible(lapply(seq(n_bch), function(ind) {
-      ind.dq <- ind.split[[ind]]
-      if (length(ind.dq) == 1) {
-        time_dqmask <- time(dqmask)[c(ind.dq, ind.dq)]
-      } else {
-        time_dqmask <- time(dqmask)[ind.dq]
-      }
-      window_to(dqmask, vr(time_dqmask))
-    }))
-  }
-  n_bch <- round(tl(ts) / t_bch)
-  ind.split <- split(
-    seq_along(ts),
-    cut(seq_along(ts), breaks = n_bch, labels = F)
-  )
-  time.stamp <- time(ts)
-  batch <- lapply(ind.split, function(ind) {
-    ts(ts[ind], start = time.stamp[ind[1]], frequency = frequency(ts))
-  })
-  names(batch) <- paste0("batch", sprintf("%04d", seq(n_bch)))
+    if (has.DQ) {
+        # Add dqmask attributes
+        dqmask <- attr(ts, "dqmask")
+        dq.level <- attr(attr(ts, "dqmask"), "level")
+        batch.dq <- batching.dq(dqmask, n_bch, dq.level)
 
-  if (has.DQ) {
-    # Add dqmask attributes
-    dqmask <- attr(ts, 'dqmask')
-    dq.level <- attr(attr(ts, 'dqmask'), 'level')
-    batch.dq <- batching.dq(dqmask, n_bch, dq.level)
-
-    invisible(lapply(seq(n_bch), function(ind) {
-      attr(batch[[ind]], 'dqmask') <<- batch.dq[[ind]]
-      attr(batch[[ind]], 'dq.lev') <<- attr(dqmask, 'level')
-    }))
-  }
-  batch
+        invisible(lapply(seq(n_bch), function(ind) {
+            attr(batch[[ind]], "dqmask") <<- batch.dq[[ind]]
+            attr(batch[[ind]], "dq.lev") <<- attr(dqmask, "level")
+        }))
+    }
+    batch
 }
 
 # Within anomaly()
@@ -188,18 +187,18 @@ batching <- function(ts, t_bch = 1, has.DQ = T) {
 #' @param fac.t A numeric multiplier (default: 10) for the trend window length.
 #'
 decomp_freq_trend <- function(ts, fac.f = 2, fac.t = 10, ...) {
-  acf.test <- acf(ts, plot = F, ...)
+    acf.test <- acf(ts, plot = F, ...)
 
-  # trend criteria
-  trend.crit <- acf.test$lag[tail(
-    which(abs(acf.test$acf) > acf.test$white95ci),
-    1L
-  )]
+    # trend criteria
+    trend.crit <- acf.test$lag[tail(
+        which(abs(acf.test$acf) > acf.test$white95ci),
+        1L
+    )]
 
-  decomp_freq <- c(trunc(tail(acf.test$lag, 1L) * trend.crit * fac.f)) #  2 times longer than the trend criteria
-  decomp_trend <- c(trunc(tail(acf.test$lag, 1L) * trend.crit * fac.t)) # 10 times longer than the trend criteria
+    decomp_freq <- c(trunc(tail(acf.test$lag, 1L) * trend.crit * fac.f)) #  2 times longer than the trend criteria
+    decomp_trend <- c(trunc(tail(acf.test$lag, 1L) * trend.crit * fac.t)) # 10 times longer than the trend criteria
 
-  return(list('freq' = decomp_freq, 'trend' = decomp_trend))
+    return(list("freq" = decomp_freq, "trend" = decomp_trend))
 }
 
 #' Identify outliers using robust IQR method
@@ -240,108 +239,104 @@ decomp_freq_trend <- function(ts, fac.f = 2, fac.t = 10, ...) {
 #' \url{https://business-science.github.io/anomalize/index.html}
 #'
 iqr2 <- function(x, alpha = 0.05, max_anoms = 0.2, verbose = FALSE) {
-  quantile_x <- stats::quantile(x, prob = c(0.25, 0.75), na.rm = TRUE)
-  iq_range <- quantile_x[[2]] - quantile_x[[1]]
-  limits <- quantile_x + (0.15 / alpha) * iq_range * c(-1, 1)
+    quantile_x <- stats::quantile(x, prob = c(0.25, 0.75), na.rm = TRUE)
+    iq_range <- quantile_x[[2]] - quantile_x[[1]]
+    limits <- quantile_x + (0.15 / alpha) * iq_range * c(-1, 1)
 
-  vals_tbl <- tibble::tibble(value = x)
-  vals_tbl <- tibble::rownames_to_column(vals_tbl, var = "index")
-  vals_tbl <- dplyr::mutate(
-    vals_tbl,
-    limit_lower = limits[1],
-    limit_upper = limits[2],
-    abs_diff_lower = ifelse(value <= limit_lower, abs(value - limit_lower), 0),
-    abs_diff_upper = ifelse(value >= limit_upper, abs(value - limit_upper), 0),
-    max_abs_diff = ifelse(
-      abs_diff_lower > abs_diff_upper,
-      abs_diff_lower,
-      abs_diff_upper
+    vals_tbl <- tibble::tibble(value = x)
+    vals_tbl <- tibble::rownames_to_column(vals_tbl, var = "index")
+    vals_tbl <- dplyr::mutate(
+        vals_tbl,
+        limit_lower = limits[1],
+        limit_upper = limits[2],
+        abs_diff_lower = ifelse(value <= limit_lower, abs(value - limit_lower), 0),
+        abs_diff_upper = ifelse(value >= limit_upper, abs(value - limit_upper), 0),
+        max_abs_diff = ifelse(
+            abs_diff_lower > abs_diff_upper,
+            abs_diff_lower,
+            abs_diff_upper
+        )
     )
-  )
-  vals_tbl <- dplyr::select(vals_tbl, index, dplyr::everything())
-  vals_tbl <- dplyr::select(vals_tbl, -c(abs_diff_lower, abs_diff_upper))
-  vals_tbl <- dplyr::mutate(
-    vals_tbl,
-    centerline = (limit_upper + limit_lower) / 2,
-    sorting = abs(value - centerline)
-  )
-  vals_tbl <- dplyr::arrange(vals_tbl, dplyr::desc(sorting))
-  vals_tbl <- dplyr::select(vals_tbl, -c(centerline, sorting))
-  vals_tbl <- tibble::rownames_to_column(vals_tbl, var = "rank")
-  vals_tbl <- dplyr::mutate(
-    vals_tbl,
-    rank = as.numeric(rank),
-    index = as.numeric(index)
-  )
-  vals_tbl <- dplyr::arrange(vals_tbl, dplyr::desc(max_abs_diff))
-  vals_tbl <- dplyr::mutate(
-    vals_tbl,
-    outlier = ifelse(max_abs_diff > 0L, 1L, 0L),
-    below_max_anoms = ifelse(
-      dplyr::row_number() / dplyr::n() > max_anoms,
-      0L,
-      1L
-    ),
-    outlier_reported = ifelse(outlier == 1L & below_max_anoms == 1L, 1L, 0L),
-    direction = dplyr::case_when(
-      (outlier_reported == 1L) & (value > limit_upper) ~ "Up",
-      (outlier_reported == 1L) & (value < limit_lower) ~ "Down",
-      TRUE ~ "NA"
-    ),
-    direction = ifelse(direction == "NA", NA, direction)
-  )
-
-  vals_tbl_filtered <- dplyr::filter(vals_tbl, below_max_anoms == 1L)
-  vals_tbl_filtered <- dplyr::select(
-    vals_tbl_filtered,
-    -c(max_abs_diff:below_max_anoms)
-  )
-  vals_tbl_filtered <- dplyr::rename(
-    vals_tbl_filtered,
-    outlier = outlier_reported
-  )
-
-  if (any(vals_tbl$outlier == 0L)) {
-    limit_tbl <- dplyr::filter(vals_tbl, outlier == 0L)
-    limit_tbl <- dplyr::slice(limit_tbl, 1)
-    limits_vec <- c(
-      limit_lower = limit_tbl$limit_lower,
-      limit_upper = limit_tbl$limit_upper
+    vals_tbl <- dplyr::select(vals_tbl, index, dplyr::everything())
+    vals_tbl <- dplyr::select(vals_tbl, -c(abs_diff_lower, abs_diff_upper))
+    vals_tbl <- dplyr::mutate(
+        vals_tbl,
+        centerline = (limit_upper + limit_lower) / 2,
+        sorting = abs(value - centerline)
     )
-  } else {
-    limit_tbl <- dplyr::slice(vals_tbl, n())
-    limits_vec <- c(
-      limit_lower = limit_tbl$limit_lower,
-      limit_upper = limit_tbl$limit_upper
+    vals_tbl <- dplyr::arrange(vals_tbl, dplyr::desc(sorting))
+    vals_tbl <- dplyr::select(vals_tbl, -c(centerline, sorting))
+    vals_tbl <- tibble::rownames_to_column(vals_tbl, var = "rank")
+    vals_tbl <- dplyr::mutate(
+        vals_tbl,
+        rank = as.numeric(rank),
+        index = as.numeric(index)
     )
-  }
-
-  if (verbose) {
-    outlier_list <- list(
-      outlier = dplyr::pull(dplyr::arrange(vals_tbl, index), outlier_reported),
-
-      outlier_idx = dplyr::pull(
-        dplyr::filter(vals_tbl, outlier_reported == 1L),
-        index
-      ),
-
-      outlier_vals = dplyr::pull(
-        dplyr::filter(vals_tbl, outlier_reported == 1L),
-        value
-      ),
-
-      outlier_direction = dplyr::pull(
-        dplyr::filter(vals_tbl, outlier_reported == 1L),
-        direction
-      ),
-
-      critical_limits = limits_vec,
-      outlier_report = vals_tbl_filtered
+    vals_tbl <- dplyr::arrange(vals_tbl, dplyr::desc(max_abs_diff))
+    vals_tbl <- dplyr::mutate(
+        vals_tbl,
+        outlier = ifelse(max_abs_diff > 0L, 1L, 0L),
+        below_max_anoms = ifelse(
+            dplyr::row_number() / dplyr::n() > max_anoms,
+            0L,
+            1L
+        ),
+        outlier_reported = ifelse(outlier == 1L & below_max_anoms == 1L, 1L, 0L),
+        direction = dplyr::case_when(
+            (outlier_reported == 1L) & (value > limit_upper) ~ "Up",
+            (outlier_reported == 1L) & (value < limit_lower) ~ "Down",
+            TRUE ~ "NA"
+        ),
+        direction = ifelse(direction == "NA", NA, direction)
     )
-    return(outlier_list)
-  } else {
-    return(dplyr::pull(dplyr::arrange(vals_tbl, index), outlier_reported))
-  }
+
+    vals_tbl_filtered <- dplyr::filter(vals_tbl, below_max_anoms == 1L)
+    vals_tbl_filtered <- dplyr::select(
+        vals_tbl_filtered,
+        -c(max_abs_diff:below_max_anoms)
+    )
+    vals_tbl_filtered <- dplyr::rename(
+        vals_tbl_filtered,
+        outlier = outlier_reported
+    )
+
+    if (any(vals_tbl$outlier == 0L)) {
+        limit_tbl <- dplyr::filter(vals_tbl, outlier == 0L)
+        limit_tbl <- dplyr::slice(limit_tbl, 1)
+        limits_vec <- c(
+            limit_lower = limit_tbl$limit_lower,
+            limit_upper = limit_tbl$limit_upper
+        )
+    } else {
+        limit_tbl <- dplyr::slice(vals_tbl, n())
+        limits_vec <- c(
+            limit_lower = limit_tbl$limit_lower,
+            limit_upper = limit_tbl$limit_upper
+        )
+    }
+
+    if (verbose) {
+        outlier_list <- list(
+            outlier = dplyr::pull(dplyr::arrange(vals_tbl, index), outlier_reported),
+            outlier_idx = dplyr::pull(
+                dplyr::filter(vals_tbl, outlier_reported == 1L),
+                index
+            ),
+            outlier_vals = dplyr::pull(
+                dplyr::filter(vals_tbl, outlier_reported == 1L),
+                value
+            ),
+            outlier_direction = dplyr::pull(
+                dplyr::filter(vals_tbl, outlier_reported == 1L),
+                direction
+            ),
+            critical_limits = limits_vec,
+            outlier_report = vals_tbl_filtered
+        )
+        return(outlier_list)
+    } else {
+        return(dplyr::pull(dplyr::arrange(vals_tbl, index), outlier_reported))
+    }
 }
 
 #' Detect outliers using robust GESD method
@@ -385,95 +380,95 @@ iqr2 <- function(x, alpha = 0.05, max_anoms = 0.2, verbose = FALSE) {
 #' Original method: Rosner, B. (1983). “Percentage points for a generalized ESD many-outlier procedure.” Technometrics.
 #'
 gesd2 <- function(x, alpha = 0.05, max_anoms = 0.2, verbose = FALSE) {
-  n <- length(x)
-  r <- trunc(n * max_anoms)
-  R <- numeric(length = r)
-  lambda <- numeric(length = r)
-  outlier_ind <- numeric(length = r)
-  outlier_val <- numeric(length = r)
-  m <- 0
-  x_new <- x
-  median_new <- numeric(length = r)
-  mad_new <- numeric(length = r)
-  for (i in seq_len(r)) {
-    median_new[i] <- median(x_new)
-    mad_new[i] <- mad(x_new)
-    z <- abs(x_new - median(x_new)) / (mad(x_new) + .Machine$double.eps)
-    max_ind <- which(z == max(z), arr.ind = T)[1]
-    R[i] <- z[max_ind]
-    outlier_val[i] <- x_new[max_ind]
-    outlier_ind[i] <- which(x_new[max_ind] == x, arr.ind = T)[1]
-    x_new <- x_new[-max_ind]
-    p <- 1 - alpha / (2 * (n - i + 1))
-    t_pv <- qt(p, df = (n - i - 1))
-    lambda[i] <- ((n - i) * t_pv) / (sqrt((n - i - 1 + t_pv^2) * (n - i + 1)))
-    if (!is.na(R[i]) & !is.na(lambda[i])) {
-      if (R[i] > lambda[i]) {
-        m <- i
-      }
+    n <- length(x)
+    r <- trunc(n * max_anoms)
+    R <- numeric(length = r)
+    lambda <- numeric(length = r)
+    outlier_ind <- numeric(length = r)
+    outlier_val <- numeric(length = r)
+    m <- 0
+    x_new <- x
+    median_new <- numeric(length = r)
+    mad_new <- numeric(length = r)
+    for (i in seq_len(r)) {
+        median_new[i] <- median(x_new)
+        mad_new[i] <- mad(x_new)
+        z <- abs(x_new - median(x_new)) / (mad(x_new) + .Machine$double.eps)
+        max_ind <- which(z == max(z), arr.ind = T)[1]
+        R[i] <- z[max_ind]
+        outlier_val[i] <- x_new[max_ind]
+        outlier_ind[i] <- which(x_new[max_ind] == x, arr.ind = T)[1]
+        x_new <- x_new[-max_ind]
+        p <- 1 - alpha / (2 * (n - i + 1))
+        t_pv <- qt(p, df = (n - i - 1))
+        lambda[i] <- ((n - i) * t_pv) / (sqrt((n - i - 1 + t_pv^2) * (n - i + 1)))
+        if (!is.na(R[i]) & !is.na(lambda[i])) {
+            if (R[i] > lambda[i]) {
+                m <- i
+            }
+        }
     }
-  }
-  vals_tbl <- tibble::tibble(
-    rank = as.numeric(1:r),
-    index = outlier_ind,
-    value = outlier_val,
-    test_statistic = R,
-    critical_value = lambda,
-    median = median_new,
-    mad = mad_new,
-    limit_lower = median_new - lambda * mad_new,
-    limit_upper = lambda * mad_new + median_new
-  )
-  vals_tbl <- dplyr::mutate(
-    vals_tbl,
-    outlier = ifelse(test_statistic > critical_value, 1L, 0L),
-    direction = dplyr::case_when(
-      (outlier == 1L) & (value > limit_upper) ~ "Up",
-      (outlier == 1L) & (value < limit_lower) ~ "Down",
-      TRUE ~ "NA"
-    ),
-    direction = ifelse(direction == "NA", NA, direction)
-  )
-  vals_tbl <- dplyr::select(vals_tbl, -c(test_statistic:mad))
+    vals_tbl <- tibble::tibble(
+        rank = as.numeric(1:r),
+        index = outlier_ind,
+        value = outlier_val,
+        test_statistic = R,
+        critical_value = lambda,
+        median = median_new,
+        mad = mad_new,
+        limit_lower = median_new - lambda * mad_new,
+        limit_upper = lambda * mad_new + median_new
+    )
+    vals_tbl <- dplyr::mutate(
+        vals_tbl,
+        outlier = ifelse(test_statistic > critical_value, 1L, 0L),
+        direction = dplyr::case_when(
+            (outlier == 1L) & (value > limit_upper) ~ "Up",
+            (outlier == 1L) & (value < limit_lower) ~ "Down",
+            TRUE ~ "NA"
+        ),
+        direction = ifelse(direction == "NA", NA, direction)
+    )
+    vals_tbl <- dplyr::select(vals_tbl, -c(test_statistic:mad))
 
-  outlier_index <- dplyr::filter(vals_tbl, outlier == 1L)
-  outlier_index <- dplyr::pull(outlier_index, index)
+    outlier_index <- dplyr::filter(vals_tbl, outlier == 1L)
+    outlier_index <- dplyr::pull(outlier_index, index)
 
-  outlier_idx <- seq_along(x) %in% outlier_index
-  outlier_response <- ifelse(outlier_idx == TRUE, 1L, 0L)
-  if (any(vals_tbl$outlier == 0L)) {
-    limit_tbl <- dplyr::filter(vals_tbl, outlier == 0L)
-    limit_tbl <- dplyr::slice(limit_tbl, 1)
-    limits_vec <- c(
-      limit_lower = limit_tbl$limit_lower,
-      limit_upper = limit_tbl$limit_upper
-    )
-  } else {
-    limit_tbl <- dplyr::slice(vals_tbl, n())
-    limits_vec <- c(
-      limit_lower = limit_tbl$limit_lower,
-      limit_upper = limit_tbl$limit_upper
-    )
-  }
-  if (verbose) {
-    outlier_vals <- dplyr::pull(dplyr::filter(vals_tbl, outlier == 1L), value)
-    outlier_direction <- dplyr::pull(
-      dplyr::filter(vals_tbl, outlier == 1L),
-      direction
-    )
+    outlier_idx <- seq_along(x) %in% outlier_index
+    outlier_response <- ifelse(outlier_idx == TRUE, 1L, 0L)
+    if (any(vals_tbl$outlier == 0L)) {
+        limit_tbl <- dplyr::filter(vals_tbl, outlier == 0L)
+        limit_tbl <- dplyr::slice(limit_tbl, 1)
+        limits_vec <- c(
+            limit_lower = limit_tbl$limit_lower,
+            limit_upper = limit_tbl$limit_upper
+        )
+    } else {
+        limit_tbl <- dplyr::slice(vals_tbl, n())
+        limits_vec <- c(
+            limit_lower = limit_tbl$limit_lower,
+            limit_upper = limit_tbl$limit_upper
+        )
+    }
+    if (verbose) {
+        outlier_vals <- dplyr::pull(dplyr::filter(vals_tbl, outlier == 1L), value)
+        outlier_direction <- dplyr::pull(
+            dplyr::filter(vals_tbl, outlier == 1L),
+            direction
+        )
 
-    outlier_list <- list(
-      outlier = outlier_response,
-      outlier_idx = outlier_index,
-      outlier_vals = outlier_vals,
-      outlier_direction = outlier_direction,
-      critical_limits = limits_vec,
-      outlier_report = vals_tbl
-    )
-    return(outlier_list)
-  } else {
-    return(outlier_response)
-  }
+        outlier_list <- list(
+            outlier = outlier_response,
+            outlier_idx = outlier_index,
+            outlier_vals = outlier_vals,
+            outlier_direction = outlier_direction,
+            critical_limits = limits_vec,
+            outlier_report = vals_tbl
+        )
+        return(outlier_list)
+    } else {
+        return(outlier_response)
+    }
 }
 
 #' Detect anomalies in a data frame column using robust statistical methods
@@ -526,61 +521,60 @@ gesd2 <- function(x, alpha = 0.05, max_anoms = 0.2, verbose = FALSE) {
 #' \url{https://business-science.github.io/anomalize/reference/anomalize.html}
 #'
 anomalize2 <- function(
-  data,
-  target,
-  method = c("iqr", "gesd"),
-  alpha = 0.05,
-  max_anoms = 0.2,
-  verbose = FALSE
-) {
-  if (missing(target)) {
-    stop(
-      "Error in anomalize(): argument \"target\" is missing, with no default",
-      call. = FALSE
-    )
-  }
-  target_expr <- rlang::enquo(target)
-  method <- tolower(method[[1]])
-  x <- dplyr::pull(data, !!target_expr)
-  if (method == "iqr") {
-    outlier_list <- iqr2(
-      x = x,
-      alpha = alpha,
-      max_anoms = max_anoms,
-      verbose = TRUE
-    )
-  } else if (method == "gesd") {
-    outlier_list <- gesd2(
-      x = x,
-      alpha = alpha,
-      max_anoms = max_anoms,
-      verbose = TRUE
-    )
-  } else {
-    stop("The `method` selected is invalid.", call. = FALSE)
-  }
-  outlier <- outlier_list$outlier
-  limit_lower <- outlier_list$critical_limits[[1]]
-  limit_upper <- outlier_list$critical_limits[[2]]
-  ret <- dplyr::mutate(
     data,
-    `:=`(
-      !!paste0(dplyr::quo_name(target_expr), "_l1"),
-      limit_lower
-    ),
-    `:=`(
-      !!paste0(dplyr::quo_name(target_expr), "_l2"),
-      limit_upper
+    target,
+    method = c("iqr", "gesd"),
+    alpha = 0.05,
+    max_anoms = 0.2,
+    verbose = FALSE) {
+    if (missing(target)) {
+        stop(
+            "Error in anomalize(): argument \"target\" is missing, with no default",
+            call. = FALSE
+        )
+    }
+    target_expr <- rlang::enquo(target)
+    method <- tolower(method[[1]])
+    x <- dplyr::pull(data, !!target_expr)
+    if (method == "iqr") {
+        outlier_list <- iqr2(
+            x = x,
+            alpha = alpha,
+            max_anoms = max_anoms,
+            verbose = TRUE
+        )
+    } else if (method == "gesd") {
+        outlier_list <- gesd2(
+            x = x,
+            alpha = alpha,
+            max_anoms = max_anoms,
+            verbose = TRUE
+        )
+    } else {
+        stop("The `method` selected is invalid.", call. = FALSE)
+    }
+    outlier <- outlier_list$outlier
+    limit_lower <- outlier_list$critical_limits[[1]]
+    limit_upper <- outlier_list$critical_limits[[2]]
+    ret <- dplyr::mutate(
+        data,
+        `:=`(
+            !!paste0(dplyr::quo_name(target_expr), "_l1"),
+            limit_lower
+        ),
+        `:=`(
+            !!paste0(dplyr::quo_name(target_expr), "_l2"),
+            limit_upper
+        )
     )
-  )
-  ret <- tibble::add_column(ret, anomaly = outlier)
+    ret <- tibble::add_column(ret, anomaly = outlier)
 
-  if (verbose) {
-    ret <- list(anomalized_tbl = ret, anomaly_details = outlier_list)
-    return(ret)
-  } else {
-    return(ret)
-  }
+    if (verbose) {
+        ret <- list(anomalized_tbl = ret, anomaly_details = outlier_list)
+        return(ret)
+    } else {
+        return(ret)
+    }
 }
 
 # Within arch()
@@ -629,54 +623,53 @@ anomalize2 <- function(
 #'
 #' @export
 anomaly <- function(
-  ts,
-  max.anom = 100,
-  scale = 1.5, # Q1-1.5*IQR / Q3+1.5*IQR
-  method = "iqr",
-  decomp = NULL,
-  tzero = 0
-) {
-  # Translate input arguments
-  expr_alpha <- 0.15 / scale # Definition of alpha in anomalize() function
-  expr_max_anoms <- signif(max.anom / length(ts), 2L)
+    ts,
+    max.anom = 100,
+    scale = 1.5, # Q1-1.5*IQR / Q3+1.5*IQR
+    method = "iqr",
+    decomp = NULL,
+    tzero = 0) {
+    # Translate input arguments
+    expr_alpha <- 0.15 / scale # Definition of alpha in anomalize() function
+    expr_max_anoms <- signif(max.anom / length(ts), 2L)
 
-  # Convert ts to tibbletime
-  tbt <- dplyr::rename(as_tbt(ts), observed = x)
+    # Convert ts to tibbletime
+    tbt <- dplyr::rename(as_tbt(ts), observed = x)
 
-  # Anomaly detection (time decomposition is an option)
-  if (!is.null(decomp)) {
-    freq_trend <- decomp_freq_trend(ts)
-    decomp_freq <- freq_trend$freq * (1 / frequency(ts))
-    decomp_trend <- freq_trend$trend * (1 / frequency(ts))
-    expr_decomp_freq <- paste(decomp_freq, "seconds")
-    expr_decomp_trend <- paste(decomp_trend, "seconds")
+    # Anomaly detection (time decomposition is an option)
+    if (!is.null(decomp)) {
+        freq_trend <- decomp_freq_trend(ts)
+        decomp_freq <- freq_trend$freq * (1 / frequency(ts))
+        decomp_trend <- freq_trend$trend * (1 / frequency(ts))
+        expr_decomp_freq <- paste(decomp_freq, "seconds")
+        expr_decomp_trend <- paste(decomp_trend, "seconds")
 
-    anomalized <- anomalize::time_decompose(
-      tbt,
-      observed,
-      method = decomp,
-      frequency = expr_decomp_freq,
-      trend = expr_decomp_trend,
-      message = FALSE
-    )
-    anomalized <- anomalize2(
-      anomalized,
-      remainder,
-      method = method,
-      alpha = expr_alpha,
-      max_anoms = expr_max_anoms
-    )
-    anomalized <- anomalize::time_recompose(anomalized)
-  } else {
-    anomalized <- anomalize2(
-      tbt,
-      observed,
-      method = method,
-      alpha = expr_alpha,
-      max_anoms = expr_max_anoms
-    )
-  }
-  return(anomalized)
+        anomalized <- anomalize::time_decompose(
+            tbt,
+            observed,
+            method = decomp,
+            frequency = expr_decomp_freq,
+            trend = expr_decomp_trend,
+            message = FALSE
+        )
+        anomalized <- anomalize2(
+            anomalized,
+            remainder,
+            method = method,
+            alpha = expr_alpha,
+            max_anoms = expr_max_anoms
+        )
+        anomalized <- anomalize::time_recompose(anomalized)
+    } else {
+        anomalized <- anomalize2(
+            tbt,
+            observed,
+            method = method,
+            alpha = expr_alpha,
+            max_anoms = expr_max_anoms
+        )
+    }
+    return(anomalized)
 }
 
 #' Add GPS time column to a data frame
@@ -689,7 +682,7 @@ anomaly <- function(
 #' @return A \code{tibble} identical to \code{df} but with an additional \code{GPS} column inserted after the \code{time} column.
 #'
 get_gps <- function(df, ref.ts) {
-  dplyr::mutate(df, GPS = c(time(ref.ts)), .after = time)
+    dplyr::mutate(df, GPS = c(time(ref.ts)), .after = time)
 }
 
 #' Run DBSCAN clustering on detected anomalies
@@ -714,33 +707,32 @@ get_gps <- function(df, ref.ts) {
 #'
 #' @examples
 #' df <- tibble::tibble(
-#'   GPS = seq(0, 1, length.out = 100),
-#'   observed = sin(2 * pi * GPS * 5),
-#'   anomaly = sample(0:1, 100, replace = TRUE)
+#'     GPS = seq(0, 1, length.out = 100),
+#'     observed = sin(2 * pi * GPS * 5),
+#'     anomaly = sample(0:1, 100, replace = TRUE)
 #' )
 #' run_dbscan(df, eps = 0.02)
 #'
 #' @export
 run_dbscan <- function(
-  anom.df,
-  time_col = "GPS",
-  val_col = "observed",
-  eps = 0.01,
-  minPts = 1,
-  cluster.col = 'cluster',
-  ...
-) {
-  dbs.input <- dplyr::select(
-    dplyr::filter(anom.df, anomaly == 1L),
-    dplyr::all_of(c(time_col, val_col))
-  )
-  if (nrow(dbs.input) == 0) {
-    anom.df[, "cluster"] <- NA
-  } else {
-    dbs.res <- dbscan::dbscan(dbs.input, eps = eps, minPts = minPts, ...)
-    anom.df[anom.df$anomaly == 1L, cluster.col] <- dbs.res$cluster
-  }
-  anom.df
+    anom.df,
+    time_col = "GPS",
+    val_col = "observed",
+    eps = 0.01,
+    minPts = 1,
+    cluster.col = "cluster",
+    ...) {
+    dbs.input <- dplyr::select(
+        dplyr::filter(anom.df, anomaly == 1L),
+        dplyr::all_of(c(time_col, val_col))
+    )
+    if (nrow(dbs.input) == 0) {
+        anom.df[, "cluster"] <- NA
+    } else {
+        dbs.res <- dbscan::dbscan(dbs.input, eps = eps, minPts = minPts, ...)
+        anom.df[anom.df$anomaly == 1L, cluster.col] <- dbs.res$cluster
+    }
+    anom.df
 }
 
 
@@ -775,8 +767,8 @@ run_dbscan <- function(
 #' @examples
 #' # Generate synthetic time series
 #' fs <- 1024
-#' t <- seq(0, 1, by = 1/fs)
-#' x <- sin(2*pi*60*t) + rnorm(length(t), sd = 0.5)
+#' t <- seq(0, 1, by = 1 / fs)
+#' x <- sin(2 * pi * 60 * t) + rnorm(length(t), sd = 0.5)
 #' ts_obj <- ts(x, start = t[1], frequency = fs)
 #'
 #' # Get default parameter set
@@ -788,38 +780,38 @@ run_dbscan <- function(
 #'
 #' @export
 arch <- function(ts, params) {
-  N_anom_max <- ifelse(is.null(params$nmax), 100, params$nmax)
-  iqr.factor <- ifelse(is.null(params$scale), 1.5, params$scale)
+    N_anom_max <- ifelse(is.null(params$nmax), 100, params$nmax)
+    iqr.factor <- ifelse(is.null(params$scale), 1.5, params$scale)
 
-  # Run seqARIMA
-  deno <- seqarima(
-    ts,
-    d = params$d,
-    p = params$p,
-    q = params$q,
-    fl = params$fl,
-    fu = params$fu,
-    verbose = F
-  )
+    # Run seqARIMA
+    deno <- seqarima(
+        ts,
+        d = params$d,
+        p = params$p,
+        q = params$q,
+        fl = params$fl,
+        fu = params$fu,
+        verbose = F
+    )
 
-  # Run anomaly detection
-  anom <- anomaly(
-    deno,
-    max.anom = N_anom_max,
-    scale = iqr.factor,
-    method = params$method, # "iqr" or "gesd"
-    decomp = params$decomp # "stl" or "twitter" or NULL
-  )
+    # Run anomaly detection
+    anom <- anomaly(
+        deno,
+        max.anom = N_anom_max,
+        scale = iqr.factor,
+        method = params$method, # "iqr" or "gesd"
+        decomp = params$decomp # "stl" or "twitter" or NULL
+    )
 
-  # Add GPS time column
-  anom <- get_gps(anom, deno)
+    # Add GPS time column
+    anom <- get_gps(anom, deno)
 
-  # Run DBSCAN
-  anom <- run_dbscan(anom, eps = params$eps)
-  anom <- dplyr::left_join(anom, as_tbt(deno, val_col = 'raw'), by = 'time')
-  anom <- dplyr::relocate(anom, anomaly, .before = cluster)
-  anom <- dplyr::relocate(anom, raw, .before = observed)
-  return(anom)
+    # Run DBSCAN
+    anom <- run_dbscan(anom, eps = params$eps)
+    anom <- dplyr::left_join(anom, as_tbt(deno, val_col = "raw"), by = "time")
+    anom <- dplyr::relocate(anom, anomaly, .before = cluster)
+    anom <- dplyr::relocate(anom, raw, .before = observed)
+    return(anom)
 }
 
 #' Get default pipeline configuration
@@ -851,42 +843,44 @@ arch <- function(ts, params) {
 #' opt2 <- config_pipe(list(p = 512, q = 10, fl = 16))
 #'
 #' @export
-config_pipe <- function(replace = NULL) {
-  def <- list(
-    # seqARIMA parameters
-    d = 2L,
-    p = 1024L,
-    q = seq.int(20),
-    fl = 32L,
-    fu = 512L,
+config_pipe <- function(t_batch = 1L, replace = NULL) {
+    def <- list(
+        # seqARIMA parameters
+        d = 2L,
+        p = 1024L,
+        q = seq.int(20),
+        fl = 32L,
+        fu = 512L,
 
-    # Anomaly Cluster parameters
-    arch = arch,
-    nmax = 100L,
-    scale = 1.5,
-    method = "iqr",
-    decomp = NULL,
-    eps = 1 / 4096,
-    DQ = "BURST_CAT2",
+        # Anomaly Cluster parameters
+        arch = arch,
+        nmax = 100L * t_batch,
+        scale = 1.5,
+        method = "iqr",
+        decomp = NULL,
+        eps = 1 / 4096,
+        DQ = "BURST_CAT2",
 
-    # Coincidence parameters
-    window_size = 128L,
-    overlap = 0.0,
-    mean.func = har_mean,
+        # Coincidence parameters
+        window_size = 128L,
+        overlap = 0.0,
+        mean.func = har_mean,
 
-    # Pipeline option
-    P_update = 0.05
-  )
+        # Pipeline option
+        P_update = 0.05
+    )
 
-  n_missed <- tr_overlap(def$d, def$p, def$q, split = T)
-  def[['n_missed']] <- n_missed
-  if (!is.null(replace)) {
-    stopifnot(is.list(replace))
-    for (i in seq_along(replace)) {
-      def[[names(replace)[i]]] <- replace[[i]]
+    if (!is.null(replace)) {
+        stopifnot(is.list(replace))
+        for (i in seq_along(replace)) {
+            def[[names(replace)[i]]] <- replace[[i]]
+        }
     }
-  }
-  def
+
+    n_missed <- tr_overlap(def$d, def$p, def$q, split = T)
+    def[["n_missed"]] <- n_missed
+
+    def
 }
 
 #' Concatenate with previous tail to form new ts
@@ -907,17 +901,17 @@ config_pipe <- function(replace = NULL) {
 #'
 #' @export
 concat_ts <- function(prev = NA, curr, n_former) {
-  if (all(is.na(prev))) {
-    curr
-  } else {
-    former_ts <- crop_to(prev, c(length(prev) - n_former, length(prev)))
-    unique_vec <- apply(
-      ts.union(former = former_ts, curr),
-      MARGIN = 1,
-      FUN = function(x) unique(x[!is.na(x)])
-    )
-    ts(unique_vec, start = ti(former_ts), frequency = frequency(curr))
-  }
+    if (all(is.na(prev))) {
+        curr
+    } else {
+        former_ts <- crop_to(prev, c(length(prev) - n_former, length(prev)))
+        unique_vec <- apply(
+            ts.union(former = former_ts, curr),
+            MARGIN = 1,
+            FUN = function(x) unique(x[!is.na(x)])
+        )
+        ts(unique_vec, start = ti(former_ts), frequency = frequency(curr))
+    }
 }
 
 #' Check if anomalies were detected
@@ -928,8 +922,8 @@ concat_ts <- function(prev = NA, curr, n_former) {
 #'
 #' @return A logical value: `TRUE` if any anomalies are detected, `FALSE` otherwise.
 is.anomdet <- function(proc) {
-  n_anom <- nrow(dplyr::filter(proc, anomaly == 1))
-  n_anom != 0
+    n_anom <- nrow(dplyr::filter(proc, anomaly == 1))
+    n_anom != 0
 }
 
 #' Adjust anomaly detection results for current batch
@@ -951,25 +945,24 @@ is.anomdet <- function(proc) {
 #' @return A filtered and adjusted data frame with corrected cluster indices and time span.
 #'
 adjust_proc <- function(
-  proc,
-  curr_batch,
-  n_missed
-) {
-  # Crop within only current batch times
-  #  + add `n_missed[["Mt"]]` amount of prev batch at the front
-  # n_missed[["Mt"]]: lost values by MA at tail.
-  proc <- dplyr::filter(
     proc,
-    GPS >= ti(curr_batch) - (deltat(curr_batch) * n_missed[["Mt"]]) &
-      GPS <= tf(curr_batch)
-  )
+    curr_batch,
+    n_missed) {
+    # Crop within only current batch times
+    #  + add `n_missed[["Mt"]]` amount of prev batch at the front
+    # n_missed[["Mt"]]: lost values by MA at tail.
+    proc <- dplyr::filter(
+        proc,
+        GPS >= ti(curr_batch) - (deltat(curr_batch) * n_missed[["Mt"]]) &
+            GPS <= tf(curr_batch)
+    )
 
-  # Shift cluster number to be starting from 1
-  if (is.anomdet(proc)) {
-    cl.shift <- unique(na.omit(proc$cluster))[1] - 1
-    proc$cluster <- proc$cluster - cl.shift
-  }
-  proc
+    # Shift cluster number to be starting from 1
+    if (is.anomdet(proc)) {
+        cl.shift <- unique(na.omit(proc$cluster))[1] - 1
+        proc$cluster <- proc$cluster - cl.shift
+    }
+    proc
 }
 
 #' Add DQ information to the processed data
@@ -985,22 +978,22 @@ adjust_proc <- function(
 #' @return A `data.frame` with additional columns corresponding to DQ flags.
 #' If \code{dq.lev = "all"}, all available DQ channels are appended. Otherwise, only the specified level is added.
 add_DQ <- function(proc, curr_batch) {
-  dq.bat <- attr(curr_batch, 'dqmask')
-  dq.lev <- attr(curr_batch, 'dq.lev')
+    dq.bat <- attr(curr_batch, "dqmask")
+    dq.lev <- attr(curr_batch, "dq.lev")
 
-  # Handling different sampling frequency between data and dq
-  t_floor <- floor(proc$GPS)
-  dq.df <- as.data.frame(dq.bat)
-  rownames(dq.df) <- as.numeric(time(dq.bat))
-  dq.col <- dq.df[as.character(t_floor), ]
+    # Handling different sampling frequency between data and dq
+    t_floor <- floor(proc$GPS)
+    dq.df <- as.data.frame(dq.bat)
+    rownames(dq.df) <- as.numeric(time(dq.bat))
+    dq.col <- dq.df[as.character(t_floor), ]
 
-  # Add DQ columns into data (proc)
-  if (dq.lev == 'all') {
-    proc[, names(DQ_ShortNames())] <- dq.col
-  } else {
-    proc[, dq.lev] <- dq.col
-  }
-  proc
+    # Add DQ columns into data (proc)
+    if (dq.lev == "all") {
+        proc[, names(DQ_ShortNames())] <- dq.col
+    } else {
+        proc[, dq.lev] <- dq.col
+    }
+    proc
 }
 
 #' Add P0_DQ mask to processed data
@@ -1013,21 +1006,21 @@ add_DQ <- function(proc, curr_batch) {
 #' @param DQ A character vector of one or more DQ channel names. Defaults to \code{"BURST_CAT2"}.
 #'
 #' @return A `data.frame` with added column(s) \code{P0_<DQ>} that contain \code{P0} values masked by duty cycle flags.
-add_P0_DQ <- function(proc, DQ = 'BURST_CAT2') {
-  if (!all(is.na(proc))) {
-    # Check proc is NA due to the duty cycle
-    if (length(DQ) > 1) {
-      for (i in seq_along(DQ)) {
-        proc <- mutate(
-          proc,
-          "P0_{DQ[i]}" := ifelse(!!sym(DQ[i]) == 0, NA, P0)
-        )
-      }
-    } else {
-      proc <- mutate(proc, "P0_{DQ}" := ifelse(!!sym(DQ) == 0, NA, P0))
+add_P0_DQ <- function(proc, DQ = "BURST_CAT2") {
+    if (!all(is.na(proc))) {
+        # Check proc is NA due to the duty cycle
+        if (length(DQ) > 1) {
+            for (i in seq_along(DQ)) {
+                proc <- mutate(
+                    proc,
+                    "P0_{DQ[i]}" := ifelse(!!sym(DQ[i]) == 0, NA, P0)
+                )
+            }
+        } else {
+            proc <- mutate(proc, "P0_{DQ}" := ifelse(!!sym(DQ) == 0, NA, P0))
+        }
     }
-  }
-  proc
+    proc
 }
 
 #' Append NA placeholders to result list
@@ -1040,13 +1033,13 @@ add_P0_DQ <- function(proc, DQ = 'BURST_CAT2') {
 #' @return The input list with additional elements: \code{stat}, \code{lamb}, \code{prob},
 #' \code{proc}, \code{updated_stat}, and \code{current_stat}, all set to `NA` or `list(N = NA, c = NA)`.
 append_NA <- function(res.list) {
-  res.list <- list.append(res.list, "stat", NA)
-  res.list <- list.append(res.list, "lamb", list(a = NA, c = NA))
-  res.list <- list.append(res.list, "prob", NA)
-  res.list <- list.append(res.list, "proc", NA)
-  res.list <- list.append(res.list, "updated_stat", NA)
-  res.list <- list.append(res.list, "current_stat", NA)
-  res.list
+    res.list <- list.append(res.list, "stat", NA)
+    res.list <- list.append(res.list, "lamb", list(a = NA, c = NA))
+    res.list <- list.append(res.list, "prob", NA)
+    res.list <- list.append(res.list, "proc", NA)
+    res.list <- list.append(res.list, "updated_stat", NA)
+    res.list <- list.append(res.list, "current_stat", NA)
+    res.list
 }
 
 #' Append or assign a value into a nested list
@@ -1061,12 +1054,12 @@ append_NA <- function(res.list) {
 #'
 #' @return The modified list object.
 list.append <- function(list, where, value, name = NULL) {
-  if (is.null(name)) {
-    list[[where]][[length(list[[where]]) + 1L]] <- value
-  } else {
-    list[[where]][[name]] <- value
-  }
-  list
+    if (is.null(name)) {
+        list[[where]][[length(list[[where]]) + 1L]] <- value
+    } else {
+        list[[where]][[name]] <- value
+    }
+    list
 }
 
 #' Initialize pipeline environment
@@ -1080,38 +1073,38 @@ list.append <- function(list, where, value, name = NULL) {
 #' @return None. This function assigns \code{prev_batch}, \code{res.net}, and \code{coinc.lis}
 #' into the calling environment.
 #' @export
-init_pipe <- function(dets = c('H1', 'L1')) {
-  #assign("i", 1L, envir = parent.frame())
-  prev_batch <- vector('list', length = length(dets))
-  names(prev_batch) <- dets
+init_pipe <- function(dets = c("H1", "L1")) {
+    # assign("i", 1L, envir = parent.frame())
+    prev_batch <- vector("list", length = length(dets))
+    names(prev_batch) <- dets
 
-  res.det <- list(
-    "proc" = list(),
-    "stat" = list(),
-    "lamb" = list(),
-    'ustat' = list(
-      list(
-        'last_tcen' = NA,
-        'stats' = list(
-          't_batch' = 0,
-          'N_cl' = 0,
-          'N_anom' = 0,
-          'lambda_a' = NA,
-          'lambda_c' = NA
+    res.det <- list(
+        "proc" = list(),
+        "stat" = list(),
+        "lamb" = list(),
+        "ustat" = list(
+            list(
+                "last_tcen" = NA,
+                "stats" = list(
+                    "t_batch" = 0,
+                    "N_cl" = 0,
+                    "N_anom" = 0,
+                    "lambda_a" = NA,
+                    "lambda_c" = NA
+                )
+            )
         )
-      )
     )
-  )
-  res.net <- vector('list', length = length(dets))
-  names(res.net) <- dets
-  for (det in dets) {
-    res.net[[det]] <- res.det
-  }
+    res.net <- vector("list", length = length(dets))
+    names(res.net) <- dets
+    for (det in dets) {
+        res.net[[det]] <- res.det
+    }
 
-  #assign("prev_batch", prev_batch, envir = parent.frame())
-  #assign("res.net", res.net, envir = parent.frame())
-  #assign("coinc.lis", list(), envir = parent.frame())
-  list(prev_batch, res.net, list())
+    # assign("prev_batch", prev_batch, envir = parent.frame())
+    # assign("res.net", res.net, envir = parent.frame())
+    # assign("coinc.lis", list(), envir = parent.frame())
+    list(prev_batch, res.net, list())
 }
 
 #' Compute anomaly cluster statistics
@@ -1131,50 +1124,50 @@ init_pipe <- function(dets = c('H1', 'L1')) {
 #'   \item{last_tcen}{The last computed cluster center time (used for streaming).}
 #' }
 stat_anom <- function(proc, last_tcen = NULL) {
-  # Compute statistic table
-  tab <- dplyr::filter(proc, anomaly == 1L)
-  tab <- dplyr::group_by(tab, cluster)
-  tab <- dplyr::mutate(tab, t_cen = median(GPS), .after = cluster) # compute t_cen
-  tab <- dplyr::select(tab, anomaly, cluster, t_cen)
-  tab <- dplyr::bind_rows(tab, dplyr::tibble(cluster = 0L, t_cen = last_tcen)) # add last_tcen
-  tab <- dplyr::arrange(tab, cluster)
-  tab <- dplyr::mutate(tab, t_lag = t_cen - dplyr::lag(t_cen)) # compute t_lag
-  tab <- dplyr::filter(tab, cluster != 0L)
-  tab <- dplyr::group_by(tab, cluster)
-  tab <- dplyr::reframe(tab, t_cen = t_cen, N_anom = n(), t_lag = t_lag)
-  tab <- dplyr::distinct(tab, cluster, .keep_all = TRUE)
+    # Compute statistic table
+    tab <- dplyr::filter(proc, anomaly == 1L)
+    tab <- dplyr::group_by(tab, cluster)
+    tab <- dplyr::mutate(tab, t_cen = median(GPS), .after = cluster) # compute t_cen
+    tab <- dplyr::select(tab, anomaly, cluster, t_cen)
+    tab <- dplyr::bind_rows(tab, dplyr::tibble(cluster = 0L, t_cen = last_tcen)) # add last_tcen
+    tab <- dplyr::arrange(tab, cluster)
+    tab <- dplyr::mutate(tab, t_lag = t_cen - dplyr::lag(t_cen)) # compute t_lag
+    tab <- dplyr::filter(tab, cluster != 0L)
+    tab <- dplyr::group_by(tab, cluster)
+    tab <- dplyr::reframe(tab, t_cen = t_cen, N_anom = n(), t_lag = t_lag)
+    tab <- dplyr::distinct(tab, cluster, .keep_all = TRUE)
 
-  # Organize output
-  if (nrow(tab) == 0L) {
-    # The same as initialized object in `init_pipe()`
-    list(
-      'table' = data.frame(
-        'cluster' = NA,
-        't_cen' = NA,
-        'N_anom' = NA,
-        't_lag' = NA
-      ),
-      'stats' = list(
-        't_batch' = 0,
-        'N_cl' = 0,
-        'N_anom' = 0,
-        'lambda_a' = NA,
-        'lambda_c' = NA
-      ),
-      'last_tcen' = NA
-    )
-  } else {
-    stats <- list(
-      t_batch = nrow(proc) / 4096,
-      N_cl = nrow(tab),
-      N_anom = sum(tab$N_anom)
-    )
-    lambda_c <- nrow(tab) / stats$t_batch
-    lambda_a <- mean(tab$N_anom)
-    stats[['lambda_c']] <- lambda_c
-    stats[['lambda_a']] <- lambda_a
-    list('table' = tab, 'stats' = stats)
-  }
+    # Organize output
+    if (nrow(tab) == 0L) {
+        # The same as initialized object in `init_pipe()`
+        list(
+            "table" = data.frame(
+                "cluster" = NA,
+                "t_cen" = NA,
+                "N_anom" = NA,
+                "t_lag" = NA
+            ),
+            "stats" = list(
+                "t_batch" = 0,
+                "N_cl" = 0,
+                "N_anom" = 0,
+                "lambda_a" = NA,
+                "lambda_c" = NA
+            ),
+            "last_tcen" = NA
+        )
+    } else {
+        stats <- list(
+            t_batch = nrow(proc) / 4096,
+            N_cl = nrow(tab),
+            N_anom = sum(tab$N_anom)
+        )
+        lambda_c <- nrow(tab) / stats$t_batch
+        lambda_a <- mean(tab$N_anom)
+        stats[["lambda_c"]] <- lambda_c
+        stats[["lambda_a"]] <- lambda_a
+        list("table" = tab, "stats" = stats)
+    }
 }
 
 #' Update accumulated cluster-level statistics
@@ -1195,26 +1188,26 @@ stat_anom <- function(proc, last_tcen = NULL) {
 #'   \item{lambda_a}{Updated average anomaly count per cluster.}
 #' }
 update_stat <- function(upd, cur) {
-  # Compute the MOST updated statistics with updated statistics (upd)
-  #   and current statistics (cur)
-  t_batch.upd <- upd$stats$t_batch + cur$stats$t_batch # total batch time
-  N_cl.upd <- upd$stats$N_cl + cur$stats$N_cl # total cluster number
-  N_anom.upd <- upd$stats$N_anom + cur$stats$N_anom # total anomaly number
+    # Compute the MOST updated statistics with updated statistics (upd)
+    #   and current statistics (cur)
+    t_batch.upd <- upd$stats$t_batch + cur$stats$t_batch # total batch time
+    N_cl.upd <- upd$stats$N_cl + cur$stats$N_cl # total cluster number
+    N_anom.upd <- upd$stats$N_anom + cur$stats$N_anom # total anomaly number
 
-  lambda_c.upd <- N_cl.upd / (t_batch.upd) # Update lambda_c
-  lambda_a.upd <- N_anom.upd / N_cl.upd # Update lambda_a
+    lambda_c.upd <- N_cl.upd / (t_batch.upd) # Update lambda_c
+    lambda_a.upd <- N_anom.upd / N_cl.upd # Update lambda_a
 
-  # Return
-  #   `last_tcen` will be added later in pipe()
-  list(
-    'stats' = list(
-      't_batch' = t_batch.upd,
-      'N_cl' = N_cl.upd,
-      'N_anom' = N_anom.upd,
-      'lambda_c' = lambda_c.upd,
-      'lambda_a' = lambda_a.upd
+    # Return
+    #   `last_tcen` will be added later in pipe()
+    list(
+        "stats" = list(
+            "t_batch" = t_batch.upd,
+            "N_cl" = N_cl.upd,
+            "N_anom" = N_anom.upd,
+            "lambda_c" = lambda_c.upd,
+            "lambda_a" = lambda_a.upd
+        )
     )
-  )
 }
 
 #' Update logic for statistics with optional P0-based filtering
@@ -1232,41 +1225,41 @@ update_stat <- function(upd, cur) {
 #'
 #' @return A list of updated statistics after merging `updated` and `current`.
 update_logic <- function(updated, current, P_update) {
-  # updated_stat cannot be NA except for the first batch
-  if (all(is.na(updated))) {
-    # use current_stat
-    return(current)
-  } else {
-    if (all(is.na(current))) {
-      # use only updated_stat so far
-      return(updated)
+    # updated_stat cannot be NA except for the first batch
+    if (all(is.na(updated))) {
+        # use current_stat
+        return(current)
     } else {
-      # Perform updating procedure
-      if (!is.null(P_update)) {
-        # Gathering info from outside
-        proc <- get('proc', envir = parent.frame(1))
-        prev_tcen <- get('prev_tcen', envir = parent.frame(1))
+        if (all(is.na(current))) {
+            # use only updated_stat so far
+            return(updated)
+        } else {
+            # Perform updating procedure
+            if (!is.null(P_update)) {
+                # Gathering info from outside
+                proc <- get("proc", envir = parent.frame(1))
+                prev_tcen <- get("prev_tcen", envir = parent.frame(1))
 
-        # Filtering by P_update
-        #   If computed P0 < P_update, it's less-likely from noise fluctuations
-        #   Thus, exclude those P0 < P_update by changing
-        #        anomaly==1 into anomaly==0
-        #   Then following function `stat_anom` will filter out anomaly==0 in
-        #     calculating statistics.
-        current.filtered <- stat_anom(
-          dplyr::mutate(proc, anomaly = ifelse(P0 < P_update, 0, anomaly)),
-          last_tcen = prev_tcen
-        )
+                # Filtering by P_update
+                #   If computed P0 < P_update, it's less-likely from noise fluctuations
+                #   Thus, exclude those P0 < P_update by changing
+                #        anomaly==1 into anomaly==0
+                #   Then following function `stat_anom` will filter out anomaly==0 in
+                #     calculating statistics.
+                current.filtered <- stat_anom(
+                    dplyr::mutate(proc, anomaly = ifelse(P0 < P_update, 0, anomaly)),
+                    last_tcen = prev_tcen
+                )
 
-        # Update statistics with filtered statistics
-        updated_new <- update_stat(upd = updated, cur = current.filtered)
-      } else {
-        # Ordinary updating procedure w/o any filtering
-        updated_new <- update_stat(upd = updated, cur = current)
-      }
-      return(updated_new)
+                # Update statistics with filtered statistics
+                updated_new <- update_stat(upd = updated, cur = current.filtered)
+            } else {
+                # Ordinary updating procedure w/o any filtering
+                updated_new <- update_stat(upd = updated, cur = current)
+            }
+            return(updated_new)
+        }
     }
-  }
 }
 
 #' Extract the most recent cluster center time
@@ -1281,17 +1274,17 @@ update_logic <- function(updated, current, P_update) {
 #' @return A numeric value representing the last cluster's center time (`t_cen`).
 #' @note Assumes that `prev_tcen` is defined in the parent frame if no clusters are found.
 get_last_tcen <- function(proc) {
-  last_tcen <- dplyr::pull(
-    dplyr::filter(
-      dplyr::distinct(proc, cluster, .keep_all = T),
-      cluster == max(proc$cluster, na.rm = T)
-    ),
-    t_cen
-  )
-  if (length(last_tcen) == 0) {
-    last_tcen <- get('prev_tcen', envir = parent.frame(1))
-  }
-  last_tcen
+    last_tcen <- dplyr::pull(
+        dplyr::filter(
+            dplyr::distinct(proc, cluster, .keep_all = T),
+            cluster == max(proc$cluster, na.rm = T)
+        ),
+        t_cen
+    )
+    if (length(last_tcen) == 0) {
+        last_tcen <- get("prev_tcen", envir = parent.frame(1))
+    }
+    last_tcen
 }
 
 
@@ -1306,13 +1299,13 @@ get_last_tcen <- function(proc) {
 #'
 #' @return A dataframe with added cluster statistics aligned by cluster ID.
 add_stat <- function(proc, stat_table) {
-  dplyr::relocate(
-    dplyr::left_join(proc, stat_table, by = 'cluster'),
-    t_cen,
-    N_anom,
-    t_lag,
-    .after = cluster
-  )
+    dplyr::relocate(
+        dplyr::left_join(proc, stat_table, by = "cluster"),
+        t_cen,
+        N_anom,
+        t_lag,
+        .after = cluster
+    )
 }
 
 #' Compute anomaly-tail Poisson probability
@@ -1327,24 +1320,24 @@ add_stat <- function(proc, stat_table) {
 #'
 #' @return A numeric vector of normalized CCDF values \eqn{P(n \ge q \mid \lambda)}.
 ppois.anom <- function(q, lambda) {
-  # NOTES:
-  # - `lower.tail=F` gives 'survival function' or 'complementary cumulative
-  #     distribution function (CCDF)' (e.g. CCDF = 1-CDF).
-  # - Since
-  #     `lower.tail=T` : P(n <= N) (default) and
-  #     `lower.tail=F` : P(n >  N) (we use this),
-  #   N is not included. Which means:
-  #     ppois(0, ..., lower.tail=F)
-  #        >> implies : P(n >  0)
-  #        >> means   : P(n >= 1) (which is what we want to compute),
-  #   because n is discrete.
-  # - Since we count from 1 for N_anom, we use
-  #     "ppois(q-1, ..., lower.tail=F)"
-  #            ^~~ q-1 will convert N_anom = {1,2,3,...} into {0,1,2,...}
-  #                as an input of ppois(..., lower.tail=F)
-  # - Normalize by ppois(0, lambda, lower.tail=F) since it does not give
-  #     exact 1.
-  ppois(q - 1, lambda, lower.tail = F) / ppois(0, lambda, lower.tail = F)
+    # NOTES:
+    # - `lower.tail=F` gives 'survival function' or 'complementary cumulative
+    #     distribution function (CCDF)' (e.g. CCDF = 1-CDF).
+    # - Since
+    #     `lower.tail=T` : P(n <= N) (default) and
+    #     `lower.tail=F` : P(n >  N) (we use this),
+    #   N is not included. Which means:
+    #     ppois(0, ..., lower.tail=F)
+    #        >> implies : P(n >  0)
+    #        >> means   : P(n >= 1) (which is what we want to compute),
+    #   because n is discrete.
+    # - Since we count from 1 for N_anom, we use
+    #     "ppois(q-1, ..., lower.tail=F)"
+    #            ^~~ q-1 will convert N_anom = {1,2,3,...} into {0,1,2,...}
+    #                as an input of ppois(..., lower.tail=F)
+    # - Normalize by ppois(0, lambda, lower.tail=F) since it does not give
+    #     exact 1.
+    ppois(q - 1, lambda, lower.tail = F) / ppois(0, lambda, lower.tail = F)
 }
 
 #' Add Poisson anomaly-tail probability to dataframe
@@ -1358,7 +1351,7 @@ ppois.anom <- function(q, lambda) {
 #'
 #' @return The input dataframe `proc` with an added `Ppois` column.
 add_Ppois <- function(proc, updated_stat) {
-  dplyr::mutate(proc, Ppois = ppois.anom(N_anom, updated_stat$stats$lambda_a))
+    dplyr::mutate(proc, Ppois = ppois.anom(N_anom, updated_stat$stats$lambda_a))
 }
 
 #' Add exponential inter-cluster probability
@@ -1374,9 +1367,9 @@ add_Ppois <- function(proc, updated_stat) {
 #'
 #' @return The input dataframe with an added `Pexp` column.
 add_Pexp <- function(proc, updated_stat) {
-  # Different from Ppois, Pexp doesn't need further treatment,
-  #   since we consider P(t <= T) by pexp(..., lower.tail=T (default) ).
-  dplyr::mutate(proc, Pexp = pexp(t_lag, updated_stat$stats$lambda_c))
+    # Different from Ppois, Pexp doesn't need further treatment,
+    #   since we consider P(t <= T) by pexp(..., lower.tail=T (default) ).
+    dplyr::mutate(proc, Pexp = pexp(t_lag, updated_stat$stats$lambda_c))
 }
 
 #' Add combined significance probability P0
@@ -1390,15 +1383,15 @@ add_Pexp <- function(proc, updated_stat) {
 #'
 #' @return The input dataframe with an added `P0` column.
 add_P0 <- function(proc) {
-  proc <- dplyr::mutate(
-    dplyr::rowwise(proc),
-    P0 = ifelse(anomaly == 0, NA, prod(Ppois, Pexp, na.rm = T))
-  )
+    proc <- dplyr::mutate(
+        dplyr::rowwise(proc),
+        P0 = ifelse(anomaly == 0, NA, prod(Ppois, Pexp, na.rm = T))
+    )
 
-  # Un-rowwise
-  # "rowwise df" can raise some incorrect computation in the future.
-  class(proc) <- c("tbl_df", "tbl", "data.frame")
-  proc
+    # Un-rowwise
+    # "rowwise df" can raise some incorrect computation in the future.
+    class(proc) <- c("tbl_df", "tbl", "data.frame")
+    proc
 }
 
 #' Add full statistical significance fields (Ppois, Pexp, P0)
@@ -1413,10 +1406,10 @@ add_P0 <- function(proc) {
 #'
 #' @return The input dataframe with added `Ppois`, `Pexp`, and `P0` columns.
 add_Pstats <- function(proc, stat) {
-  proc <- add_Ppois(proc, stat)
-  proc <- add_Pexp(proc, stat)
-  proc <- add_P0(proc)
-  return(proc)
+    proc <- add_Ppois(proc, stat)
+    proc <- add_Pexp(proc, stat)
+    proc <- add_P0(proc)
+    return(proc)
 }
 
 #' Main anomaly detection pipeline for a single detector
@@ -1455,82 +1448,81 @@ add_Pstats <- function(proc, stat) {
 #' @examples
 #' \dontrun{
 #' # Assume you have curr_batch and prev_batch as ts objects
-#' dets <- c('H1', 'L1')
+#' dets <- c("H1", "L1")
 #' arch_params <- config_pipe()
 #' init <- init_pipe(dets = dets)
 #' prev_batch <- init[[1]]
 #' res.net <- init[[2]]
 #'
-#' result <- pipe(curr_batch, prev_batch[['H1']], res.net[['H1']], arch_params)
+#' result <- pipe(curr_batch, prev_batch[["H1"]], res.net[["H1"]], arch_params)
 #' }
 #' @export
 pipe <- function(
-  curr_batch,
-  prev_batch,
-  res.list,
-  arch_params,
-  verb = T
-) {
-  if (all(is.na(curr_batch))) {
-    res.list <- append_NA(res.list)
-    message.verb(
-      "WARNING: The current batch is NA might be due to the duty cycle",
-      v = verb
-    )
-  } else {
-    # Processing
-    arch <- arch_params$arch
-    n_missed <- arch_params$n_missed
-    DQ <- arch_params$DQ
-    P_update <- arch_params$P_update
-    proc <- arch(
-      concat_ts(
-        prev = prev_batch,
-        curr = curr_batch,
-        n_former = n_missed[["Mh"]]
-      ),
-      params = arch_params
-    )
-    proc <- adjust_proc(proc, curr_batch = curr_batch, n_missed = n_missed)
-    if (!is.null(DQ)) {
-      proc <- add_DQ(proc, curr_batch = curr_batch)
+    curr_batch,
+    prev_batch,
+    res.list,
+    arch_params,
+    verb = T) {
+    if (all(is.na(curr_batch))) {
+        res.list <- append_NA(res.list)
+        message.verb(
+            "WARNING: The current batch is NA might be due to the duty cycle",
+            v = verb
+        )
+    } else {
+        # Processing
+        arch <- arch_params$arch
+        n_missed <- arch_params$n_missed
+        DQ <- arch_params$DQ
+        P_update <- arch_params$P_update
+        proc <- arch(
+            concat_ts(
+                prev = prev_batch,
+                curr = curr_batch,
+                n_former = n_missed[["Mh"]]
+            ),
+            params = arch_params
+        )
+        proc <- adjust_proc(proc, curr_batch = curr_batch, n_missed = n_missed)
+        if (!is.null(DQ)) {
+            proc <- add_DQ(proc, curr_batch = curr_batch)
+        }
+
+        # Compute statistics on current batch
+        prev_updated_stat <- dplyr::last(res.list$ustat)
+        prev_tcen <- prev_updated_stat$last_tcen
+        current_stat <- stat_anom(proc, last_tcen = prev_tcen)
+        proc <- add_stat(proc, stat_table = current_stat$table)
+
+        # Compute probabilities based on prev_updated_stat
+        proc <- add_Pstats(proc, prev_updated_stat)
+        if (!is.null(DQ)) {
+            proc <- add_P0_DQ(proc, DQ = DQ)
+        }
+
+        # Update statistics with previous updated & current one
+        # if P_update != NULL, `update_logic()` will use prev_tcen and proc inside
+        updated_stat <- update_logic(
+            updated = prev_updated_stat,
+            current = current_stat,
+            P_update = P_update
+        )
+
+        # Extract the last cluster's t_cen for the next batch
+        updated_stat[["last_tcen"]] <- get_last_tcen(proc)
+
+        # Store results
+        res.list <- list.append(res.list, "stat", current_stat)
+        res.list <- list.append(
+            res.list,
+            "lamb",
+            list(a = updated_stat$stats$lambda_a, c = updated_stat$stats$lambda_c)
+        )
+        res.list <- list.append(res.list, "ustat", updated_stat)
+        # res.list <- list.append(res.list, "proc", proc)
+        res.list[["proc"]] <- proc
     }
-
-    # Compute statistics on current batch
-    prev_updated_stat <- dplyr::last(res.list$ustat)
-    prev_tcen <- prev_updated_stat$last_tcen
-    current_stat <- stat_anom(proc, last_tcen = prev_tcen)
-    proc <- add_stat(proc, stat_table = current_stat$table)
-
-    # Compute probabilities based on prev_updated_stat
-    proc <- add_Pstats(proc, prev_updated_stat)
-    if (!is.null(DQ)) {
-      proc <- add_P0_DQ(proc, DQ = DQ)
-    }
-
-    # Update statistics with previous updated & current one
-    # if P_update != NULL, `update_logic()` will use prev_tcen and proc inside
-    updated_stat <- update_logic(
-      updated = prev_updated_stat,
-      current = current_stat,
-      P_update = P_update
-    )
-
-    # Extract the last cluster's t_cen for the next batch
-    updated_stat[['last_tcen']] <- get_last_tcen(proc)
-
-    # Store results
-    res.list <- list.append(res.list, "stat", current_stat)
-    res.list <- list.append(
-      res.list,
-      "lamb",
-      list(a = updated_stat$stats$lambda_a, c = updated_stat$stats$lambda_c)
-    )
-    res.list <- list.append(res.list, "ustat", updated_stat)
-    #res.list <- list.append(res.list, "proc", proc)
-    res.list[['proc']] <- proc
-  }
-  return(res.list)
+    return(res.list)
 }
 
 #' Coincidence Analysis Using P0 Statistics
@@ -1557,103 +1549,102 @@ pipe <- function(
 #'
 #' @export
 coincide_P0 <- function(
-  shift.proc,
-  ref.proc,
-  n_shift = NULL,
-  window_size,
-  overlap = 0.5,
-  step_size = (1 - overlap) * window_size,
-  mean.func = har.mean,
-  p_col = 'P0_BURST_CAT2',
-  return = 1L
-) {
-  if (length(mean.func) > 1L) {
-    if (is.null(attr(mean.func, 'names'))) {
-      stop(
-        "(InputError) If multiple `mean.func` is given, it must be named vector."
-      )
+    shift.proc,
+    ref.proc,
+    n_shift = NULL,
+    window_size,
+    overlap = 0.5,
+    step_size = (1 - overlap) * window_size,
+    mean.func = har.mean,
+    p_col = "P0_BURST_CAT2",
+    return = 1L) {
+    if (length(mean.func) > 1L) {
+        if (is.null(attr(mean.func, "names"))) {
+            stop(
+                "(InputError) If multiple `mean.func` is given, it must be named vector."
+            )
+        }
     }
-  }
-  if (!return %in% c(1L, 2L)) {
-    stop(
-      "InputError: 'return' must be one of (1, 2, 3)\n  1: returns 'result' only  \n  2: returns list of 'joined' and 'result'"
-    )
-  }
+    if (!return %in% c(1L, 2L)) {
+        stop(
+            "InputError: 'return' must be one of (1, 2, 3)\n  1: returns 'result' only  \n  2: returns list of 'joined' and 'result'"
+        )
+    }
 
-  data.table::setDTthreads(1L) # Multi-threads in data.table (DEPRECATED IN THE MOMENT)
+    data.table::setDTthreads(1L) # Multi-threads in data.table (DEPRECATED IN THE MOMENT)
 
-  # (H1 must be shifted)
-  # Shifting
-  if (!is.null(n_shift)) {
-    shift.proc$time <- shift.proc$time[c(
-      (n_shift + 1L):nrow(shift.proc),
-      1L:n_shift
-    )]
-  }
+    # (H1 must be shifted)
+    # Shifting
+    if (!is.null(n_shift)) {
+        shift.proc$time <- shift.proc$time[c(
+            (n_shift + 1L):nrow(shift.proc),
+            1L:n_shift
+        )]
+    }
 
-  # Joining
-  ## Select only required columns
-  shift.proc <- shift.proc[, .SD, .SDcols = c('time', p_col)]
-  ref.proc <- ref.proc[, .SD, .SDcols = c('time', p_col)]
-  ## Rename
-  data.table::setnames(shift.proc, c('time', p_col), c('time', 'P0_H1'))
-  data.table::setnames(ref.proc, c('time', p_col), c('time', 'P0_L1'))
+    # Joining
+    ## Select only required columns
+    shift.proc <- shift.proc[, .SD, .SDcols = c("time", p_col)]
+    ref.proc <- ref.proc[, .SD, .SDcols = c("time", p_col)]
+    ## Rename
+    data.table::setnames(shift.proc, c("time", p_col), c("time", "P0_H1"))
+    data.table::setnames(ref.proc, c("time", p_col), c("time", "P0_L1"))
 
-  ## Set time as key
-  data.table::setkey(shift.proc, 'time')
-  data.table::setkey(ref.proc, 'time')
+    ## Set time as key
+    data.table::setkey(shift.proc, "time")
+    data.table::setkey(ref.proc, "time")
 
-  ## Join by time
-  if (nrow(shift.proc) > nrow(ref.proc)) {
-    joined_shift <- shift.proc[ref.proc, on = 'time']
-  } else {
-    joined_shift <- ref.proc[shift.proc, on = 'time']
-  }
+    ## Join by time
+    if (nrow(shift.proc) > nrow(ref.proc)) {
+        joined_shift <- shift.proc[ref.proc, on = "time"]
+    } else {
+        joined_shift <- ref.proc[shift.proc, on = "time"]
+    }
 
-  # Aggregation + Joint
-  ## Make starting indicies with 'window_size' and 'step_size' (or overlap)
-  ind_starts <- seq(1, nrow(joined_shift) - window_size + 1, by = step_size)
+    # Aggregation + Joint
+    ## Make starting indicies with 'window_size' and 'step_size' (or overlap)
+    ind_starts <- seq(1, nrow(joined_shift) - window_size + 1, by = step_size)
 
-  ## Divided joined_shift by bin_id in list
-  bin_list <- lapply(seq_along(ind_starts), function(i) {
-    idx <- ind_starts[i]:(ind_starts[i] + window_size - 1)
-    data.table::data.table(bin_id = i, joined_shift[idx])
-  })
+    ## Divided joined_shift by bin_id in list
+    bin_list <- lapply(seq_along(ind_starts), function(i) {
+        idx <- ind_starts[i]:(ind_starts[i] + window_size - 1)
+        data.table::data.table(bin_id = i, joined_shift[idx])
+    })
 
-  ## Rebind
-  joined_overlap <- data.table::rbindlist(bin_list)
+    ## Rebind
+    joined_overlap <- data.table::rbindlist(bin_list)
 
-  ## Aggregate by bin_id
-  result <- joined_overlap[,
-    .(
-      time_bin = median(time),
-      P0_H1_bin = mean.func(P0_H1),
-      P0_L1_bin = mean.func(P0_L1)
-    ),
-    by = bin_id
-  ]
+    ## Aggregate by bin_id
+    result <- joined_overlap[,
+        .(
+            time_bin = median(time),
+            P0_H1_bin = mean.func(P0_H1),
+            P0_L1_bin = mean.func(P0_L1)
+        ),
+        by = bin_id
+    ]
 
-  ## Compute coincident P0 by product
-  result[,
-    P0_net := prod(.SD),
-    .SDcols = !c('bin_id', 'time_bin'),
-    by = bin_id
-  ]
+    ## Compute coincident P0 by product
+    result[,
+        P0_net := prod(.SD),
+        .SDcols = !c("bin_id", "time_bin"),
+        by = bin_id
+    ]
 
-  #setDTthreads(1L) (DEPRECATED)
+    # setDTthreads(1L) (DEPRECATED)
 
-  # Returning
-  if (return == 1L) {
-    result
-  } else if (return == 2L) {
-    list(
-      'joined' = joined_overlap[result, on = 'bin_id'][,
-        .SD,
-        .SDcols = c('time', 'bin_id', 'P0_H1', 'P0_L1', 'P0_net')
-      ],
-      'result' = result
-    )
-  }
+    # Returning
+    if (return == 1L) {
+        result
+    } else if (return == 2L) {
+        list(
+            "joined" = joined_overlap[result, on = "bin_id"][,
+                .SD,
+                .SDcols = c("time", "bin_id", "P0_H1", "P0_L1", "P0_net")
+            ],
+            "result" = result
+        )
+    }
 }
 
 #' Run anomaly detection pipeline over detector network
@@ -1693,86 +1684,84 @@ coincide_P0 <- function(
 #' @import data.table
 #' @export
 pipe_net <- function(
-  batch_net,
-  prev_batch,
-  res.net,
-  coinc.lis,
-  arch_params,
-  update_model = TRUE,
-  verb = TRUE,
-  debug = FALSE
-) {
-  # Get detector names
-  dets <- names(batch_net)
+    batch_net,
+    prev_batch,
+    res.net,
+    coinc.lis,
+    arch_params,
+    update_model = TRUE,
+    verb = TRUE,
+    debug = FALSE) {
+    # Get detector names
+    dets <- names(batch_net)
 
-  # Run pipe in parallel over detectors
-  if (debug) {
-    #For debugging
-    res.net <- lapply(dets, function(det) {
-      pipe(
-        curr_batch = batch_net[[det]],
-        prev_batch = prev_batch[[det]],
-        res.list = res.net[[det]],
-        arch_params = arch_params,
-        verb = verb
-      )
-    })
-    names(res.net) <- dets
-  } else {
-    res.net <- foreach::foreach(det = dets, .combine = 'list') %dopar%
-      {
-        pipe(
-          curr_batch = batch_net[[det]],
-          prev_batch = prev_batch[[det]],
-          res.list = res.net[[det]],
-          arch_params = arch_params,
-          verb = verb
-        )
-      }
-    names(res.net) <- dets
-  }
-
-  # Store current batch as prev_batch for the next iteration
-  for (det in dets) {
-    prev_batch[[det]] <- batch_net[[det]]
-  }
-
-  # Monitoring lambdas
-  if (verb) {
-    for (det in dets) {
-      cat(paste0(
-        "  ",
-        det,
-        ": λ_c=",
-        sprintf('%.03f', dplyr::last(res.net[[det]]$lamb)$c),
-        ", λ_N=",
-        sprintf('%.03f', dplyr::last(res.net[[det]]$lamb)$a),
-        '\n'
-      ))
+    # Run pipe in parallel over detectors
+    if (debug) {
+        # For debugging
+        res.net <- lapply(dets, function(det) {
+            pipe(
+                curr_batch = batch_net[[det]],
+                prev_batch = prev_batch[[det]],
+                res.list = res.net[[det]],
+                arch_params = arch_params,
+                verb = verb
+            )
+        })
+        names(res.net) <- dets
+    } else {
+        res.net <- foreach::foreach(det = dets, .combine = "list") %dopar% {
+            pipe(
+                curr_batch = batch_net[[det]],
+                prev_batch = prev_batch[[det]],
+                res.list = res.net[[det]],
+                arch_params = arch_params,
+                verb = verb
+            )
+        }
+        names(res.net) <- dets
     }
-  }
 
-  # Coincidence analysis
-  if (any(sapply(res.net, function(det) all(is.na(det$proc))))) {
-    coinc.res <- NA
-  } else {
-    coinc.res <- coincide_P0(
-      shift.proc = data.table::data.table(res.net$H1$proc),
-      ref.proc = data.table::data.table(res.net$L1$proc),
-      n_shift = NULL,
-      window_size = arch_params$window_size,
-      overlap = arch_params$overlap,
-      mean.func = arch_params$mean.func,
-      p_col = paste0('P0_', arch_params$DQ),
-      return = 2L
-    )
-  }
-  coinc.lis[[length(coinc.lis) + 1]] <- coinc.res
+    # Store current batch as prev_batch for the next iteration
+    for (det in dets) {
+        prev_batch[[det]] <- batch_net[[det]]
+    }
 
-  # Assign them into parent frame (outside of pipe.net)
-  assign('res.net', res.net, envir = parent.frame())
-  assign('prev_batch', prev_batch, envir = parent.frame())
-  assign('coinc.lis', coinc.lis, envir = parent.frame())
+    # Monitoring lambdas
+    if (verb) {
+        for (det in dets) {
+            cat(paste0(
+                "  ",
+                det,
+                ": λ_c=",
+                sprintf("%.03f", dplyr::last(res.net[[det]]$lamb)$c),
+                ", λ_N=",
+                sprintf("%.03f", dplyr::last(res.net[[det]]$lamb)$a),
+                "\n"
+            ))
+        }
+    }
+
+    # Coincidence analysis
+    if (any(sapply(res.net, function(det) all(is.na(det$proc))))) {
+        coinc.res <- NA
+    } else {
+        coinc.res <- coincide_P0(
+            shift.proc = data.table::data.table(res.net$H1$proc),
+            ref.proc = data.table::data.table(res.net$L1$proc),
+            n_shift = NULL,
+            window_size = arch_params$window_size,
+            overlap = arch_params$overlap,
+            mean.func = arch_params$mean.func,
+            p_col = paste0("P0_", arch_params$DQ),
+            return = 2L
+        )
+    }
+    coinc.lis[[length(coinc.lis) + 1]] <- coinc.res
+
+    # Assign them into parent frame (outside of pipe.net)
+    assign("res.net", res.net, envir = parent.frame())
+    assign("prev_batch", prev_batch, envir = parent.frame())
+    assign("coinc.lis", coinc.lis, envir = parent.frame())
 }
 
 #' Run full anomaly detection stream over multiple batches
@@ -1811,94 +1800,93 @@ pipe_net <- function(
 #'
 #' @examples
 #' \dontrun{
-#'   # Assume batch_set and arch_params are prepared
-#'   result <- stream(batch_set, arch_params)
-#'   result$summary   # Show summary statistics
-#'   result$model     # Save model for reuse
+#' # Assume batch_set and arch_params are prepared
+#' result <- stream(batch_set, arch_params)
+#' result$summary # Show summary statistics
+#' result$model # Save model for reuse
 #' }
 #'
 #' @export
 stream <- function(
-  batch_set,
-  arch_params,
-  use_model = NA
-) {
-  # Initialize pipeline
-  dets <- names(batch_set[[1]])
-  init <- init_pipe(dets = dets)
-  prev_batch <- init[[1]]
-  res.net <- init[[2]]
-  coinc.lis <- init[[3]]
+    batch_set,
+    arch_params,
+    use_model = NA) {
+    # Initialize pipeline
+    dets <- names(batch_set[[1]])
+    init <- init_pipe(dets = dets)
+    prev_batch <- init[[1]]
+    res.net <- init[[2]]
+    coinc.lis <- init[[3]]
 
-  # Pre-trained model
-  if (!all(is.na(use_model))) {
-    for (det in dets) {
-      res.net[[det]][['ustat']] <- list(use_model[[det]])
+    # Pre-trained model
+    if (!all(is.na(use_model))) {
+        for (det in dets) {
+            res.net[[det]][["ustat"]] <- list(use_model[[det]])
+        }
     }
-  }
 
-  # foreach config
-  library(foreach)
-  cl <- snow::makeCluster(length(dets), type = 'SOCK', outfile = "/dev/null")
-  invisible({
-    snow::clusterEvalQ(cl, expr = {
-      suppressPackageStartupMessages(library(beacon))
+    # foreach config
+    library(foreach)
+    cl <- snow::makeCluster(length(dets), type = "SOCK", outfile = "/dev/null")
+    invisible({
+        snow::clusterEvalQ(cl, expr = {
+            suppressPackageStartupMessages(library(beacon))
+        })
     })
-  })
-  doSNOW::registerDoSNOW(cl)
+    doSNOW::registerDoSNOW(cl)
 
-  # Run pipe_net()
-  eta.lis <- vector(mode = 'list', length = length(batch_set))
-  for (ibch in seq_along(batch_set)) {
-    # for (ibch in 1:5) { #
-    cat(paste0(ibch, "-th batch:\n"))
-    eta.lis[[ibch]] <- system.time({
-      pipe_net(
-        batch_net = batch_set[[ibch]],
-        prev_batch = prev_batch,
-        res.net = res.net,
-        coinc.lis = coinc.lis,
-        arch_params = arch_params,
-        debug = T
-      )
-    })
-  }
+    # Run pipe_net()
+    eta.lis <- vector(mode = "list", length = length(batch_set))
+    for (ibch in seq_along(batch_set)) {
+        # for (ibch in 1:5) { #
+        cat(paste0(ibch, "-th batch:\n"))
+        eta.lis[[ibch]] <- system.time({
+            pipe_net(
+                batch_net = batch_set[[ibch]],
+                prev_batch = prev_batch,
+                res.net = res.net,
+                coinc.lis = coinc.lis,
+                arch_params = arch_params,
+                debug = T
+            )
+        })
+    }
 
-  # End of foreach
-  foreach::registerDoSEQ()
-  snow::stopCluster(cl)
+    # End of foreach
+    foreach::registerDoSEQ()
+    snow::stopCluster(cl)
 
-  # Plot lambdas
-  p.lamba <- plot_lambda(
-    res.net,
-    lambda = "a",
-    t_from = ti(batch_set[[1]][[1]])
-  )
-  p.lambc <- plot_lambda(
-    res.net,
-    lambda = "c",
-    t_from = ti(batch_set[[1]][[1]])
-  )
+    # Plot lambdas
+    p.lamba <- plot_lambda(
+        res.net,
+        lambda = "a",
+        t_from = ti(batch_set[[1]][[1]])
+    )
+    p.lambc <- plot_lambda(
+        res.net,
+        lambda = "c",
+        t_from = ti(batch_set[[1]][[1]])
+    )
 
-  # Summary
-  res.net_updated_stat_summary <- dplyr::bind_rows(
-    as.data.frame(dplyr::last(res.net[[1]][["ustat"]])),
-    as.data.frame(dplyr::last(res.net[[2]][["ustat"]]))
-  )
-  rownames(res.net_updated_stat_summary) <- dets
+    # Summary
+    res.net_updated_stat_summary <- dplyr::bind_rows(
+        as.data.frame(dplyr::last(res.net[[1]][["ustat"]])),
+        as.data.frame(dplyr::last(res.net[[2]][["ustat"]]))
+    )
+    rownames(res.net_updated_stat_summary) <- dets
 
-  # Model
-  model <- lapply(res.net, function(x) dplyr::last(x$ustat))
+    # Model
+    model <- lapply(res.net, function(x) dplyr::last(x$ustat))
 
-  list(
-    'res.net' = res.net,
-    'coinc.lis' = coinc.lis,
-    'model' = model,
-    'arch_params' = arch_params,
-    'lambda_plot' = list('a' = p.lamba, 'c' = p.lambc),
-    'summary' = res.net_updated_stat_summary,
-    'eta' = eta.lis
-  )
+    list(
+        "res.net" = res.net,
+        "coinc.lis" = coinc.lis,
+        "model" = model,
+        "arch_params" = arch_params,
+        "lambda_plot" = list("a" = p.lamba, "c" = p.lambc),
+        "summary" = res.net_updated_stat_summary,
+        "eta" = eta.lis
+    )
 }
 
 #' Reproduce the `proc` and coincidence result for a specific batch
@@ -1936,78 +1924,77 @@ stream <- function(
 #'
 #' @export
 reproduce <- function(
-  batch_set,
-  batch_at = NULL,
-  batch_num = NULL,
-  result,
-  window_size = NULL,
-  overlap = NULL
-) {
-  # Find which batch is going to be reproduced
-  if (hasArg(batch_at) & is.null(batch_num)) {
-    # Find which batch contains the time "batch_at"
-    logical_bch <- sapply(batch_set, function(bnet_i) {
-      trange <- tr(bnet_i[[1]])
-      batch_at >= trange[1] & batch_at <= trange[2]
+    batch_set,
+    batch_at = NULL,
+    batch_num = NULL,
+    result,
+    window_size = NULL,
+    overlap = NULL) {
+    # Find which batch is going to be reproduced
+    if (hasArg(batch_at) & is.null(batch_num)) {
+        # Find which batch contains the time "batch_at"
+        logical_bch <- sapply(batch_set, function(bnet_i) {
+            trange <- tr(bnet_i[[1]])
+            batch_at >= trange[1] & batch_at <= trange[2]
+        })
+        i_bch <- which(logical_bch)
+    } else if (hasArg(batch_num) & is.null(batch_at)) {
+        i_bch <- batch_num
+    } else {
+        stop("InputError) Only one of batch_at and batch_num must be provided")
+    }
+
+    # Collect batches at (i_bch - 1) and (i_bch)
+    if (i_bch == 1) {
+        prev_batch <- `names<-`(
+            as.vector(rep(NA, length(batch_set[[1]])), mode = "list"),
+            names(batch_set[[1]])
+        )
+    } else {
+        prev_batch <- batch_set[[i_bch - 1]]
+    }
+    curr_batch <- batch_set[[i_bch]]
+
+    # Collect result list from 1 to i_bch - 1
+    dets <- names(curr_batch)
+    for (det in dets) {
+        i_bch.prev <- ifelse(i_bch == 1, 1, i_bch - 1)
+        result$res.net[[det]]$stat <- result$res.net[[det]]$stat[1:i_bch.prev]
+        result$res.net[[det]]$lamb <- result$res.net[[det]]$lamb[1:i_bch.prev]
+        result$res.net[[det]]$ustat <- result$res.net[[det]]$ustat[1:i_bch]
+    }
+    model <- lapply(result$res.net, function(x) dplyr::last(x$ustat))
+    result$model <- model
+
+    # Re do pipe
+    arch_params <- result$arch_params
+    res.net <- lapply(dets, function(det) {
+        pipe(
+            curr_batch = curr_batch[[det]],
+            prev_batch = prev_batch[[det]],
+            res.list = result$res.net[[det]],
+            arch_params = arch_params,
+            verb = F
+        )
     })
-    i_bch <- which(logical_bch)
-  } else if (hasArg(batch_num) & is.null(batch_at)) {
-    i_bch <- batch_num
-  } else {
-    stop("InputError) Only one of batch_at and batch_num must be provided")
-  }
+    names(res.net) <- dets
 
-  # Collect batches at (i_bch - 1) and (i_bch)
-  if (i_bch == 1) {
-    prev_batch <- `names<-`(
-      as.vector(rep(NA, length(batch_set[[1]])), mode = 'list'),
-      names(batch_set[[1]])
+    # Coincidence analysis
+    if (is.null(window_size) | is.null(window_size)) {
+        window_size <- result$arch_params$window_size
+        overlap <- result$arch_params$overlap
+    }
+    coinc.res <- coincide_P0(
+        shift.proc = data.table::data.table(res.net$H1$proc),
+        ref.proc = data.table::data.table(res.net$L1$proc),
+        n_shift = NULL,
+        window_size = window_size,
+        overlap = overlap,
+        mean.func = result$arch_params$mean.func,
+        p_col = paste0("P0_", result$arch_params$DQ),
+        return = 2L
     )
-  } else {
-    prev_batch <- batch_set[[i_bch - 1]]
-  }
-  curr_batch <- batch_set[[i_bch]]
-
-  # Collect result list from 1 to i_bch - 1
-  dets <- names(curr_batch)
-  for (det in dets) {
-    i_bch.prev <- ifelse(i_bch == 1, 1, i_bch - 1)
-    result$res.net[[det]]$stat <- result$res.net[[det]]$stat[1:i_bch.prev]
-    result$res.net[[det]]$lamb <- result$res.net[[det]]$lamb[1:i_bch.prev]
-    result$res.net[[det]]$ustat <- result$res.net[[det]]$ustat[1:i_bch]
-  }
-  model <- lapply(result$res.net, function(x) dplyr::last(x$ustat))
-  result$model <- model
-
-  # Re do pipe
-  arch_params <- result$arch_params
-  res.net <- lapply(dets, function(det) {
-    pipe(
-      curr_batch = curr_batch[[det]],
-      prev_batch = prev_batch[[det]],
-      res.list = result$res.net[[det]],
-      arch_params = arch_params,
-      verb = F
-    )
-  })
-  names(res.net) <- dets
-
-  # Coincidence analysis
-  if (is.null(window_size) | is.null(window_size)) {
-    window_size <- result$arch_params$window_size
-    overlap <- result$arch_params$overlap
-  }
-  coinc.res <- coincide_P0(
-    shift.proc = data.table::data.table(res.net$H1$proc),
-    ref.proc = data.table::data.table(res.net$L1$proc),
-    n_shift = NULL,
-    window_size = window_size,
-    overlap = overlap,
-    mean.func = result$arch_params$mean.func,
-    p_col = paste0('P0_', result$arch_params$DQ),
-    return = 2L
-  )
-  list('res.net' = res.net, 'coinc.res' = coinc.res, 'batch_num' = i_bch)
+    list("res.net" = res.net, "coinc.res" = coinc.res, "batch_num" = i_bch)
 }
 
 #' Detection Significance from Probability
@@ -2025,5 +2012,5 @@ reproduce <- function(
 #'
 #' @export
 Significance <- function(P, a = 2.3) {
-  -a * log10(P)
+    -a * log10(P)
 }
