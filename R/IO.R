@@ -1,50 +1,3 @@
-#' Custom print method for time series with dqmask
-#'
-#' Prints a time series object that includes a \code{dqmask} attribute,
-#' while suppressing the full output of the \code{dqmask} for clarity.
-#' A summary message is shown instead to indicate its presence and structure.
-#'
-#' This method is triggered automatically for objects with class \code{"dq"},
-#' and is designed to wrap around standard \code{ts} or \code{mts} objects.
-#'
-#' @param x An object of class \code{"dq"}, typically a \code{ts} or \code{mts}
-#'   object with an additional \code{dqmask} attribute attached.
-#' @param ... Additional arguments passed to the default \code{print} method.
-#'
-#' @return Invisibly returns \code{x}, printed to the console with \code{dqmask}
-#'   content hidden.
-#' @export
-print.dq <- function(x, ...) {
-    # Extract dqmask and level attributes
-    dqmask <- attr(x, "dqmask", exact = TRUE)
-    dqlevel <- attr(dqmask, "level", exact = TRUE)
-
-    # Strip dqmask (and optional attributes) for printing
-    x2 <- x
-    attributes(x2)$dqmask <- NULL
-
-    # Print without dqmask
-    NextMethod("print", x2, ...)
-
-    # Manual summary message
-    if (!is.null(dqmask)) {
-        if (is.matrix(dqmask)) {
-            d <- dim(dqmask)
-            cat(sprintf(
-                "\n[dqmask: mts object with %d series × %d time points — hidden]",
-                d[2], d[1]
-            ))
-        } else {
-            cat(sprintf("\n[dqmask: ts object with %d time points — hidden]", length(dqmask)))
-        }
-        if (!is.null(dqlevel)) {
-            cat(sprintf(" (level = \"%s\")", dqlevel))
-        }
-        cat("\n")
-    }
-}
-
-
 #' Read HDF5 Time Series Data with Data Quality Mask
 #'
 #' Reads a single-channel strain data from an HDF5 file along with its DQ mask.
@@ -74,21 +27,22 @@ read_H5 <- function(file, sampling.freq, dq.level = "BURST_CAT2") {
     if (!is.null(dq.level)) {
         dqmask <- tmp[["quality"]][["simple"]][["DQmask"]]$read()
         dqmask <- if (dq.level == "all") {
-            ts(
+            dqm <- ts(
                 t(sapply(dqmask, DQlev, level = dq.level)),
                 start = tstart,
                 frequency = 1
             )
+            class(dqm) <- c("matrix", "array")
         } else {
-            ts(
+            dqm <- ts(
                 sapply(dqmask, DQlev, level = dq.level),
                 start = tstart,
                 frequency = 1
             )
+            class(dqm) <- NULL
         }
         attr(dqmask, "level") <- dq.level
         attr(res, "dqmask") <- dqmask
-        class(res) <- c("dq", class(res))
     }
     tmp$close_all()
 
