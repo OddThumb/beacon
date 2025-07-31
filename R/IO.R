@@ -33,6 +33,7 @@ read_H5 <- function(file, sampling.freq, dq.level = "BURST_CAT2") {
                 frequency = 1
             )
             class(dqm) <- c("matrix", "array")
+            dqm
         } else {
             dqm <- ts(
                 sapply(dqmask, DQlev, level = dq.level),
@@ -40,6 +41,7 @@ read_H5 <- function(file, sampling.freq, dq.level = "BURST_CAT2") {
                 frequency = 1
             )
             class(dqm) <- "numeric"
+            dqm
         }
         attr(dqmask, "level") <- dq.level
         attr(res, "dqmask") <- dqmask
