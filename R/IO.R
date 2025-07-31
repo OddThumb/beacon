@@ -13,28 +13,37 @@
 #'
 #' @return Invisibly returns \code{x}, printed to the console with \code{dqmask}
 #'   content hidden.
+#' @export
 print.dq <- function(x, ...) {
-    # remove dqmask for clean printing
-    x2 <- x
-    dqmask <- attr(x2, "dqmask")
-    attr(x2, "dqmask") <- NULL
+    # Extract dqmask and level attributes
+    dqmask <- attr(x, "dqmask", exact = TRUE)
+    dqlevel <- attr(dqmask, "level", exact = TRUE)
 
-    # delegate to ts printing
+    # Strip dqmask (and optional attributes) for printing
+    x2 <- x
+    attributes(x2)$dqmask <- NULL
+
+    # Print without dqmask
     NextMethod("print", x2, ...)
 
-    # informative dqmask summary
+    # Manual summary message
     if (!is.null(dqmask)) {
         if (is.matrix(dqmask)) {
             d <- dim(dqmask)
             cat(sprintf(
-                "\n[dqmask: mts object with %d series × %d time points — hidden]\n",
+                "\n[dqmask: mts object with %d series × %d time points — hidden]",
                 d[2], d[1]
             ))
         } else {
-            cat(sprintf("\n[dqmask: ts object with %d time points — hidden]\n", length(dqmask)))
+            cat(sprintf("\n[dqmask: ts object with %d time points — hidden]", length(dqmask)))
         }
+        if (!is.null(dqlevel)) {
+            cat(sprintf(" (level = \"%s\")", dqlevel))
+        }
+        cat("\n")
     }
 }
+
 
 #' Read HDF5 Time Series Data with Data Quality Mask
 #'
