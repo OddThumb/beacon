@@ -163,8 +163,8 @@ batching <- function(ts, t_bch = 1, has.DQ = T) {
 
     if (has.DQ) {
         # Add dqmask attributes
-        dqmask <- attr(ts, "dqmask")
-        dq.level <- attr(attr(ts, "dqmask"), "level")
+        dqmask <- get_dqmask(ts)
+        dq.level <- attr(dqmask, "level")
         batch.dq <- batching.dq(dqmask, n_bch, dq.level)
 
         invisible(lapply(seq(n_bch), function(ind) {

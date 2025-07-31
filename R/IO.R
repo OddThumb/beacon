@@ -51,6 +51,66 @@ read_H5 <- function(file, sampling.freq, dq.level = "BURST_CAT2") {
     return(res)
 }
 
+#' Reconstruct dqmask as a ts or mts object
+#'
+#' Converts the `dqmask` metadata attribute stored in an object (typically removed
+#' from `ts` class during storage) back to a formal time‑series (`ts` or `mts`) object.
+#' Uses the stored `tsp` attribute (or fallback to the parent object’s `tsp`)
+#' to reconstruct the appropriate start, end, and frequency information.
+#'
+#' @param obj An R object (e.g. returned by \code{read_H5()}) containing
+#'   an attribute named \code{"dqmask"}, which is either a numeric vector
+#'   or a numeric matrix/array (multi‑series).
+#'
+#' @returns A \code{ts} object for univariate data or \code{mts} object for
+#'   multivariate data, reconstructed using \code{tsp} and with
+#'   the original \code{"level"} attribute re‑attached. Returns \code{NULL}
+#'   if \code{dqmask} is missing or \code{NULL}.
+#'
+#' @details
+#' This helper retrieves \code{dqmask} from \code{obj}, determines the appropriate
+#' time-series parameters via \code{tsp(obj)} or \code{tsp(dqmask)}, and then recreates
+#' the time-series using \code{\link[stats]{ts}()}. The original
+#' \code{"level"} attribute (e.g. \code{"all"} vs specific level) is preserved.
+#'
+#' @examples
+#' # Example for univariate case:
+#' res <- read_H5("example.h5", sampling.freq = 1000, dq.level = "CAT1")
+#' dq_ts <- get_dqmask(res)
+#' print(dq_ts)
+#'
+#' # Example for multivariate case:
+#' res2 <- read_H5("example_multi.h5", sampling.freq = 1000, dq.level = "all")
+#' dq_ts2 <- get_dqmask(res2)
+#' str(dq_ts2)
+#'
+#' @export
+get_dqmask <- function(obj) {
+    dq <- attr(obj, "dqmask", exact = TRUE)
+    if (is.null(dq)) {
+        return(NULL)
+    }
+
+    tsp_info <- attr(dq, "tsp", exact = TRUE)
+    if (is.null(tsp_info)) {
+        tsp_info <- attr(obj, "tsp", exact = TRUE)
+    }
+    if (!is.numeric(tsp_info) || length(tsp_info) != 3) {
+        stop("tsp attribute (start, end, frequency) missing or invalid")
+    }
+
+    data_vec <- dq
+    if (is.matrix(data_vec)) {
+        # multivariate case
+        ts_obj <- ts(data_vec, start = tsp_info[1], frequency = tsp_info[3])
+    } else {
+        # univariate case
+        ts_obj <- ts(data_vec, start = tsp_info[1], frequency = tsp_info[3])
+    }
+    attr(ts_obj, "level") <- attr(dq, "level", exact = TRUE)
+    ts_obj
+}
+
 #' Convert Decimal DQ Flag to Bit Representation
 #'
 #' @param decimal.dq An integer. Decimal representation of the DQ flag.
