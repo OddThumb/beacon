@@ -79,7 +79,7 @@ read_H5 <- function(file, sampling.freq, dq.level = "BURST_CAT2") {
         }
         attr(dqmask, "level") <- dq.level
         attr(res, "dqmask") <- dqmask
-        class(res) <- c(class(res), "dq")
+        class(res) <- c("dq", class(res))
     }
     tmp$close_all()
 
