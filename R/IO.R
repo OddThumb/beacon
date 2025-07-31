@@ -22,13 +22,10 @@ read_H5 <- function(file, sampling.freq, dq.level = "BURST_CAT2") {
     tmp <- hdf5r::h5file(filename = file, mode = "r")
     tstart <- tmp[["meta"]]$open(name = "GPSstart")$read()
     Data <- tmp[["strain"]]$open(name = "Strain")$read()
-    dqmask <- tmp[["quality"]][["simple"]][["DQmask"]]$read()
-    tmp$close_all()
-    rm(tmp)
-
     res <- ts(Data, start = tstart, frequency = sampling.freq)
 
     if (!is.null(dq.level)) {
+        dqmask <- tmp[["quality"]][["simple"]][["DQmask"]]$read()
         dqmask <- if (dq.level == "all") {
             ts(
                 t(sapply(dqmask, DQlev, level = dq.level)),
@@ -45,6 +42,7 @@ read_H5 <- function(file, sampling.freq, dq.level = "BURST_CAT2") {
         attr(dqmask, "level") <- dq.level
         attr(res, "dqmask") <- dqmask
     }
+    tmp$close_all()
 
     return(res)
 }
