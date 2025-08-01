@@ -14,6 +14,8 @@ seqarima(
   ar.aic = TRUE,
   ar.collector = "median",
   ma.collector = "median",
+  ar.args = list(),
+  ma.args = list(),
   return.step = FALSE,
   verbose = TRUE
 )
@@ -36,6 +38,14 @@ seqarima(
 \item{ar.collector}{Collector for AR ensemble. One of 'mean', 'median', or 'pca'.}
 
 \item{ma.collector}{Collector for MA ensemble. One of 'mean', 'median', or 'pca'.}
+
+\item{ar.args}{A named list of additional arguments to be passed to the `Autoregressive()` function.
+This allows customization of the AR stage beyond standard parameters used in `burgar()`, etc.
+These arguments are merged with the core inputs via `do.call()`.}
+
+\item{ma.args}{A named list of additional arguments to be passed to the `MovingAverage()` function.
+This enables optional customization of the MA stage, for example by supplying `w.func`, custom weights,
+or smoothing parameters. Like `ar.args`, these are passed using `do.call()`.}
 
 \item{return.step}{Logical. If TRUE, intermediate stages are returned.}
 

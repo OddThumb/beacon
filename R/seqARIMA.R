@@ -900,6 +900,12 @@ MovingAverage <- function(ts, q, verbose = TRUE, ...) {
 #' @param ar.aic Logical. Whether to use AIC-based AR model selection.
 #' @param ar.collector Collector for AR ensemble. One of 'mean', 'median', or 'pca'.
 #' @param ma.collector Collector for MA ensemble. One of 'mean', 'median', or 'pca'.
+#' @param ar.args A named list of additional arguments to be passed to the `Autoregressive()` function.
+#'   This allows customization of the AR stage beyond standard parameters used in `burgar()`, etc.
+#'   These arguments are merged with the core inputs via `do.call()`.
+#' @param ma.args A named list of additional arguments to be passed to the `MovingAverage()` function.
+#'   This enables optional customization of the MA stage, for example by supplying `w.func`, custom weights,
+#'   or smoothing parameters. Like `ar.args`, these are passed using `do.call()`.
 #' @param return.step Logical. If TRUE, intermediate stages are returned.
 #' @param verbose Logical. If TRUE, messages are printed during execution.
 #'
@@ -944,6 +950,8 @@ seqarima <- function(
     ar.aic = TRUE,
     ar.collector = "median",
     ma.collector = "median",
+    ar.args = list(),
+    ma.args = list(),
     return.step = FALSE,
     verbose = TRUE) {
     # Argument matching
@@ -978,13 +986,15 @@ seqarima <- function(
     # 2) Auto-Regressive (EAR)
     if (!is.null(p)) {
         message_verb("> (2) Autoregressive stage", v = verbose)
-        x_ar <- Autoregressive(
+        ar_input <- c(list(
             ts = out,
             p = p,
             aic = ar.aic,
             verbose = verbose,
             collector = ar.collector
-        )
+        ), ar.args)
+        x_ar <- do.call(Autoregressive, ar_input)
+
         return.list[["ar_feat"]] <- attr(x_ar, "feature")
         return.list[["p"]] <- attr(x_ar, "p_order")
         if (return.step) {
@@ -995,12 +1005,14 @@ seqarima <- function(
 
     # 3) Moving Average (EoA)
     if (!is.null(q)) {
-        x_ma <- MovingAverage(
+        ma_input <- c(list(
             ts = out,
             q = q,
             verbose = verbose,
             collector = ma.collector
-        )
+        ), ma.args)
+        x_ma <- do.call(MovingAverage, ma_input)
+
         if (return.step) {
             return.list[["steps"]][["MA"]] <- x_ma
         }
