@@ -428,7 +428,7 @@ interp_psd <- function(fs, delta_f) {
     samples <- 0:(new_n - 1) * delta_f
     interp.fs <- approx(xout = samples, x = freqs(fs), y = fs)
 
-    fs(interp.fs$y, df = delta_f)
+    fs(interp.fs$y, df = delta_f, sampling.freq = attr(fs, "sampling.freq"))
 }
 
 #' Inverse Spectrum Truncation
