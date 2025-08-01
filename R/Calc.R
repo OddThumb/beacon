@@ -125,31 +125,6 @@ vl <- function(x) {
     diff(vr(x))
 }
 
-#' Weighted Product with Inverse Normalization
-#'
-#' @description
-#' Compute the product of input values with inverse weighting to compensate for missing values.
-#'
-#' @param x A numeric vector or list of numeric values.
-#' @param w Optional numeric scalar. Weight applied to each element. If \code{NULL}, it is automatically set to the ratio \code{length(x) / length(na.omit(x))}.
-#'
-#' @return A numeric value representing the weighted product of non-NA values in \code{x}, capped at 1.
-#'
-#' @details
-#' This function is useful when combining multiple probabilities with missing entries.
-#' It corrects the product by inflating it with an inverse of the missing rate.
-#'
-#' @export
-invweight_prod <- function(x, w = NULL) {
-    x <- unlist(x)
-    x.omit <- na.omit(x)
-    if (is.null(w)) {
-        L <- length(x)
-        w <- L / length(x.omit)
-    }
-    min(prod(w * x.omit), 1)
-}
-
 #' Arithmetic Mean Ignoring NA
 #'
 #' @description
@@ -179,8 +154,8 @@ ari_mean <- function(x) {
 #'
 #' @export
 har_mean <- function(x, na.rm = T) {
-    #if (na.rm) x <- na.omit(x)
-    #length(x) / sum(1/x, na.rm = F)
+    # if (na.rm) x <- na.omit(x)
+    # length(x) / sum(1/x, na.rm = F)
     x <- x[!is.na(x)]
     length(x) / sum(1 / x)
 }
@@ -201,11 +176,11 @@ har_mean <- function(x, na.rm = T) {
 #'
 #' @export
 geo_mean <- function(x, na.rm = T) {
-    #if (na.rm) x <- na.omit(x)
+    # if (na.rm) x <- na.omit(x)
     if (na.rm) {
         x <- x[!is.na(x)]
     }
-    #prod(x, na.rm=F)^(1/length(x))
+    # prod(x, na.rm=F)^(1/length(x))
     exp(sum(log(x)) / length(x))
 }
 
@@ -244,7 +219,7 @@ ceiling.digit <- function(x, digits = 0) {
 #' @return An integer or vector of integers representing \code{floor(log10(x))}.
 #' @export
 oom <- function(x) {
-    floor(log10(x))
+    floor(log10(abs(x)))
 }
 
 #' Rounded Range with Specified Bin Width
@@ -318,7 +293,7 @@ sample_dist <- function(nsample, pop, return_fit = TRUE, seed = NULL) {
     })
 
     # Extract fitted distribution function
-    rfit <- eval(parse(text = paste0("r", fit.dist$family[1L])))
+    rfit <- eval(parse(text = paste0("gamlss.dist::r", fit.dist$family[1L])))
 
     # Apply the distribution function
     dist.tmp <- with(set.seed(seed), {

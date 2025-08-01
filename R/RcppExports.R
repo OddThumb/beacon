@@ -8,6 +8,6 @@
 #' @param numCores A numeric. A number of cores
 #' @export
 embedParallelCpp <- function(x, dimension, numCores) {
-    .Call('_beacon_embedParallelCpp', PACKAGE = 'beacon', x, dimension, numCores)
+    .Call(`_beacon_embedParallelCpp`, x, dimension, numCores)
 }
 
