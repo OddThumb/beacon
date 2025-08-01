@@ -879,7 +879,7 @@ MovingAverage <- function(ts, q, verbose = TRUE, ...) {
     } else {
         # Single MA
         message_verb("> (3) MA stage with q=", q, v = verbose)
-        ma_res <- ma(ts, q)
+        ma_res <- ma(ts, q, ...)
         message_verb("|> q=", attr(ma_res, "q_order"), v = verbose)
     }
 

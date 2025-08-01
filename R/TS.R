@@ -601,5 +601,5 @@ BandPass <- function(
 #' @export
 whiten <- function(ts, sl, fl, fu, ...) {
     PSD <- psd(ts, sl, fl)
-    BandPass(to_ts((to.fs(ts) / (PSD^0.5))), fl, fu, verbose = F, ...)
+    BandPass(to_ts((to_fs(ts) / (PSD^0.5))), fl, fu, verbose = F, ...)
 }
