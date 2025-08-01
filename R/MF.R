@@ -235,7 +235,7 @@ matched_filter <- function(
 
     # qtilde need to retain the length of N before ifft
     qtilde <- double(N)
-    qtilde[kidx$min:kidx$max] <- qtilde.replace
+    qtilde[kidx[1]:kidx[2]] <- qtilde.replace
 
     # Let qtilde behave fs
     qtilde <- copy_attr(
@@ -272,7 +272,7 @@ matched_filter <- function(
     )
 
     # qtilde divided by psd
-    qtilde[kidx$min:kidx$max] <- qtilde[kidx$min:kidx$max] /
+    qtilde[kidx[1]:kidx[2]] <- qtilde[kidx[1]:kidx[2]] /
         cutoff_to(psd, kidx)
 
     # Output SNR, need to be transformed into ts
@@ -347,8 +347,8 @@ overlap_cplx <- function(
         df = deltaf(stilde),
         N = (length(stilde) - 1) * 2
     )
-    kmin <- kidx$min
-    kmax <- kidx$max
+    kmin <- kidx[1]
+    kmax <- kidx[2]
 
     if (!is.null(psd)) {
         if (!inherits(psd, "fs")) {
