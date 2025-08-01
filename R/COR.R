@@ -210,7 +210,7 @@ CCF <- function(
                 ggplot2::aes(linetype = "95% C.I. for white noise", yintercept = -sigs),
                 color = "blue"
             ) +
-            ggplot2::cale_x_continuous(
+            ggplot2::scale_x_continuous(
                 breaks = scales::breaks_pretty(ifelse(
                     nrow(ret.df > 10 * sampling.freq),
                     10,
