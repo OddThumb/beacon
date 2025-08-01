@@ -791,7 +791,7 @@ ma <- function(ts, order, weights = NULL, na.rm = T) {
             w <- rep(1, order) / order
         }
     }
-    out <- stats::filter(x, filter = w, sides = 2)
+    out <- stats::filter(ts, filter = w, sides = 2)
 
     if (na.rm) {
         out <- na.omit(out)
