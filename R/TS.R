@@ -56,24 +56,6 @@ utc2gps <- function(y, origin = as.POSIXct("1980-01-06 00:00:00", tz = "UTC")) {
     as.numeric(difftime(y, origin, units = "secs"))
 }
 
-#' Get or update the start time of a time series
-#'
-#' @param x A `ts` object.
-#' @param tstart A numeric. If provided, updates start time.
-#' @return If \code{tstart} is \code{NULL}, returns initial time. Otherwise, updates the object in global environment.
-#' @export
-start_time <- function(x, tstart = NULL) {
-    if (is.null(tstart)) {
-        ti(x)
-    } else {
-        assign(
-            deparse(substitute(x)),
-            ts(x, start = tstart, freq = frequency(x)),
-            envir = .GlobalEnv
-        )
-    }
-}
-
 #' Convert to `ts` object using a reference
 #'
 #' @param obj A vector, list, or data frame.
@@ -412,42 +394,27 @@ resize <- function(ts, nlen) {
 pad <- function(ts, tstart, tend, at = 0) {
     sampling_freq <- frequency(ts)
 
-    # Span zerobase indicies
-    base.inds <- trunc(
-        seq(tstart, tend, by = 1 / sampling_freq) * sampling_freq
-    )
+    # Time vector of full zero-base
+    times <- seq(tstart, tend, by = 1 / sampling_freq)
+    base.inds <- seq_along(times)
 
-    # Modify `tsp` by `at`
-    tsp(ts) <- tsp(ts) + c(at, at, 0)
+    # Shifted insertion index
+    shift_samples <- round((at - tstart) * sampling_freq)
+    ts_len <- length(ts)
 
-    # Get modified time range and its indicies
-    # As `ts` has been modified by `at`, its index will be integer > 0
-    dat.tr <- range(time(ts))
-    dat.range <- trunc(dat.tr * sampling_freq)
+    # Zero vector
+    zerobase <- numeric(length(times))
 
-    # Generate zero-base
-    len <- length(base.inds)
-    zerobase <- double(len)
+    # Assign data (careful indexing)
+    start_idx <- shift_samples + 1
+    end_idx <- start_idx + ts_len - 1
 
-    # Specify starting & ending padding index
-    padstart <- if (vi(base.inds) < dat.range[1]) {
-        which(base.inds == dat.range[1])
+    if (start_idx >= 1 && end_idx <= length(zerobase)) {
+        zerobase[start_idx:end_idx] <- ts
     } else {
-        which(base.inds == vi(base.inds))
-    }
-    padend <- if (vf(base.inds) > dat.range[2]) {
-        which(base.inds == dat.range[2])
-    } else {
-        which(base.inds == vf(base.inds))
+        stop("Padded series would go out of bounds. Check 'at', 'tstart', 'tend'.")
     }
 
-    # Inject into zero-base
-    zerobase[padstart:padend] <- c(suppressWarnings(window_to(
-        ts,
-        c(tstart, tend)
-    )))
-
-    # Make it as `ts`
     ts(zerobase, start = tstart, frequency = sampling_freq)
 }
 
