@@ -16,11 +16,11 @@
 #'
 #' @export
 ACF <- function(ts, lag.max = length(ts), plot = TRUE, title = NULL) {
-    ret <- stats::acf(x = ts, lag.max = lag.max, type = 'correlation', plot = F)
+    ret <- stats::acf(x = ts, lag.max = lag.max, type = "correlation", plot = F)
     sigs <- 1.96 / sqrt(length(ts))
-    ret[['white95ci']] <- sigs
+    ret[["white95ci"]] <- sigs
 
-    ret.df <- data.frame('lag' = c(ret$lag), 'acf' = c(ret$acf))
+    ret.df <- data.frame("lag" = c(ret$lag), "acf" = c(ret$acf))
     if (plot) {
         p <- ggplot2::ggplot(ret.df, ggplot2::aes(x = lag, y = acf)) +
             ggplot2::geom_segment(
@@ -30,37 +30,37 @@ ACF <- function(ts, lag.max = length(ts), plot = TRUE, title = NULL) {
             ggplot2::geom_point(size = 1, alpha = 0.5) +
             ggplot2::geom_hline(
                 ggplot2::aes(
-                    linetype = '95% C.I. for white noise',
+                    linetype = "95% C.I. for white noise",
                     yintercept = sigs
                 ),
-                color = 'blue'
+                color = "blue"
             ) +
             ggplot2::geom_hline(
                 ggplot2::aes(
-                    linetype = '95% C.I. for white noise',
+                    linetype = "95% C.I. for white noise",
                     yintercept = -sigs
                 ),
-                color = 'blue'
+                color = "blue"
             ) +
             ggplot2::scale_x_continuous(breaks = scales::breaks_pretty()) +
             ggplot2::scale_linetype_manual(
                 name = NULL,
-                values = 'dashed',
+                values = "dashed",
                 guide = ggplot2::guide_legend(
                     override.aes = list(color = c("blue"))
                 )
             ) +
-            ggplot2::labs(x = 'lag (s)', y = 'ACF', title = title) +
+            ggplot2::labs(x = "lag (s)", y = "ACF", title = title) +
             ggplot2::theme_bw() +
             ggplot2::theme(
                 legend.justification = c(1, 1),
                 legend.position = c(1, 1),
                 legend.background = ggplot2::element_rect(
-                    fill = ggplot2::alpha('white', 0)
+                    fill = ggplot2::alpha("white", 0)
                 )
             )
 
-        return(list('acf' = ret, 'plot' = p))
+        return(list("acf" = ret, "plot" = p))
     } else {
         return(ret)
     }
@@ -85,14 +85,14 @@ ACF <- function(ts, lag.max = length(ts), plot = TRUE, title = NULL) {
 #'
 #' @export
 PACF <- function(ts, lag.max = length(ts), plot = TRUE, title = NULL) {
-    ret <- stats::acf(x = ts, lag.max = lag.max, type = 'partial', plot = F)
+    ret <- stats::acf(x = ts, lag.max = lag.max, type = "partial", plot = F)
     sigs <- 1.96 / sqrt(length(ts))
-    ret[['white95ci']] <- sigs
+    ret[["white95ci"]] <- sigs
 
-    ret.df <- data.frame('lag' = c(ret$lag), 'acf' = c(ret$acf))
+    ret.df <- data.frame("lag" = c(ret$lag), "acf" = c(ret$acf))
 
     if (plot) {
-        p <- ggplot2::ggplot(ret.df, aes(x = lag, y = acf)) +
+        p <- ggplot2::ggplot(ret.df, ggplot2::aes(x = lag, y = acf)) +
             ggplot2::geom_segment(
                 ggplot2::aes(xend = lag, yend = 0),
                 alpha = 0.6
@@ -100,37 +100,37 @@ PACF <- function(ts, lag.max = length(ts), plot = TRUE, title = NULL) {
             ggplot2::geom_point(size = 1, alpha = 0.5) +
             ggplot2::geom_hline(
                 ggplot2::aes(
-                    linetype = '95% C.I. for white noise',
+                    linetype = "95% C.I. for white noise",
                     yintercept = sigs
                 ),
-                color = 'blue'
+                color = "blue"
             ) +
             ggplot2::geom_hline(
                 ggplot2::aes(
-                    linetype = '95% C.I. for white noise',
+                    linetype = "95% C.I. for white noise",
                     yintercept = -sigs
                 ),
-                color = 'blue'
+                color = "blue"
             ) +
             ggplot2::scale_x_continuous(breaks = scales::breaks_pretty()) +
             ggplot2::scale_linetype_manual(
                 name = NULL,
-                values = 'dashed',
+                values = "dashed",
                 guide = ggplot2::guide_legend(
                     override.aes = list(color = c("blue"))
                 )
             ) +
-            ggplot2::labs(x = 'lag (s)', y = 'PACF', title = title) +
+            ggplot2::labs(x = "lag (s)", y = "PACF", title = title) +
             ggplot2::theme_bw() +
             ggplot2::theme(
                 legend.justification = c(1, 1),
                 legend.position = c(1, 1),
                 legend.background = ggplot2::element_rect(
-                    fill = ggplot2::alpha('white', 0)
+                    fill = ggplot2::alpha("white", 0)
                 )
             )
 
-        return(list('pacf' = ret, 'plot' = p))
+        return(list("pacf" = ret, "plot" = p))
     } else {
         return(ret)
     }
@@ -171,8 +171,7 @@ CCF <- function(
     save = FALSE,
     dir = NULL,
     prefix = NULL,
-    times = NULL
-) {
+    times = NULL) {
     if (!is.ts(ts1) | !is.ts(ts2)) {
         if (is.null(times)) {
             stop("To convert given data to ts, 'times' needs to be provided")
@@ -193,23 +192,23 @@ CCF <- function(
     ccf_max <- ret$acf[ind_max]
     lag_max <- ret$lag[ind_max]
     sigs <- 1.96 / sqrt(length(ts1))
-    ret[['white95ci']] <- sigs
+    ret[["white95ci"]] <- sigs
 
-    ret.df <- data.frame('lag' = c(ret$lag), 'acf' = c(ret$acf))
+    ret.df <- data.frame("lag" = c(ret$lag), "acf" = c(ret$acf))
 
     if (plot) {
-        plot <- ggplot2::ggplot(ret.df, aes(x = lag, y = acf)) +
+        plot <- ggplot2::ggplot(ret.df, ggplot2::aes(x = lag, y = acf)) +
             ggplot2::geom_line(show.legend = F) +
             ggplot2::geom_hline(
                 ggplot2::aes(
-                    linetype = '95% C.I. for white noise',
+                    linetype = "95% C.I. for white noise",
                     yintercept = sigs
                 ),
-                color = 'blue'
+                color = "blue"
             ) +
             ggplot2::geom_hline(
-                aes(linetype = '95% C.I. for white noise', yintercept = -sigs),
-                color = 'blue'
+                aes(linetype = "95% C.I. for white noise", yintercept = -sigs),
+                color = "blue"
             ) +
             ggplot2::cale_x_continuous(
                 breaks = scales::breaks_pretty(ifelse(
@@ -220,29 +219,29 @@ CCF <- function(
             ) +
             ggplot2::scale_linetype_manual(
                 name = NULL,
-                values = 'dashed',
+                values = "dashed",
                 guide = ggplot2::guide_legend(
                     override.aes = list(color = c("blue"))
                 )
             ) +
-            ggplot2::labs(x = 'lag (s)', y = 'CCF', title = title) +
+            ggplot2::labs(x = "lag (s)", y = "CCF", title = title) +
             ggplot2::theme_bw() +
             ggplot2::theme(
                 legend.justification = c(1, 1),
                 legend.position = c(1, 1),
                 legend.background = ggplot2::element_rect(
-                    fill = ggplot2::alpha('white', 0)
+                    fill = ggplot2::alpha("white", 0)
                 )
             )
 
-        if (save) savefig(plot, 'CCF.pdf')
+        if (save) savefig(plot, "CCF.pdf")
     }
 
     return(list(
-        'ccf_res' = ret,
-        'ind_max' = ind_max,
-        'ccf_max' = ccf_max,
-        'lag_max' = lag_max,
-        'plot' = plot
+        "ccf_res" = ret,
+        "ind_max" = ind_max,
+        "ccf_max" = ccf_max,
+        "lag_max" = lag_max,
+        "plot" = plot
     ))
 }
