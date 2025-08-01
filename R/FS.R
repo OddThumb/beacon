@@ -251,20 +251,25 @@ fs_df <- function(fs) {
     data.frame("freqs" = freqs(fs), "PSD" = fs)
 }
 
-
 #' Crop frequency series to a given range
 #'
 #' @param fs A `fs` object (frequency series).
-#' @param ref A list with elements `min` and `max`, indicating index range.
+#' @param ref A vector with elements: `c(min, max)`, indicating index range.
 #' @return A cropped `fs` object with preserved attributes.
 #'
 #' @export
-cutoff_to <- function(fs, ref) {
+cutoff_to <- function(fs, ref, frange = NULL) {
     if (!inherits(fs, "fs")) {
         stop("TypeError: Input must be a fs class")
     }
-    kmin <- ref[1]
-    kmax <- ref[2]
+    if (!is.null(frange)) {
+        kmin <- which.min(abs(freqs(fs) - frange[1]))
+        kmax <- which.min(abs(freqs(fs) - frange[2]))
+    } else {
+        kmin <- ref[1]
+        kmax <- ref[2]
+        frange <- freqs(fs)[ref]
+    }
 
     out <- fs[kmin:kmax]
     out <- copy_attr(
@@ -273,5 +278,6 @@ cutoff_to <- function(fs, ref) {
         which = c("sampling.freq", "delta_f", "class", "ti")
     )
     attr(out, "flen") <- kmax - kmin + 1
+    attr(out, "frange") <- frange
     out
 }
