@@ -207,7 +207,7 @@ CCF <- function(
                 color = "blue"
             ) +
             ggplot2::geom_hline(
-                aes(linetype = "95% C.I. for white noise", yintercept = -sigs),
+                ggplot2::aes(linetype = "95% C.I. for white noise", yintercept = -sigs),
                 color = "blue"
             ) +
             ggplot2::cale_x_continuous(
