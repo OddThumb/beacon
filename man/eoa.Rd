@@ -4,7 +4,7 @@
 \alias{eoa}
 \title{Apply Ensemble of Averages (EoA)}
 \usage{
-eoa(ts, qs, collector = "median")
+eoa(ts, qs, collector = "median", w.func = NULL, ...)
 }
 \arguments{
 \item{ts}{A `ts` object.}
@@ -12,6 +12,11 @@ eoa(ts, qs, collector = "median")
 \item{qs}{MA orders.}
 
 \item{collector}{Aggregation method.}
+
+\item{w.func}{Optional function to generate a weight vector given `order`.
+Should return a numeric vector of length `order`.}
+
+\item{...}{Additional arguments passed to `w.func`, if specified.}
 }
 \value{
 Smoothed `ts` object with MA ensemble metadata.

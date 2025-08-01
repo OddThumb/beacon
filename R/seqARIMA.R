@@ -757,34 +757,42 @@ Autoregressive <- function(ts, p, aic = TRUE, verbose = TRUE, ...) {
 
 #' Two-sided Centered Moving Average Smoother
 #'
-#' Applies a centered moving average filter to a time series, with optional custom weighting.
-#' If no weights are provided, a rectangular window (simple average) is used.
+#' Applies a centered moving average filter to a time series using either a rectangular window
+#' (default) or a custom window function. If a user-supplied window function is provided via
+#' \code{w.func}, it will be called as \code{w.func(order, ...)} and must return a numeric vector
+#' of length \code{order}.
 #'
 #' @param ts A `ts` object to be smoothed.
-#' @param order An integer specifying the window size (moving average order).
-#' @param weights Optional numeric vector of weights of length `order`.
-#'   If supplied, it will be normalized internally. If `NULL`, a rectangular window is used.
-#' @param na.rm Logical. If `TRUE` (default), `NA`s introduced by the filtering at the edges
-#'   will be removed via `na.omit()`.
+#' @param order An integer specifying the moving average window size. Must be ≥ 1.
+#' @param na.rm Logical. If `TRUE` (default), removes `NA` values introduced by filtering.
+#' @param w.func Optional function to generate a weight vector given `order`.
+#'   Should return a numeric vector of length `order`.
+#' @param ... Additional arguments passed to `w.func`, if specified.
 #'
 #' @return A smoothed `ts` object with attributes:
 #' \describe{
-#'   \item{\code{collector}}{A character string set to "single" for tracking.}
-#'   \item{\code{q_order}}{The integer order of the moving average used.}
+#'   \item{\code{collector}}{Set to `"single"` for bookkeeping.}
+#'   \item{\code{q_order}}{The order of the moving average used.}
+#' }
+#'
+#' @examples
+#' ts_data <- ts(rnorm(100))
+#' ma(ts_data, order = 5)
+#'
+#' # Using a Tukey window
+#' if (requireNamespace("bspec", quietly = TRUE)) {
+#'     ma(ts_data, order = 11, w.func = bspec::tukeywindow, r = 0.3)
 #' }
 #'
 #' @export
-ma <- function(ts, order, weights = NULL, na.rm = T) {
-    if (abs(order - round(order)) > 1e-8) {
-        stop("order must be an integer")
-    }
-    if (!is.null(weights)) {
-        if (length(weights) != order) {
-            stop("Length of weights must match 'order'")
+ma <- function(ts, order, na.rm = T, w.func = NULL, ...) {
+    if (!is.null(w.func)) {
+        w <- w.func(order, ...)
+        if (length(w) != order) {
+            stop("w.func must return a vector of length 'order'")
         }
-        w <- weights / sum(weights) # normalize
+        w <- w / sum(w)
     } else {
-        # rectangular
         if (order %% 2 == 0) {
             w <- c(0.5, rep(1, order - 1), 0.5) / order
         } else {
@@ -806,12 +814,15 @@ ma <- function(ts, order, weights = NULL, na.rm = T) {
 #' @param ts A `ts` object.
 #' @param qs MA orders.
 #' @param collector Aggregation method.
+#' @param w.func Optional function to generate a weight vector given `order`.
+#'   Should return a numeric vector of length `order`.
+#' @param ... Additional arguments passed to `w.func`, if specified.
 #'
 #' @return Smoothed `ts` object with MA ensemble metadata.
 #' @export
-eoa <- function(ts, qs, collector = "median") {
+eoa <- function(ts, qs, collector = "median", w.func = NULL, ...) {
     mas <- ts(
-        sapply(qs, function(q) ma(ts, q, na.rm = F)),
+        sapply(qs, function(q) ma(ts, q, na.rm = F, w.func, ...)),
         start = ti(ts),
         frequency = frequency(ts)
     )

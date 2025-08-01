@@ -4,27 +4,40 @@
 \alias{ma}
 \title{Two-sided Centered Moving Average Smoother}
 \usage{
-ma(ts, order, weights = NULL, na.rm = T)
+ma(ts, order, na.rm = T, w.func = NULL, ...)
 }
 \arguments{
 \item{ts}{A `ts` object to be smoothed.}
 
-\item{order}{An integer specifying the window size (moving average order).}
+\item{order}{An integer specifying the moving average window size. Must be ≥ 1.}
 
-\item{weights}{Optional numeric vector of weights of length `order`.
-If supplied, it will be normalized internally. If `NULL`, a rectangular window is used.}
+\item{na.rm}{Logical. If `TRUE` (default), removes `NA` values introduced by filtering.}
 
-\item{na.rm}{Logical. If `TRUE` (default), `NA`s introduced by the filtering at the edges
-will be removed via `na.omit()`.}
+\item{w.func}{Optional function to generate a weight vector given `order`.
+Should return a numeric vector of length `order`.}
+
+\item{...}{Additional arguments passed to `w.func`, if specified.}
 }
 \value{
 A smoothed `ts` object with attributes:
 \describe{
-  \item{\code{collector}}{A character string set to "single" for tracking.}
-  \item{\code{q_order}}{The integer order of the moving average used.}
+  \item{\code{collector}}{Set to `"single"` for bookkeeping.}
+  \item{\code{q_order}}{The order of the moving average used.}
 }
 }
 \description{
-Applies a centered moving average filter to a time series, with optional custom weighting.
-If no weights are provided, a rectangular window (simple average) is used.
+Applies a centered moving average filter to a time series using either a rectangular window
+(default) or a custom window function. If a user-supplied window function is provided via
+\code{w.func}, it will be called as \code{w.func(order, ...)} and must return a numeric vector
+of length \code{order}.
+}
+\examples{
+ts_data <- ts(rnorm(100))
+ma(ts_data, order = 5)
+
+# Using a Tukey window
+if (requireNamespace("bspec", quietly = TRUE)) {
+    ma(ts_data, order = 11, w.func = bspec::tukeywindow, r = 0.3)
+}
+
 }
