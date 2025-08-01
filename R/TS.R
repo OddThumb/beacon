@@ -448,11 +448,35 @@ evenify <- function(ts) {
 #' @param ts A `ts` object.
 #' @return A normalized `ts` object. Scale factor is stored in \code{attr(..., "order")}.
 #' @export
-one_ts <- function(ts) {
+unit_normalize <- function(ts) {
     order.val <- get_order(ts)
     norm <- ts / order.val
     attr(norm, "order") <- order.val
     return(norm)
+}
+
+#' Denormalize a unit-normalized `ts` object
+#'
+#' Restores the original scale of a normalized time series. The scale factor is retrieved
+#' from the \code{"order"} attribute of the input \code{ts}, or optionally provided directly.
+#'
+#' @param ts A normalized `ts` object.
+#' @param order Optional numeric. If provided, used as the scale factor.
+#'
+#' @return A `ts` object restored to its original scale.
+#' @export
+unit_denormalize <- function(ts, order = NULL) {
+    scale_factor <- if (!is.null(order)) {
+        order
+    } else {
+        attr(ts, "order", exact = TRUE)
+    }
+
+    if (is.null(scale_factor)) {
+        stop("No 'order' attribute found and no scale factor provided.")
+    }
+
+    ts * scale_factor
 }
 
 #' Apply median filter to a `ts`
