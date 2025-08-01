@@ -39,35 +39,22 @@ tl <- function(ts) {
 #' Convert GPS time to UTC
 #'
 #' @param x A numeric. GPS time.
-#' @param origin A character or Date (default: "1980-01-06"). GPS epoch.
-#' @param out_format A character. Output format string.
-#' @return A character string of UTC time.
+#' @param origin A POSIXct (default: as.POSIXct("1980-01-06 00:00:00", tz = "UTC"))
+#' @return A POSIXct of UTC time.
 #' @export
-gps2utc <- function(
-    x,
-    origin = as.Date('1980-01-06'),
-    out_format = "%Y-%m-%d %H:%M:%OS"
-) {
-    y <- as.POSIXct(as.vector(x), origin = origin, tz = 'UTC')
-    format.POSIXct(y, out_format)
+gps2utc <- function(x, origin = as.POSIXct("1980-01-06 00:00:00", tz = "UTC")) {
+    origin + as.numeric(x)
 }
 
 #' Convert UTC to GPS time
 #'
 #' @param y A character. UTC time string.
-#' @param origin A character or Date (default: "1980-01-06"). GPS epoch.
-#' @param in_format A character. Format string of the UTC time.
+#' @param origin A POSIXct (default: as.POSIXct("1980-01-06 00:00:00", tz = "UTC"))
 #' @return A numeric. GPS time.
 #' @export
-utc2gps <- function(
-    y,
-    origin = as.Date('1980-01-06'),
-    in_format = "%Y-%m-%d %H:%M:%OS"
-) {
-    as.numeric(as.POSIXct(as.character(y), origin = origin, tz = "UTC")) -
-        as.numeric(as.POSIXct(origin))
+utc2gps <- function(y, origin = as.POSIXct("1980-01-06 00:00:00", tz = "UTC")) {
+    as.numeric(difftime(y, origin, units = "secs"))
 }
-
 
 #' Get or update the start time of a time series
 #'
@@ -173,7 +160,7 @@ tsfy <- function(obj, ref, sampling.freq = NULL, na.rm = T) {
     }
 
     if (na.rm) {
-        out <- na.omit(out) #tseries::na.remove()
+        out <- na.omit(out) # tseries::na.remove()
     }
 
     return(out)
@@ -214,7 +201,7 @@ ts_df <- function(ts, tzero = 0, val.name = "x") {
 #' @param val_col A character. Column name for value (default: "x").
 #' @return A \code{tbl_time} object.
 #' @export
-as_tbt <- function(ts, time_col = 'time', val_col = 'x') {
+as_tbt <- function(ts, time_col = "time", val_col = "x") {
     timerange <- as.POSIXct(
         tr(ts),
         origin = as.Date("1980-01-06"),
@@ -227,9 +214,9 @@ as_tbt <- function(ts, time_col = 'time', val_col = 'x') {
                 timerange[1] ~ timerange[2],
                 period = paste(as.character(1 / frequency(ts)), "second")
             ),
-            '{val_col}' := c(ts)
+            "{val_col}" := c(ts)
         ),
-        '{time_col}' := date
+        "{time_col}" := date
     )
     attr(tbt, "index_quo") <- dplyr::quo(time)
     tbt
@@ -384,10 +371,10 @@ shift_phase <- function(ts, ref = NULL, phase = NULL) {
     ts.shift <- ts(ts, start = time(ts)[1] + d_phi, frequency = sampling.freq)
 
     # Assign attributes of chages
-    attr(ts.shift, 'd_phi') <- d_phi
+    attr(ts.shift, "d_phi") <- d_phi
     attr(
         ts.shift,
-        'corrected_by'
+        "corrected_by"
     ) <- "time(ts) + d_phi; d_phi = phi_ref - phi_ts"
 
     return(ts.shift)
@@ -486,7 +473,7 @@ evenify <- function(ts) {
 one_ts <- function(ts) {
     order.val <- get_order(ts)
     norm <- ts / order.val
-    attr(norm, 'order') <- order.val
+    attr(norm, "order") <- order.val
     return(norm)
 }
 
@@ -518,8 +505,7 @@ BandPass <- function(
     fu = NULL,
     resp = "FIR",
     filt_order = NULL,
-    verbose = T
-) {
+    verbose = T) {
     if (resp == "FIR") {
         filt.name <- "signal::fir1"
         n <- ifelse(is.null(filt_order), 512, filt_order)
@@ -595,9 +581,9 @@ BandPass <- function(
 
     attr(out, "type") <- filter.type
     attr(out, "order") <- n
-    attr(out, 'window.name') <- 'bspec::welchwindow'
-    attr(out, 'filter.name') <- filt.name
-    attr(out, 'cutoff') <- c(fl, fu)
+    attr(out, "window.name") <- "bspec::welchwindow"
+    attr(out, "filter.name") <- filt.name
+    attr(out, "cutoff") <- c(fl, fu)
     return(out)
 }
 

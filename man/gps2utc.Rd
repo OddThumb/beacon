@@ -4,21 +4,15 @@
 \alias{gps2utc}
 \title{Convert GPS time to UTC}
 \usage{
-gps2utc(
-  x,
-  origin = as.Date("1980-01-06"),
-  out_format = "\%Y-\%m-\%d \%H:\%M:\%OS"
-)
+gps2utc(x, origin = as.POSIXct("1980-01-06 00:00:00", tz = "UTC"))
 }
 \arguments{
 \item{x}{A numeric. GPS time.}
 
-\item{origin}{A character or Date (default: "1980-01-06"). GPS epoch.}
-
-\item{out_format}{A character. Output format string.}
+\item{origin}{A POSIXct (default: as.POSIXct("1980-01-06 00:00:00", tz = "UTC"))}
 }
 \value{
-A character string of UTC time.
+A POSIXct of UTC time.
 }
 \description{
 Convert GPS time to UTC
