@@ -4,14 +4,14 @@
 \alias{copy_attr}
 \title{Copy Attributes from Reference Object}
 \usage{
-copy_attr(target, ref, which)
+copy_attr(target, ref, which = NULL)
 }
 \arguments{
 \item{target}{An object to which attributes will be added.}
 
 \item{ref}{A reference object from which attributes will be copied.}
 
-\item{which}{A character vector specifying the names of attributes to copy.}
+\item{which}{A character vector specifying the names of attributes to copy. If NULL, all the attributes will be overwritten.}
 }
 \value{
 The modified `target` object with selected attributes copied from `ref`.

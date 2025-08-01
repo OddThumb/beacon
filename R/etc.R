@@ -12,7 +12,7 @@
 #' @return A character string of the final working directory path (only if `set = TRUE`).
 #' @export
 create_wd <- function(root, sub, subsub, alternative = F, set = T) {
-    dir <- paste(root, sub, subsub, sep = '/')
+    dir <- paste(root, sub, subsub, sep = "/")
 
     if (!dir.exists(dir)) {
         dir.create(dir, recursive = T)
@@ -26,9 +26,9 @@ create_wd <- function(root, sub, subsub, alternative = F, set = T) {
                 "'",
                 alter.dir,
                 "' already exists\n Try with ",
-                paste(dir, i, sep = '_')
+                paste(dir, i, sep = "_")
             )
-            alter.dir <- paste(dir, i, sep = '_')
+            alter.dir <- paste(dir, i, sep = "_")
             cond <- dir.exists(alter.dir)
             if (!cond) {
                 dir.create(alter.dir, recursive = T)
@@ -60,9 +60,9 @@ create_wd <- function(root, sub, subsub, alternative = F, set = T) {
 #' @export
 paste_wd <- function(file, prefix = NULL, dir = getwd()) {
     if (is.null(prefix)) {
-        paste(dir, '/', file, sep = '')
+        paste(dir, "/", file, sep = "")
     } else {
-        paste(dir, '/', paste(prefix, "_", file, sep = ''), sep = '')
+        paste(dir, "/", paste(prefix, "_", file, sep = ""), sep = "")
     }
 }
 
@@ -72,13 +72,17 @@ paste_wd <- function(file, prefix = NULL, dir = getwd()) {
 #'
 #' @param target An object to which attributes will be added.
 #' @param ref A reference object from which attributes will be copied.
-#' @param which A character vector specifying the names of attributes to copy.
+#' @param which A character vector specifying the names of attributes to copy. If NULL, all the attributes will be overwritten.
 #'
 #' @return The modified `target` object with selected attributes copied from `ref`.
 #' @export
-copy_attr <- function(target, ref, which) {
-    for (att in which) {
-        attr(target, att) <- attr(ref, att)
+copy_attr <- function(target, ref, which = NULL) {
+    if (is.null(which)) {
+        attributes(target) <- attributes(ref)
+    } else {
+        for (att in which) {
+            attr(target, att) <- attr(ref, att)
+        }
     }
     target
 }

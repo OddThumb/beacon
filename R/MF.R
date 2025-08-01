@@ -133,7 +133,7 @@ sigmasq <- function(
     high_frequency_cutoff = NULL) {
     # If htilde is ts, transform to fs.
     if (inherits(htilde, "ts")) {
-        htilde <- to.fs(htilde)
+        htilde <- to_fs(htilde)
     }
 
     # Output length
@@ -210,8 +210,8 @@ matched_filter <- function(
     fu = NULL,
     h.norm = NULL) {
     # FFT of given ts
-    htilde <- to.fs(template)
-    stilde <- to.fs(data)
+    htilde <- to_fs(template)
+    stilde <- to_fs(data)
     sampling.freq <- attr(stilde, "sampling.freq")
 
     # Check lengths
@@ -327,14 +327,14 @@ overlap_cplx <- function(
     high_frequency_cutoff = NULL,
     normalized = TRUE) {
     if (inherits(vec1, "ts")) {
-        htilde <- to.fs(vec1)
+        htilde <- to_fs(vec1)
     } else if (inherits(vec1, "fs")) {
         htilde <- vec1
     } else {
         stop("InputError: vec1 should be an object of ts or fs")
     }
     if (inherits(vec2, "ts")) {
-        stilde <- to.fs(vec2)
+        stilde <- to_fs(vec2)
     } else if (inherits(vec2, "fs")) {
         stilde <- vec2
     } else {
