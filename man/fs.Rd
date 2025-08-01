@@ -4,7 +4,7 @@
 \alias{fs}
 \title{Create a Frequency Series Object (`fs`)}
 \usage{
-fs(x, df)
+fs(x, df, sampling.freq)
 }
 \arguments{
 \item{x}{A numeric vector representing frequency-domain data.}

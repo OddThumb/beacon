@@ -505,7 +505,10 @@ psd <- function(
         method = "median",
         windowfun = window_func
     )
-    first_psd <- fs(welch_psd$power, df = uniqdif(welch_psd$frequency))
+    first_psd <- fs(welch_psd$power,
+        df = uniqdif(welch_psd$frequency),
+        sampling.freq = frequency(ts)
+    )
     secon_psd <- interp_psd(first_psd, delf)
     third_psd <- inv_spec_trunc_psd(
         secon_psd,

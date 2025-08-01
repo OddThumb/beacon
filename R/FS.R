@@ -10,12 +10,13 @@
 #' @examples
 #' fs(c(1, 2, 3), df = 0.5)
 #' @export
-fs <- function(x, df) {
+fs <- function(x, df, sampling.freq) {
     attr(x, "assoc.ts") <- NULL
     attr(x, "ti") <- NULL
-    attr(x, "sampling.freq") <- NULL
+    attr(x, "sampling.freq") <- sampling.freq
     attr(x, "delta_f") <- df
     attr(x, "flen") <- length(x)
+    attr(x, "frange") <- c(0, sampling.freq / 2)
     structure(x, class = c("fs", "complex"))
 }
 
