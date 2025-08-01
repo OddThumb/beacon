@@ -785,7 +785,7 @@ ma <- function(ts, order, weights = NULL, na.rm = T) {
         w <- weights / sum(weights) # normalize
     } else {
         # rectangular
-        if (order %% 2 == 0 && centre) {
+        if (order %% 2 == 0) {
             w <- c(0.5, rep(1, order - 1), 0.5) / order
         } else {
             w <- rep(1, order) / order
