@@ -390,6 +390,17 @@ resize <- function(ts, nlen) {
 #' @param at A numeric. Time to inject original `ts`.
 #'
 #' @return A padded `ts` object.
+#' @examples
+#' # Original signal from t = 0 with 0.1 sec spacing
+#' x <- ts(c(1, 2, 3, 4, 5), deltat = 0.1)
+#'
+#' # Pad x into a 1-second series starting at t = 1.3
+#' padded <- pad(x, tstart = 1, tend = 2, at = 1.3)
+#' # shows time indices from 1.0 to 2.0
+#' time(padded)
+#' # shows inserted values at 1.3, 1.4, ..., 1.7
+#' padded
+#'
 #' @export
 pad <- function(ts, tstart, tend, at = 0) {
     sampling_freq <- frequency(ts)
