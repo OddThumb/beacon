@@ -76,7 +76,7 @@ get_cutoff_indices <- function(flow, fupp, df, N) {
         stop(err_msg)
     }
 
-    return(list("min" = kmin, "max" = kmax))
+    return(c(kmin, kmax))
 }
 
 
@@ -130,8 +130,7 @@ sigmasq <- function(
     htilde,
     psd = NULL,
     low_frequency_cutoff = NULL,
-    high_frequency_cutoff = NULL
-) {
+    high_frequency_cutoff = NULL) {
     # If htilde is ts, transform to fs.
     if (inherits(htilde, "ts")) {
         htilde <- to.fs(htilde)
@@ -209,8 +208,7 @@ matched_filter <- function(
     psd = NULL,
     fl = NULL,
     fu = NULL,
-    h.norm = NULL
-) {
+    h.norm = NULL) {
     # FFT of given ts
     htilde <- to.fs(template)
     stilde <- to.fs(data)
@@ -327,8 +325,7 @@ overlap_cplx <- function(
     psd = NULL,
     low_frequency_cutoff = NULL,
     high_frequency_cutoff = NULL,
-    normalized = TRUE
-) {
+    normalized = TRUE) {
     if (inherits(vec1, "ts")) {
         htilde <- to.fs(vec1)
     } else if (inherits(vec1, "fs")) {
@@ -407,8 +404,7 @@ overlap <- function(
     psd = NULL,
     low_frequency_cutoff = NULL,
     high_frequency_cutoff = NULL,
-    normalized = TRUE
-) {
+    normalized = TRUE) {
     Re(overlap_cplx(
         vec1,
         vec2,
@@ -446,8 +442,7 @@ inv_spec_trunc_psd <- function(
     fs,
     max_filter_len,
     fl = NULL,
-    trunc_method = NULL
-) {
+    trunc_method = NULL) {
     if (!is.null(fl) & (fl < 0 | fl > vf(freqs(fs)))) {
         stop(
             "ValueError: low_frequency_cutoff must be within the bandwidth of the PSD"
@@ -499,8 +494,7 @@ psd <- function(
     sl = 4,
     fl = 15,
     delf = NULL,
-    window_func = bspec::hannwindow
-) {
+    window_func = bspec::hannwindow) {
     if (is.null(delf)) {
         delf <- frequency(ts) / length(ts)
     }

@@ -40,7 +40,7 @@ to_fs <- function(ts, delta_f = NULL) {
     # Add 0.5 to round integer
     sampling.freq <- frequency(ts)
     tlen <- floor(1 / delta_f / (1 / sampling.freq) + 0.5)
-    flen <- (tlen %/% 2) + 1 #flen <- round(tlen/2 + 1)
+    flen <- (tlen %/% 2) + 1 # flen <- round(tlen/2 + 1)
 
     # Check tlen
     if (tlen < length(ts)) {
@@ -67,6 +67,7 @@ to_fs <- function(ts, delta_f = NULL) {
     attr(fs.out, "delta_f") <- delta_f
     attr(fs.out, "flen") <- flen
     attr(fs.out, "tlen") <- tlen
+    attr(fs.out, "frange") <- c(0, frequency(ts) / 2)
     structure(fs.out, class = c("fs", "complex"))
 }
 
@@ -165,29 +166,28 @@ plot.fs <- function(
     xlab = "Frequency (Hz)",
     ylab = "PSD",
     xlim = NULL,
-    ylim = NULL
-) {
+    ylim = NULL) {
     base_breaks <- function(n = 10) {
         function(x) {
             axisTicks(log10(range(x, na.rm = TRUE)), log = TRUE, n = n)
         }
     }
 
-    fs_df <- data.frame('freqs' = freqs(fs), 'PSD' = abs(fs))
+    fs_df <- data.frame("freqs" = freqs(fs), "PSD" = abs(fs))
 
     # plot
     pl <- ggplot2::ggplot(fs_df, ggplot2::aes(x = freqs, y = PSD)) +
         ggplot2::geom_line()
 
     # log axis vs lin axis
-    if ("x" %in% strsplit(log, split = '')[[1]]) {
+    if ("x" %in% strsplit(log, split = "")[[1]]) {
         pl <- pl +
             ggplot2::scale_x_log10(breaks = base_breaks(), labels = prettyNum)
     } else {
         pl <- pl + ggplot2::scale_x_continuous(breaks = scales::pretty_breaks())
     }
 
-    if ("y" %in% strsplit(log, split = '')[[1]]) {
+    if ("y" %in% strsplit(log, split = "")[[1]]) {
         pl <- pl +
             ggplot2::scale_y_log10(
                 breaks = scales::breaks_log(),
@@ -218,7 +218,9 @@ plot.fs <- function(
 freqs <- function(fs) {
     delta_f <- attr(fs, "delta_f")
     flen <- attr(fs, "flen")
-    seq(0, flen - 1) * delta_f
+    frange <- attr(fs, "frange")
+    # seq(0, flen - 1) * delta_f
+    seq(frange[1], frange[2], by = delta_f)
 }
 
 #' Get Duration of the Original Time Series
@@ -261,8 +263,8 @@ cutoff_to <- function(fs, ref) {
     if (!inherits(fs, "fs")) {
         stop("TypeError: Input must be a fs class")
     }
-    kmin <- ref$min
-    kmax <- ref$max
+    kmin <- ref[1]
+    kmax <- ref[2]
 
     out <- fs[kmin:kmax]
     out <- copy_attr(
