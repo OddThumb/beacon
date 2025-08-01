@@ -482,12 +482,12 @@ unit_denormalize <- function(ts, order = NULL) {
 #' Apply median filter to a `ts`
 #'
 #' @param ts A `ts` object.
-#' @param order An integer. Window size of the median filter.
+#' @param order An odd integer. Window size of the median filter.
 #' @return A smoothed `ts` object.
 #' @export
 mmed <- function(ts, order) {
     meds <- runmed(ts, order)
-    tsfy(meds, ts)
+    ts(meds, start = ti(ts), frequency = frequency(ts))
 }
 
 #' Apply band-pass filter to `ts`

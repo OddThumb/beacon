@@ -9,7 +9,7 @@ mmed(ts, order)
 \arguments{
 \item{ts}{A `ts` object.}
 
-\item{order}{An integer. Window size of the median filter.}
+\item{order}{An odd integer. Window size of the median filter.}
 }
 \value{
 A smoothed `ts` object.

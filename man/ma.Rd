@@ -2,20 +2,29 @@
 % Please edit documentation in R/seqARIMA.R
 \name{ma}
 \alias{ma}
-\title{Two-sided centered Moving Average smoother}
+\title{Two-sided Centered Moving Average Smoother}
 \usage{
-ma(ts, order, na.rm = T)
+ma(ts, order, weights = NULL, na.rm = T)
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{ts}{A `ts` object to be smoothed.}
 
-\item{order}{MA order.}
+\item{order}{An integer specifying the window size (moving average order).}
 
-\item{na.rm}{Remove NAs.}
+\item{weights}{Optional numeric vector of weights of length `order`.
+If supplied, it will be normalized internally. If `NULL`, a rectangular window is used.}
+
+\item{na.rm}{Logical. If `TRUE` (default), `NA`s introduced by the filtering at the edges
+will be removed via `na.omit()`.}
 }
 \value{
-Smoothed `ts` object.
+A smoothed `ts` object with attributes:
+\describe{
+  \item{\code{collector}}{A character string set to "single" for tracking.}
+  \item{\code{q_order}}{The integer order of the moving average used.}
+}
 }
 \description{
-Two-sided centered Moving Average smoother
+Applies a centered moving average filter to a time series, with optional custom weighting.
+If no weights are provided, a rectangular window (simple average) is used.
 }

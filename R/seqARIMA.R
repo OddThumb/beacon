@@ -25,9 +25,9 @@ get_MissingValues <- function(ts, ref) {
     NA.times.head <- time(ref)[head.NA.idx]
     NA.times.tail <- time(ref)[tail.NA.idx]
     NA.times.list <- list(
-        'all' = NA.times,
-        'head' = NA.times.head,
-        'tail' = NA.times.tail
+        "all" = NA.times,
+        "head" = NA.times.head,
+        "tail" = NA.times.tail
     )
     NA.times.list
 }
@@ -46,8 +46,7 @@ apply_pca <- function(
     scale. = F,
     tol = NULL,
     rank. = NULL,
-    ...
-) {
+    ...) {
     # Original prcomp
     pca <- prcomp(
         x,
@@ -170,7 +169,7 @@ auto_diff <- function(ts, t.seg = 0.5, d_max = 2, verbose = TRUE) {
     pval.list[[paste("d", d, sep = "")]] <- p.values
 
     while (!all(p.values == 0.1)) {
-        message_verb('|||> Non-stationary. p-value < 10 %', v = verbose)
+        message_verb("|||> Non-stationary. p-value < 10 %", v = verbose)
 
         d <- d + 1
         out <- diff(out, difference = 1)
@@ -182,9 +181,9 @@ auto_diff <- function(ts, t.seg = 0.5, d_max = 2, verbose = TRUE) {
             if (d == d_max) break
         }
     }
-    ret.list[['d']] <- d
-    ret.list[['out']] <- out
-    ret.list[['p.values']] <- pval.list
+    ret.list[["d"]] <- d
+    ret.list[["out"]] <- out
+    ret.list[["p.values"]] <- pval.list
 
     return(ret.list)
 }
@@ -204,8 +203,7 @@ Differencing <- function(
     d,
     t.seg = 0.5,
     return.pvals = FALSE,
-    verbose = TRUE
-) {
+    verbose = TRUE) {
     if (missing(d)) {
         stop(
             "Argument 'd' must be specified as either 'auto', 0, or a positive integer."
@@ -309,8 +307,7 @@ burgar <- function(
     series = NULL,
     var.method = 2L,
     numCores = NULL,
-    ...
-) {
+    ...) {
     AIC <- function(order.max, vars.pred, n.used) {
         2 * (0L:order.max) + n.used * log(vars.pred)
     }
@@ -405,7 +402,11 @@ burgar <- function(
             order.max
         }
     } else {
-        ic_fun <- switch(ic, "AIC" = AIC, "BIC" = BIC, "FPE" = FPE)
+        ic_fun <- switch(ic,
+            "AIC" = AIC,
+            "BIC" = BIC,
+            "FPE" = FPE
+        )
         xic <- ic_fun(order.max, vars.pred, n.used)
         attr(xic, "ic") <- ic
 
@@ -470,12 +471,12 @@ burgar <- function(
 
     res$asy.var.coef <- NULL
     # WE DON'T NEED THIS WHICH TAKES TIME A LOT!
-    #if (order) {
+    # if (order) {
     #    xacf <- acf(x, type = "covariance", lag.max = order,
     #                plot = FALSE)$acf
     #    res$asy.var.coef <- solve(toeplitz(drop(xacf)[seq_len(order)])) *
     #        var.pred/n.used
-    #}
+    # }
 
     class(res) <- "ar"
 
@@ -493,9 +494,9 @@ sar <- function(ts, ...) {
     AR <- burgar(x = ts, ...)
     resid <- na.omit(AR$resid)
 
-    attr(resid, 'collector') <- 'single'
-    attr(resid, 'feature') <- AR$ar
-    attr(resid, 'p_order') <- AR$order
+    attr(resid, "collector") <- "single"
+    attr(resid, "feature") <- AR$ar
+    attr(resid, "p_order") <- AR$order
     return(resid)
 }
 
@@ -513,24 +514,24 @@ plot_aic <- function(ar) {
         data = ar.aic.df,
         ggplot2::aes(x = p, y = AIC)
     ) +
-        ggplot2::geom_line(color = 'blue') +
+        ggplot2::geom_line(color = "blue") +
         ggplot2::geom_point(
             ggplot2::aes(alpha = ""),
             data = ar.order,
-            color = 'red',
+            color = "red",
             size = 2
         ) +
         ggplot2::geom_vline(
             xintercept = ar.order$p,
-            linetype = 'dashed',
+            linetype = "dashed",
             size = 1,
-            color = 'red'
+            color = "red"
         ) +
         ggplot2::scale_alpha_manual(values = 1) +
-        ggplot2::labs(x = 'AR orders', y = 'AIC') +
+        ggplot2::labs(x = "AR orders", y = "AIC") +
         ggplot2::theme_bw() +
         ggplot2::theme(
-            legend.position = 'none',
+            legend.position = "none",
             plot.margin = ggplot2::unit(c(0, 1, 1, 1), "lines")
         )
 
@@ -543,19 +544,19 @@ plot_aic <- function(ar) {
         ggplot2::labs(x = NULL, y = NULL) +
         ggplot2::coord_cartesian(xlim = plot.xlim, ylim = plot.ylim) +
         ggplot2::annotate(
-            'text',
+            "text",
             x = ar.order$p + 0.2,
             y = plot.ylim[2] / 2,
             label = latex2exp::TeX(
-                paste('p=', ar.order$p, sep = ''),
+                paste("p=", ar.order$p, sep = ""),
                 italic = T,
                 bold = T
             ),
-            color = 'red',
+            color = "red",
             hjust = 0,
             size = 5
         ) +
-        ggplot2::theme(legend.position = 'none')
+        ggplot2::theme(legend.position = "none")
 
     aic.plot.final <- aic.plot +
         ggplot2::geom_rect(
@@ -566,7 +567,7 @@ plot_aic <- function(ar) {
                 ymax = plot.ylim[2] + ar.order$AIC
             ),
             color = "black",
-            linetype = 'dashed',
+            linetype = "dashed",
             alpha = 0,
             size = 0.3
         ) +
@@ -578,7 +579,7 @@ plot_aic <- function(ar) {
                 y = ar.order$AIC,
                 yend = 1e1 + ar.order$AIC
             ),
-            linetype = 'dashed',
+            linetype = "dashed",
             size = 0.3
         ) +
 
@@ -589,7 +590,7 @@ plot_aic <- function(ar) {
                 y = plot.ylim[2] + ar.order$AIC,
                 yend = 5e3 + ar.order$AIC
             ),
-            linetype = 'dashed',
+            linetype = "dashed",
             size = 0.3
         ) +
 
@@ -609,13 +610,13 @@ plot_aic <- function(ar) {
                 ymax = 5e3 + ar.order$AIC
             ),
             color = "black",
-            linetype = 'dashed',
+            linetype = "dashed",
             alpha = 0,
             size = 0.4
         ) +
 
-        ggplot2::scale_x_continuous(expand = c(0, 0), trans = 'log10') +
-        ggplot2::scale_y_continuous(expand = c(0, 0), trans = 'log10') +
+        ggplot2::scale_x_continuous(expand = c(0, 0), trans = "log10") +
+        ggplot2::scale_y_continuous(expand = c(0, 0), trans = "log10") +
         ggplot2::annotation_logticks()
 
     return(aic.plot.final)
@@ -641,9 +642,8 @@ ear <- function(
     return.vec = T,
     return.var = T,
     return.mean = T,
-    collector = 'median',
-    ...
-) {
+    collector = "median",
+    ...) {
     # Apply ARfeat over ps
     AR.fits <- lapply(ps, function(p) burgar(ts, ic = aic, order.max = p, ...))
 
@@ -655,14 +655,13 @@ ear <- function(
 
     # Extracting residuals
     resid.lis <- lapply(AR.fits, function(arp) arp$resid)
-    names(resid.lis) <- paste0('AR', psel)
+    names(resid.lis) <- paste0("AR", psel)
     if (length(resid.lis) == 1) {
         resid.ens <- resid.lis[[1]]
-        collector <- 'Not aggregated because selected orders are duplicated in given input orders'
+        collector <- "Not aggregated because selected orders are duplicated in given input orders"
     } else {
-        resid.mts <- do.call('ts.intersect', resid.lis)
-        resid.ens <- switch(
-            collector,
+        resid.mts <- do.call("ts.intersect", resid.lis)
+        resid.ens <- switch(collector,
             pca = tsfy(
                 extract_pc(resid.mts),
                 ref = na.omit(resid.mts[, ncol(resid.mts)])
@@ -680,12 +679,12 @@ ear <- function(
 
     # Extracting features (coefficients, variance (option), mean (option))
     feat.lis <- lapply(AR.fits, function(arp) {
-        ret <- c('ar' = arp$ar)
+        ret <- c("ar" = arp$ar)
         if (return.var) {
-            ret <- c(ret, 'var' = arp$var.pred)
+            ret <- c(ret, "var" = arp$var.pred)
         }
         if (return.mean) {
-            ret <- c(ret, 'mean' = arp$x.mean)
+            ret <- c(ret, "mean" = arp$x.mean)
         }
         ret
     })
@@ -696,15 +695,15 @@ ear <- function(
         if (p == 0) {
             newname <- NULL
         } else {
-            prefix <- paste0('ar', p)
-            newname <- paste0(prefix, '_', 1:p)
+            prefix <- paste0("ar", p)
+            newname <- paste0(prefix, "_", 1:p)
         }
 
         if (return.var) {
-            newname <- c(newname, paste0(prefix, '_var'))
+            newname <- c(newname, paste0(prefix, "_var"))
         }
         if (return.mean) {
-            newname <- c(newname, paste0(prefix, '_mean'))
+            newname <- c(newname, paste0(prefix, "_mean"))
         }
         names(feat.lis[[i]]) <- newname
     }
@@ -713,9 +712,9 @@ ear <- function(
         feat.lis <- unlist(feat.lis)
     }
 
-    attr(resid.ens, 'collector') <- collector
-    attr(resid.ens, 'feature') <- feat.lis
-    attr(resid.ens, 'p_order') <- psel
+    attr(resid.ens, "collector") <- collector
+    attr(resid.ens, "feature") <- feat.lis
+    attr(resid.ens, "p_order") <- psel
     return(resid.ens)
 }
 
@@ -738,38 +737,66 @@ Autoregressive <- function(ts, p, aic = TRUE, verbose = TRUE, ...) {
 
     if (length(p) > 1) {
         ar_res <- ear(ts, ps = p, aic = aic, ...)
-        p_order <- attr(ar_res, 'p_order')
+        p_order <- attr(ar_res, "p_order")
         message_verb(
             "|> p={",
-            paste(p_order, collapse = ', '),
+            paste(p_order, collapse = ", "),
             "} is selected and aggregated by a collector: ",
-            attr(ar_res, 'collector'),
+            attr(ar_res, "collector"),
             v = verbose
         )
     } else {
         # length(p) == 1 : Single AR
         ar_res <- sar(ts, ic = aic, order.max = p, ...)
-        p_order <- attr(ar_res, 'p_order')
+        p_order <- attr(ar_res, "p_order")
         message_verb("|> p=", p_order, " is selected!", v = verbose)
     }
 
     return(ar_res)
 }
 
-#' Two-sided centered Moving Average smoother
+#' Two-sided Centered Moving Average Smoother
 #'
-#' @param ts A `ts` object.
-#' @param order MA order.
-#' @param na.rm Remove NAs.
+#' Applies a centered moving average filter to a time series, with optional custom weighting.
+#' If no weights are provided, a rectangular window (simple average) is used.
 #'
-#' @return Smoothed `ts` object.
+#' @param ts A `ts` object to be smoothed.
+#' @param order An integer specifying the window size (moving average order).
+#' @param weights Optional numeric vector of weights of length `order`.
+#'   If supplied, it will be normalized internally. If `NULL`, a rectangular window is used.
+#' @param na.rm Logical. If `TRUE` (default), `NA`s introduced by the filtering at the edges
+#'   will be removed via `na.omit()`.
+#'
+#' @return A smoothed `ts` object with attributes:
+#' \describe{
+#'   \item{\code{collector}}{A character string set to "single" for tracking.}
+#'   \item{\code{q_order}}{The integer order of the moving average used.}
+#' }
+#'
 #' @export
-ma <- function(ts, order, na.rm = T) {
-    out <- forecast::ma(ts, order, centre = T)
+ma <- function(ts, order, weights = NULL, na.rm = T) {
+    if (abs(order - round(order)) > 1e-8) {
+        stop("order must be an integer")
+    }
+    if (!is.null(weights)) {
+        if (length(weights) != order) {
+            stop("Length of weights must match 'order'")
+        }
+        w <- weights / sum(weights) # normalize
+    } else {
+        # rectangular
+        if (order %% 2 == 0 && centre) {
+            w <- c(0.5, rep(1, order - 1), 0.5) / order
+        } else {
+            w <- rep(1, order) / order
+        }
+    }
+    out <- stats::filter(x, filter = w, sides = 2)
+
     if (na.rm) {
         out <- na.omit(out)
     }
-    attr(out, 'collector') <- 'single'
+    attr(out, "collector") <- "single"
     attr(out, "q_order") <- order
     return(out)
 }
@@ -790,8 +817,7 @@ eoa <- function(ts, qs, collector = "median") {
     )
     colnames(mas) <- paste("q", qs, sep = "")
 
-    res <- switch(
-        collector,
+    res <- switch(collector,
         "pca" = tsfy(
             extract_pc(mas),
             ref = na.omit(mas[, ncol(mas)])
@@ -805,9 +831,9 @@ eoa <- function(ts, qs, collector = "median") {
             ref = mas[, 1]
         )
     )
-    attr(res, 'collector') <- collector
-    attr(res, 'q_order') <- qs
-    attr(res, 'mas') <- mas
+    attr(res, "collector") <- collector
+    attr(res, "q_order") <- qs
+    attr(res, "mas") <- mas
     return(res)
 }
 
@@ -831,10 +857,10 @@ MovingAverage <- function(ts, q, verbose = TRUE, ...) {
         # Ensemble of Average (EoA)
         message_verb("> (3) EoA (Ensemble of Averages) stage", v = verbose)
         ma_res <- eoa(ts, q, ...)
-        q_order <- attr(ma_res, 'q_order')
+        q_order <- attr(ma_res, "q_order")
         message_verb(
             "|> q={",
-            paste(q_order, collapse = ','),
+            paste(q_order, collapse = ","),
             "} by a collector: ",
             attr(ma_res, "collector"),
             v = verbose
@@ -843,7 +869,7 @@ MovingAverage <- function(ts, q, verbose = TRUE, ...) {
         # Single MA
         message_verb("> (3) MA stage with q=", q, v = verbose)
         ma_res <- ma(ts, q)
-        message_verb("|> q=", attr(ma_res, 'q_order'), v = verbose)
+        message_verb("|> q=", attr(ma_res, "q_order"), v = verbose)
     }
 
     return(ma_res)
@@ -872,22 +898,22 @@ MovingAverage <- function(ts, q, verbose = TRUE, ...) {
 #' # Generate noisy sinusoid
 #' set.seed(123)
 #' fs <- 1024
-#' t <- seq(0, 1, by = 1/fs)
+#' t <- seq(0, 1, by = 1 / fs)
 #' x <- sin(2 * pi * 60 * t) + rnorm(length(t), sd = 0.5)
 #' ts_obj <- ts(x, start = t[1], frequency = fs)
 #'
 #' # Apply sequential ARIMA pipeline
 #' out <- seqarima(
-#'   ts_obj,
-#'   d = 1,
-#'   p = c(50, 100, 150),
-#'   q = 20,
-#'   fl = 30,
-#'   fu = 300,
-#'   ar.collector = "median",
-#'   ma.collector = "mean",
-#'   return.step = TRUE,
-#'   verbose = FALSE
+#'     ts_obj,
+#'     d = 1,
+#'     p = c(50, 100, 150),
+#'     q = 20,
+#'     fl = 30,
+#'     fu = 300,
+#'     ar.collector = "median",
+#'     ma.collector = "mean",
+#'     return.step = TRUE,
+#'     verbose = FALSE
 #' )
 #'
 #' # Plot result
@@ -908,8 +934,7 @@ seqarima <- function(
     ar.collector = "median",
     ma.collector = "median",
     return.step = FALSE,
-    verbose = TRUE
-) {
+    verbose = TRUE) {
     # Argument matching
     ar.collector <- match.arg(ar.collector, c("mean", "median", "pca"))
     ma.collector <- match.arg(ma.collector, c("mean", "median", "pca"))
@@ -924,7 +949,7 @@ seqarima <- function(
     sampling.freq <- frequency(ts)
     return.list <- list()
     if (return.step) {
-        return.list[['steps']][['input']] <- ts
+        return.list[["steps"]][["input"]] <- ts
     }
     out <- ts
 
@@ -932,9 +957,9 @@ seqarima <- function(
     if (!is.null(d)) {
         message_verb("> (1) Difference stage", v = verbose)
         x_d <- Differencing(out, d = d, verbose = verbose)
-        return.list[['d']] <- attr(x_d, 'd_order')
+        return.list[["d"]] <- attr(x_d, "d_order")
         if (return.step) {
-            return.list[['steps']][['I']] <- x_d
+            return.list[["steps"]][["I"]] <- x_d
         }
         out <- x_d
     }
@@ -949,10 +974,10 @@ seqarima <- function(
             verbose = verbose,
             collector = ar.collector
         )
-        return.list[['ar_feat']] <- attr(x_ar, 'feature')
-        return.list[['p']] <- attr(x_ar, 'p_order')
+        return.list[["ar_feat"]] <- attr(x_ar, "feature")
+        return.list[["p"]] <- attr(x_ar, "p_order")
         if (return.step) {
-            return.list[['steps']][['AR']] <- x_ar
+            return.list[["steps"]][["AR"]] <- x_ar
         }
         out <- x_ar
     }
@@ -966,9 +991,9 @@ seqarima <- function(
             collector = ma.collector
         )
         if (return.step) {
-            return.list[['steps']][['MA']] <- x_ma
+            return.list[["steps"]][["MA"]] <- x_ma
         }
-        return.list[['q']] <- attr(x_ma, 'q_order')
+        return.list[["q"]] <- attr(x_ma, "q_order")
         out <- x_ma
     }
 
@@ -978,19 +1003,19 @@ seqarima <- function(
 
         x_bp <- BandPass(out, fl, fu, verb = verbose)
         if (return.step) {
-            return.list[['steps']][['BP']] <- x_bp
+            return.list[["steps"]][["BP"]] <- x_bp
         }
-        return.list[['cutoff']] <- attr(x_bp, 'cutoff')
+        return.list[["cutoff"]] <- attr(x_bp, "cutoff")
         out <- x_bp
     }
 
     # Also return missing values caused by ARIMA
-    return.list[['NA.times']] <- get_MissingValues(
+    return.list[["NA.times"]] <- get_MissingValues(
         ts = out,
         ref = ts
     )
 
-    attr(out, 'meta') <- return.list
+    attr(out, "meta") <- return.list
 
     return(out)
 }
