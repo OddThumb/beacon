@@ -478,7 +478,7 @@ inv_spec_trunc_psd <- function(
     psd_trunc <- Conj(psd_trunc) * psd_trunc
     psd_out <- 1 / abs(psd_trunc)
 
-    fs(psd_out, df = deltaf(fs))
+    fs(psd_out, df = deltaf(fs), sampling.freq = attr(fs, "sampling.freq"))
 }
 
 #' Generate PSD
