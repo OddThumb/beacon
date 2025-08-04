@@ -74,11 +74,11 @@ write_H5 <- function(file, tsobj, meta.list = NULL) {
 
     # Write strain data
     h5$create_group("strain")
-    h5[["strain"]]$create_dataset("Strain", data = y)
+    h5[["strain"]]$create_dataset("Strain", robj = y)
 
     # Write meta data (GPSstart)
     h5$create_group("meta")
-    h5[["meta"]]$create_dataset("GPSstart", data = start_time)
+    h5[["meta"]]$create_dataset("GPSstart", robj = start_time)
 
     # Optional: write additional metadata
     if (!is.null(meta.list)) {
@@ -93,7 +93,7 @@ write_H5 <- function(file, tsobj, meta.list = NULL) {
                 current <- current[[g]]
             }
             # Write dataset
-            current$create_dataset(final_name, data = meta.list[[path]])
+            current$create_dataset(final_name, robj = meta.list[[path]])
         }
     }
 
