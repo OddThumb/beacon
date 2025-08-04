@@ -29,7 +29,7 @@ BEACON is a fully data-driven pipeline designed to detect unmodeled gravitationa
          └───────────┬─────────────┘
                      ↓
          ┌─────────────────────────┐
-         │ Significance Eavluation │◀─── Significance (λₐ, λ꜀)
+         │ Significance Evaluation │◀─── Significance (λₐ, λ꜀)
          └───────────┬─────────────┘
                      ↓
          ┌─────────────────────────┐
