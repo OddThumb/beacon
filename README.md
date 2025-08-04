@@ -2,7 +2,7 @@
 
 [![License: MIT\|82x20](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-BEACON is a fully data-driven pipeline designed to detect unmodeled gravitational wave (GW) transients. By combining sequential autoregressive modeling and anomaly clustering, BEACON provides a low-latency and model-agnostic framework for robust burst detection.
+BEACON is a fully data-driven pipeline designed to detect unmodeled gravitational wave (GW) transients. By combining sequential autoregressive modeling ([seqARIMA](https://doi.org/10.1103/PhysRevD.109.102003)) and anomaly clustering, BEACON provides a low-latency and model-agnostic framework for robust burst detection.
 
 ## Key Features
 
