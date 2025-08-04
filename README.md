@@ -1,0 +1,97 @@
+# BEACON: Burst Event Anomaly Clustering and Outlier Notification
+
+[![License: MIT|82x20](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+BEACON is a fully data-driven pipeline designed to detect unmodeled gravitational wave (GW) transients. By combining sequential autoregressive modeling and anomaly clustering, BEACON provides a low-latency and model-agnostic framework for robust burst detection.
+
+## Key Features
+- **Denoising** via high-order ARIMA modeling (`seqarima`)
+- **Anomaly Detection** using robust IQR-based statistical thresholds
+- **Clustering** of temporal outliers with DBSCAN
+- **Statistical Evaluation** via Poisson and Exponential models
+- **Coincidence Analysis** across multiple detectors
+- Fully compatible with streaming or batch-based analysis
+
+## Installation
+```shell
+# In R
+# If `devtools` is not installed
+# install.packages(“devtools”)
+devtools::install_github(
+	repo = “https://github.com/OddThumb/beacon.git”,
+	upgrade = “never”
+)
+```
+or
+```bash
+git clone https://github.com/OddThumb/beacon.git
+cd beacon
+
+# In R
+devtools::install(".")
+```
+
+## Usage
+```r
+# R Example
+library(beacon)
+
+# Load GW strain data
+ts_H1 <- read_H5("H1.hdf5")
+ts_L1 <- read_H5("L1.hdf5")
+
+# Preprocess into batches
+batches <- batching(Rist(H1 = ts_H1, L1 = ts_L1), t_bch = 1)
+
+# Configure pipeline
+cfg <- config_pipe(p = 512, alpha = 0.1, max_anom = 5)
+
+# Run detection pipeline
+result <- stream(batch_set = batches, arch_params = cfg)
+```
+
+> ⚠️ **Note:** If you plan to use the **PyCBC backend**, make sure to link your environment with PyCBC installed.  
+> You can do so by specifying the path to your conda environment as shown below:
+```r
+# Install reticulate to incorporate python package
+install.packges(“reticulate”)
+
+# Register your conda envrionment path
+reticulate::use_condaenv(condaenv = “path/to/your/conda/env”)
+```
+
+## **Pipeline Overview**
+```text
+         ┌─────────────────────────┐
+         │        seqARIMA         │◀─── Denoising (seqarima)
+         └───────────┬─────────────┘
+                     ↓
+         ┌─────────────────────────┐
+         │    Anomaly Detection    │◀─── IQR method
+         └───────────┬─────────────┘
+                     ↓
+         ┌─────────────────────────┐
+         │       Clustering        │◀─── DBSCAN clustering
+         └───────────┬─────────────┘
+                     ↓
+         ┌─────────────────────────┐
+         │ Significance Eavluation │◀─── Significance (λₐ, λ꜀)
+         └───────────┬─────────────┘
+                     ↓
+         ┌─────────────────────────┐
+         │  Coincidence Analysis   │◀─── Across detectors
+         └─────────────────────────┘
+```
+
+## **Documentation**
+- Full function documentation is provided via Roxygen2 in the R source files.
+- Python bindings (if any) follow NumPy-style docstrings.
+
+## **Example Datasets**
+See data/ or use [GWOSC](https://www.gw-openscience.org/) compatible tools to fetch real event data.
+
+## **Publications**
+If you use BEACON in your work, please cite: Kim et al., “Autoregressive Search of Gravitational Waves: Design of low-latency search pipeline for unmodeled transients — BEACON”, in prep.
+
+## **License**
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
