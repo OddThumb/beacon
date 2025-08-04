@@ -13,6 +13,30 @@ BEACON is a fully data-driven pipeline designed to detect unmodeled gravitationa
 -   **Coincidence Analysis** across multiple detectors
 -   Fully compatible with streaming or batch-based analysis
 
+## **Pipeline Overview**
+
+``` text
+         ┌─────────────────────────┐
+         │        seqARIMA         │◀─── Denoising (seqarima)
+         └───────────┬─────────────┘
+                     ↓
+         ┌─────────────────────────┐
+         │    Anomaly Detection    │◀─── IQR method
+         └───────────┬─────────────┘
+                     ↓
+         ┌─────────────────────────┐
+         │       Clustering        │◀─── DBSCAN clustering
+         └───────────┬─────────────┘
+                     ↓
+         ┌─────────────────────────┐
+         │ Significance Eavluation │◀─── Significance (λₐ, λ꜀)
+         └───────────┬─────────────┘
+                     ↓
+         ┌─────────────────────────┐
+         │  Coincidence Analysis   │◀─── Across detectors
+         └─────────────────────────┘
+```
+
 ## Installation
 
 ``` shell
@@ -73,30 +97,6 @@ install.packges(“reticulate”)
 
 # Register your conda envrionment path
 reticulate::use_condaenv(condaenv = “path/to/your/conda/env”)
-```
-
-## **Pipeline Overview**
-
-``` text
-         ┌─────────────────────────┐
-         │        seqARIMA         │◀─── Denoising (seqarima)
-         └───────────┬─────────────┘
-                     ↓
-         ┌─────────────────────────┐
-         │    Anomaly Detection    │◀─── IQR method
-         └───────────┬─────────────┘
-                     ↓
-         ┌─────────────────────────┐
-         │       Clustering        │◀─── DBSCAN clustering
-         └───────────┬─────────────┘
-                     ↓
-         ┌─────────────────────────┐
-         │ Significance Eavluation │◀─── Significance (λₐ, λ꜀)
-         └───────────┬─────────────┘
-                     ↓
-         ┌─────────────────────────┐
-         │  Coincidence Analysis   │◀─── Across detectors
-         └─────────────────────────┘
 ```
 
 ## **Documentation**
