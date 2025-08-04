@@ -51,6 +51,56 @@ read_H5 <- function(file, sampling.freq, dq.level = "BURST_CAT2") {
     return(res)
 }
 
+
+#' Write a time series and metadata into HDF5 format
+#'
+#' @param file Path to output HDF5 file.
+#' @param tsobj A time series object of class `ts` (e.g., output of `ts()`).
+#' @param meta.list A named list of additional metadata to store.
+#'        Names should be full HDF5 paths (e.g., "quality/simple/DQmask").
+#'
+#' @return Invisibly returns the HDF5 file path.
+#' @export
+write_H5 <- function(file, tsobj, meta.list = NULL) {
+    stopifnot(inherits(tsobj, "ts"))
+
+    # Extract data and time reference
+    y <- as.numeric(tsobj)
+    start_time <- start(tsobj)[1] # only supports regular sampling
+    fs <- frequency(tsobj)
+
+    # Open HDF5 for writing
+    h5 <- hdf5r::H5File$new(filename = file, mode = "w")
+
+    # Write strain data
+    h5$create_group("strain")
+    h5[["strain"]]$create_dataset("Strain", data = y)
+
+    # Write meta data (GPSstart)
+    h5$create_group("meta")
+    h5[["meta"]]$create_dataset("GPSstart", data = start_time)
+
+    # Optional: write additional metadata
+    if (!is.null(meta.list)) {
+        for (path in names(meta.list)) {
+            # Ensure the group exists
+            parts <- strsplit(path, "/")[[1]]
+            groups <- parts[-length(parts)]
+            final_name <- parts[length(parts)]
+            current <- h5
+            for (g in groups) {
+                if (!g %in% names(current)) current$create_group(g)
+                current <- current[[g]]
+            }
+            # Write dataset
+            current$create_dataset(final_name, data = meta.list[[path]])
+        }
+    }
+
+    h5$close_all()
+    invisible(file)
+}
+
 #' Reconstruct dqmask as a ts or mts object
 #'
 #' Converts the `dqmask` metadata attribute stored in an object (typically removed
