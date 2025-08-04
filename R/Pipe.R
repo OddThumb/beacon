@@ -1465,7 +1465,7 @@ pipe <- function(
     verb = T) {
     if (all(is.na(curr_batch))) {
         res.list <- append_NA(res.list)
-        message.verb(
+        message_verb(
             "WARNING: The current batch is NA might be due to the duty cycle",
             v = verb
         )
