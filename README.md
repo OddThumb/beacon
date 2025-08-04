@@ -93,11 +93,13 @@ result <- stream(batch_set = batch_set, arch_params = cfg)
 
 ``` r
 # Install reticulate to incorporate python package
-install.packges(“reticulate”)
+install.packages(“reticulate”)
 
 # Register your conda envrionment path
 reticulate::use_condaenv(condaenv = “path/to/your/conda/env”)
 ```
+
+> ⚙️ **Python Version (In Progress):** A Python version of the BEACON pipeline is currently under active development. While the core design is being ported from R, the Python version will support the same sequential anomaly detection and clustering logic. Stay tuned for updates in this repository 🔥.
 
 ## **Documentation**
 
