@@ -29,7 +29,7 @@ proc2ts <- function(
     )
 }
 
-#' Reshape a list-of-lists (LList) by transposing elements
+#' Reshape a list-of-lists by transposing elements
 #'
 #' This function reshapes a list of named lists into a named list of lists,
 #' effectively performing a transpose operation. It is equivalent to `purrr::list_transpose()`,
@@ -44,11 +44,11 @@ proc2ts <- function(
 #'     list(a = 1, b = 2),
 #'     list(a = 3, b = 4)
 #' )
-#' reshape.LList(x)
+#' transpose.List(x)
 #' # Returns: list(a = list(1, 3), b = list(2, 4))
 #'
 #' @export
-reshape.LList <- function(list) {
+transpose.List <- function(list) {
     # Same result as purrr::list_transpose()
     # But shorter codes
     nm <- el(lapply(list, names))
@@ -174,6 +174,34 @@ batching <- function(ts, t_bch = 1, has.DQ = T) {
     }
     batch
 }
+
+#' Perform batching and NA filtering for multiple ts objects
+#'
+#' @param ts.list A named list of `ts` objects, one per detector
+#' @param t_bch Batch length in seconds (default: 1)
+#' @param has.DQ Logical; whether to use DQ mask in batching (default: TRUE)
+#'
+#' @return A reshaped list of valid (non-NaN) batches from all detectors
+#' @export
+batching.network <- function(ts.list, t_bch = 1, has.DQ = TRUE) {
+    # Step 1: batching per detector
+    batch_net <- lapply(ts.list, function(tsobj) {
+        batching(tsobj, t_bch = t_bch, has.DQ = has.DQ)
+    })
+
+    # Step 2: remove batches with any NaN values
+    batch_net <- lapply(batch_net, function(det_batches) {
+        lapply(det_batches, function(batch) {
+            if (any(is.nan(batch))) NA else batch
+        })
+    })
+
+    # Step 3: reshape list-of-lists into time-wise structure
+    batch_set <- transpose.List(batch_net)
+
+    return(batch_set)
+}
+
 
 # Within anomaly()
 
