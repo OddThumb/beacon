@@ -66,8 +66,7 @@ write_H5 <- function(file, tsobj, meta.list = NULL) {
 
     # Extract data and time reference
     y <- as.numeric(tsobj)
-    start_time <- start(tsobj)[1] # only supports regular sampling
-    fs <- frequency(tsobj)
+    start_time <- time(tsobj)[1]
 
     # Open HDF5 for writing
     h5 <- hdf5r::H5File$new(filename = file, mode = "w")
