@@ -19,9 +19,9 @@ warnings, and printed output.
 \examples{
 \dontrun{
 suppressALL({
-  warning("This is suppressed")
-  message("Also suppressed")
-  print("This too")
+    warning("This is suppressed")
+    message("Also suppressed")
+    print("This too")
 })
 }
 }

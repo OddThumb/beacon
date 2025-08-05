@@ -21,7 +21,7 @@ savemsg <- function(msg, ..., file, show = T) {
         append = T
     )
     if (show) {
-        message(cat(paste(msg, ..., sep = '\n')))
+        message(cat(paste(msg, ..., sep = "\n")))
     }
 }
 
@@ -122,9 +122,9 @@ sinking <- function(expr, file) {
 #' @examples
 #' \dontrun{
 #' suppressALL({
-#'   warning("This is suppressed")
-#'   message("Also suppressed")
-#'   print("This too")
+#'     warning("This is suppressed")
+#'     message("Also suppressed")
+#'     print("This too")
 #' })
 #' }
 #' @export
@@ -160,12 +160,11 @@ savetab <- function(
     show = T,
     append = F,
     nsep = 30,
-    ...
-) {
-    message(' >>> Saving table in MD format...')
+    ...) {
+    message(" >>> Saving table in MD format...")
     if (append & !is.null(nsep)) {
         write.table(
-            paste(rep("-", nsep), collapse = ''),
+            paste(rep("-", nsep), collapse = ""),
             file = paste_wd(file),
             quote = F,
             row.names = F,
@@ -182,8 +181,8 @@ savetab <- function(
     write.table(
         insight::export_table(
             x,
-            digits = paste("signif", signif, sep = ''),
-            format = 'md',
+            digits = paste("signif", signif, sep = ""),
+            format = "md",
             ...
         ),
         file = paste_wd(file),
@@ -206,7 +205,7 @@ savetab <- function(
 #' @return None.
 #' @export
 append.line <- function(x, file, show = T) {
-    message(' >>> Appending lines in a file...')
+    message(" >>> Appending lines in a file...")
     write.table(
         x,
         file = paste_wd(file),
@@ -240,9 +239,8 @@ savefig <- function(
     height = 5,
     show = T,
     verbose = F,
-    ...
-) {
-    message_verb(' >>> Saving...', v = verbose)
+    ...) {
+    message_verb(" >>> Saving...", v = verbose)
     ggpubr::ggexport(
         plot,
         filename = paste_wd(file),
@@ -274,18 +272,17 @@ plot_oscillo <- function(
     ts,
     tzero = NULL,
     trange = NULL,
-    ylim = 'pm',
+    ylim = "pm",
     title = NULL,
     size = 0.3,
-    ...
-) {
+    ...) {
     if (is.null(trange)) {
         trange <- c(time(ts)[1], time(ts)[length(ts)])
     }
-    ts.df <- data.frame('time' = time(ts), 'strain' = ts)
+    ts.df <- data.frame("time" = time(ts), "strain" = ts)
     ts.df <- dplyr::mutate(
         dplyr::filter(ts.df, time >= trange[1] & time <= trange[2]),
-        'time' = time - ifelse(is.null(tzero), 0, tzero)
+        "time" = time - ifelse(is.null(tzero), 0, tzero)
     )
     value.order <- floor(log10(amax(ts.df$strain)))
     plot <- ggplot2::ggplot() +
@@ -308,15 +305,15 @@ plot_oscillo <- function(
             x = ifelse(
                 is.null(tzero),
                 "Time (s)",
-                latex2exp::TeX('Time - $t_0$ (s)')
+                latex2exp::TeX("Time - $t_0$ (s)")
             ),
-            y = latex2exp::TeX(paste('$h~(10^{', value.order, '})$', sep = '')),
+            y = latex2exp::TeX(paste("$h~(10^{", value.order, "})$", sep = "")),
             title = title
         ) +
         ggplot2::theme_bw() +
         ggplot2::theme(legend.position = "none")
     if (is.character(ylim)) {
-        if (ylim == 'pm') {
+        if (ylim == "pm") {
             limiting <- get_limit(ts.df$strain)
             plot <- plot + ggplot2::coord_cartesian(ylim = limiting)
         }
@@ -348,14 +345,13 @@ plot_oscillo_multi <- function(
     ts.df,
     tzero = NULL,
     trange = NULL,
-    facet.scale = 'fixed',
+    facet.scale = "fixed",
     facet.label = NULL,
     order.of.mag = TRUE,
     title = NULL,
     color = NULL,
     width = 0.3,
-    ...
-) {
+    ...) {
     if (is.null(ncol(ts.df))) {
         stop("For one ts, use Oscillo()")
     }
@@ -364,7 +360,7 @@ plot_oscillo_multi <- function(
         trange <- c(ts.df$time[1], tail(ts.df$time, 1))
     }
 
-    if (!('time' %in% colnames(ts.df))) {
+    if (!("time" %in% colnames(ts.df))) {
         ts.df <- dplyr::bind_cols(time = time(ts.df), as.data.frame(ts.df))
     }
 
@@ -376,7 +372,7 @@ plot_oscillo_multi <- function(
 
     ts.df <- dplyr::mutate(
         dplyr::filter(ts.df, time >= trange[1] & time <= trange[2]),
-        'time' = time - ifelse(is.null(tzero), 0, tzero)
+        "time" = time - ifelse(is.null(tzero), 0, tzero)
     )
     ts.df.molten <- reshape2::melt(ts.df, id.vars = "time")
 
@@ -393,16 +389,16 @@ plot_oscillo_multi <- function(
         ggplot2::facet_wrap(
             ~variable,
             ncol = 1,
-            strip.position = 'right',
+            strip.position = "right",
             scales = facet.scale
         ) +
         ggplot2::labs(
             x = ifelse(
                 is.null(tzero),
                 "Time (s)",
-                latex2exp::TeX('Time - $t_0$ (s)')
+                latex2exp::TeX("Time - $t_0$ (s)")
             ),
-            y = latex2exp::TeX(paste('$h~(10^{', value.order, '})$', sep = '')),
+            y = latex2exp::TeX(paste("$h~(10^{", value.order, "})$", sep = "")),
             title = title
         ) +
         ggplot2::theme_bw() +
@@ -452,17 +448,17 @@ oscillo_option <- function(ts, tzero = 0, title = NULL) {
             limits = get_limit(ts, 1.5)
         ),
         ggplot2::labs(
-            x = ifelse(tzero != 0, paste0('Time (s) from ', tzero), 'Time (s)'),
+            x = ifelse(tzero != 0, paste0("Time (s) from ", tzero), "Time (s)"),
             y = latex2exp::TeX(paste(
-                '$\\textit{h}~(10^{',
+                "$\\textit{h}~(10^{",
                 value.order,
-                '})$',
-                sep = ''
+                "})$",
+                sep = ""
             )),
             title = title
         ),
         ggplot2::theme_bw(),
-        ggplot2::theme(legend.position = 'none')
+        ggplot2::theme(legend.position = "none")
     )
 }
 
@@ -512,13 +508,12 @@ plot_spectro <- function(
     trans = NULL,
     specScaleDir = "vertical",
     specScalePos = "ul",
-    linecolor = 'black',
+    linecolor = "black",
     osciLegend = FALSE,
     osciXlabel = TRUE,
     osciYlabel = TRUE,
     stack = T,
-    ...
-) {
+    ...) {
     # Frequency
     sampling.freq <- frequency(ts)
 
@@ -553,26 +548,26 @@ plot_spectro <- function(
 
     # Applying transform function on z-axis
     if (!is.null(trans)) {
-        qspecdata[['S']] <- trans(qspecdata[['S']])
+        qspecdata[["S"]] <- trans(qspecdata[["S"]])
     }
 
     # Limit on color (z-axis)
     if (!is.null(crange)) {
-        qspecdata[['S']][qspecdata[['S']] <= crange[1]] <- crange[1]
-        qspecdata[['S']][qspecdata[['S']] >= crange[2]] <- crange[2]
+        qspecdata[["S"]][qspecdata[["S"]] <= crange[1]] <- crange[1]
+        qspecdata[["S"]][qspecdata[["S"]] >= crange[2]] <- crange[2]
     }
 
     # Convert qspecdata (list) to melted qspecdata.df (data.frame)
     qspecdata.df <- data.frame(
-        'f' = rep(qspecdata$f, times = length(qspecdata$t)),
-        't' = rep(qspecdata$t, each = length(qspecdata$f)),
-        'S' = c(qspecdata$S)
+        "f" = rep(qspecdata$f, times = length(qspecdata$t)),
+        "t" = rep(qspecdata$t, each = length(qspecdata$f)),
+        "S" = c(qspecdata$S)
     )
 
     # Filter qspecdata.df with time range and shift with tzero
     qspecdata.df <- dplyr::mutate(
         dplyr::filter(qspecdata.df, dplyr::between(t, trange[1], trange[2])),
-        't' = t - tzero
+        "t" = t - tzero
     )
 
     # Save memory
@@ -604,9 +599,9 @@ plot_spectro <- function(
         ) +
         ggplot2::scale_fill_gradientn(colors = specColorPal) +
         ggplot2::labs(
-            x = latex2exp::TeX('Time - $t_0$ (s)'),
-            y = 'Frequency (Hz)',
-            fill = 'Normalized Power',
+            x = latex2exp::TeX("Time - $t_0$ (s)"),
+            y = "Frequency (Hz)",
+            fill = "Normalized Power",
             title = NULL
         ) +
         ggplot2::theme_bw() +
@@ -685,15 +680,13 @@ plot_spectro <- function(
             lgndttlang <- 0
         }
 
-        lgndpos <- switch(
-            specScalePos,
+        lgndpos <- switch(specScalePos,
             "ul" = c(0, 1),
             "ur" = c(1, 1),
             "bl" = c(0, 0),
             "br" = c(1, 0)
         )
-        lgndjus <- switch(
-            specScalePos,
+        lgndjus <- switch(specScalePos,
             "ul" = c(0, 1),
             "ur" = c(1, 1),
             "bl" = c(0, 0),
@@ -716,7 +709,7 @@ plot_spectro <- function(
                 legend.title.align = 0.5,
                 legend.text = ggplot2::element_text(size = 8),
                 legend.background = ggplot2::element_rect(
-                    fill = ggplot2::alpha('white', 0.4)
+                    fill = ggplot2::alpha("white", 0.4)
                 )
             )
     }
@@ -744,8 +737,8 @@ plot_spectro <- function(
             limits = limiting
         ) +
         ggplot2::labs(
-            x = latex2exp::TeX('Time - $t_0$ (s)'),
-            y = latex2exp::TeX(paste('$h~(10^{', value.order, '})$', sep = '')),
+            x = latex2exp::TeX("Time - $t_0$ (s)"),
+            y = latex2exp::TeX(paste("$h~(10^{", value.order, "})$", sep = "")),
             title = NULL
         ) +
         ggplot2::theme_bw() +
@@ -782,7 +775,7 @@ plot_spectro <- function(
             osci.plot,
             heights = c(0.7, 0.3),
             nrow = 2,
-            align = 'v'
+            align = "v"
         )
 
         if (!is.null(title)) {
@@ -809,7 +802,7 @@ plot_spectro <- function(
                 top = ggpubr::text_grob(title, face = "bold", size = 14)
             )
         }
-        return(list('spec.plot' = spec.plot, 'osci.plot' = osci.plot))
+        return(list("spec.plot" = spec.plot, "osci.plot" = osci.plot))
     }
 }
 
@@ -834,8 +827,7 @@ plot_anomalies <- function(
     err_lwr = NULL,
     err_upr = NULL,
     p_crit = 0.05,
-    p_col = "P0"
-) {
+    p_col = "P0") {
     # tzero
     if (is.null(tzero)) {
         tzero <- anom.df[1, time_col, drop = T]
@@ -860,12 +852,12 @@ plot_anomalies <- function(
         ggplot2::geom_ribbon(
             ggplot2::aes(ymin = .data[[err_lwr]], ymax = .data[[err_upr]]),
             na.rm = F,
-            fill = 'grey50',
+            fill = "grey50",
             alpha = 0.5
         )
 
     # Line and point
-    p <- p + ggplot2::geom_line(color = 'grey15')
+    p <- p + ggplot2::geom_line(color = "grey15")
     if (!is.null(p_crit)) {
         anom.df <- dplyr::mutate(
             dplyr::filter(
@@ -896,14 +888,14 @@ plot_anomalies <- function(
         p <- p +
             ggplot2::geom_point(
                 data = dplyr::filter(anom.df, anomaly == 1),
-                color = 'red',
+                color = "red",
                 shape = 20,
                 size = 2,
                 alpha = 0.35
             ) +
             ggplot2::geom_point(
                 data = dplyr::filter(anom.df, anomaly == 1),
-                color = 'red',
+                color = "red",
                 shape = 21,
                 size = 3,
                 alpha = 0.35
@@ -913,12 +905,12 @@ plot_anomalies <- function(
     p <- p +
         oscillo_option(ts.recons, tzero) +
         ggplot2::theme(
-            legend.direction = 'horizontal',
+            legend.direction = "horizontal",
             legend.position.inside = c(1, 1),
             legend.justification = c(1, 1),
             legend.background = ggplot2::element_rect(
-                colour = ggplot2::alpha('black', 0.5),
-                fill = ggplot2::alpha('white', 0.5)
+                colour = ggplot2::alpha("black", 0.5),
+                fill = ggplot2::alpha("white", 0.5)
             )
         )
     return(p)
@@ -983,10 +975,9 @@ plot_lambda <- function(
     lambda = c("a", "c"),
     chunk_len = 1,
     t_from = NULL,
-    ...
-) {
+    ...) {
     lambda <- match.arg(lambda)
-    extract_key <- if (lambda == "a") "N" else "c"
+    extract_key <- if (lambda == "a") "a" else "c"
     y_label <- if (lambda == "a") "$\\lambda_a$" else "$\\lambda_c$"
     title_label <- if (lambda == "a") {
         "Update history of $\\textit{\\lambda_a}$"
@@ -1008,7 +999,7 @@ plot_lambda <- function(
             linetype = variable
         )) +
         ggplot2::scale_x_continuous(breaks = scales::pretty_breaks()) +
-        ggplot2::scale_color_manual(values = c('H1' = 'red', 'L1' = 'blue')) +
+        ggplot2::scale_color_manual(values = c("H1" = "red", "L1" = "blue")) +
         ggplot2::labs(
             x = if (is.null(t_from)) {
                 latex2exp::TeX("$\\textit{t}~(s)$")
@@ -1025,7 +1016,7 @@ plot_lambda <- function(
             plot.title = ggplot2::element_text(hjust = 0.5),
             panel.grid.minor = ggplot2::element_blank()
         ) +
-        legend_inside(legend.direction = 'horizontal')
+        legend_inside(legend.direction = "horizontal")
 }
 
 #' Plot coincidence significance values over time
@@ -1043,25 +1034,23 @@ plot_coinc <- function(
     tzero = NULL,
     p_crit = 0.05,
     a = 3,
-    legend.position = 'tr'
-) {
+    legend.position = "tr") {
     # Lazy way...
     P0_names <- c("P0_net", "P0_H1_bin", "P0_L1_bin")
-    new_names <- structure(c("coinc", 'H1', 'L1'), names = P0_names)
-    det_colors <- structure(c('black', 'red', 'blue'), names = P0_names)
+    new_names <- structure(c("coinc", "H1", "L1"), names = P0_names)
+    det_colors <- structure(c("black", "red", "blue"), names = P0_names)
     det_alphas <- structure(c(1, 0.3, 0.3), names = P0_names)
     det_ltypes <- structure(c(1, 2, 2), names = P0_names)
-    legpos <- switch(
-        legend.position,
-        'tr' = list(pos = c(1, 1), jus = c(1, 1)),
-        'tl' = list(pos = c(0, 1), jus = c(0, 1)),
-        'br' = list(pos = c(1, 0), jus = c(1, 0)),
-        'bl' = list(pos = c(0, 0), jus = c(0, 1))
+    legpos <- switch(legend.position,
+        "tr" = list(pos = c(1, 1), jus = c(1, 1)),
+        "tl" = list(pos = c(0, 1), jus = c(0, 1)),
+        "br" = list(pos = c(1, 0), jus = c(1, 0)),
+        "bl" = list(pos = c(0, 0), jus = c(0, 1))
     )
 
     coinc_melt <- reshape2::melt(
         dplyr::select(coinc.res, "time_bin", dplyr::contains("P0_")),
-        id.vars = 'time_bin'
+        id.vars = "time_bin"
     )
     coinc_melt$variable <- factor(coinc_melt$variable, levels = P0_names)
     coinc_melt$value[is.nan(coinc_melt$value)] <- 1
@@ -1085,7 +1074,7 @@ plot_coinc <- function(
         )) +
         ggplot2::geom_hline(
             yintercept = Significance(p_crit, a),
-            linetype = 'dashed'
+            linetype = "dashed"
         ) +
         ggplot2::labs(
             x = paste0("Time (s) from ", tzero),
@@ -1093,12 +1082,11 @@ plot_coinc <- function(
             color = NULL,
             linetype = NULL
         ) +
-
         ggplot2::scale_color_manual(values = det_colors, labels = new_names) +
         ggplot2::scale_alpha_manual(
             values = det_alphas,
             labels = new_names,
-            guide = 'none'
+            guide = "none"
         ) +
         ggplot2::scale_linetype_manual(
             values = det_ltypes,
@@ -1108,7 +1096,7 @@ plot_coinc <- function(
         legend_inside(
             pos = legpos$pos,
             jus = legpos$jus,
-            legend.direction = 'horizontal'
+            legend.direction = "horizontal"
         )
 }
 
@@ -1123,15 +1111,15 @@ plot_coinc <- function(
 legend_inside <- function(pos = c(1, 1), jus = c(1, 1), ...) {
     list(
         theme(
-            legend.position = 'inside',
+            legend.position = "inside",
             legend.position.inside = pos,
             legend.justification.inside = jus,
-            legend.background = element_rect(fill = alpha('white', 0.3)),
+            legend.background = element_rect(fill = alpha("white", 0.3)),
             legend.box.background = element_rect(
-                fill = alpha('white', 0.3),
+                fill = alpha("white", 0.3),
                 linewidth = 0.5
             ),
-            legend.spacing.y = unit(-0.35, 'cm'),
+            legend.spacing.y = unit(-0.35, "cm"),
             ...
         )
     )
@@ -1159,7 +1147,7 @@ get_break_rngdgt <- function(x, bin = 0.2) {
 #'
 #' @return A ggplot object showing discrete histogram-like point distribution.
 #' @export
-plot_onsource <- function(S.vec, color = 'black', shape = 24, binwidth = 0.2) {
+plot_onsource <- function(S.vec, color = "black", shape = 24, binwidth = 0.2) {
     his <- hist(S.vec, breaks = get_break_rngdgt(S.vec, binwidth), plot = F)
     df_ons <- dplyr::filter(
         data.frame(x = his$breaks[-1], y = his$counts),
@@ -1187,12 +1175,11 @@ plot_onsource <- function(S.vec, color = 'black', shape = 24, binwidth = 0.2) {
 #' @export
 plot_background <- function(
     S.bkg.vec,
-    color = 'black',
+    color = "black",
     binwidth = 0.2,
     xlimit = c(7, 30),
     ylimit = c(5e-3, 5e2),
-    factor = 1
-) {
+    factor = 1) {
     # Histogram setup
     rng <- range.width(S.bkg.vec, binwidth)
     his <- hist(S.bkg.vec, breaks = seq(rng[1], rng[2], binwidth), plot = FALSE)
@@ -1211,13 +1198,13 @@ plot_background <- function(
             breaks = scales::breaks_pretty(10)
         ) +
         ggplot2::scale_y_continuous(
-            trans = 'log10',
+            trans = "log10",
             breaks = scales::breaks_log(7)
         ) +
         ggplot2::coord_cartesian(xlim = xlimit, ylim = ylimit) +
-        ggplot2::labs(x = expression(italic(S)), y = 'Number of Triggers') +
+        ggplot2::labs(x = expression(italic(S)), y = "Number of Triggers") +
         ggplot2::theme_bw(base_size = 15, base_line_size = 0.3) +
-        ggplot2::annotation_logticks(sides = 'rl') +
+        ggplot2::annotation_logticks(sides = "rl") +
         ggplot2::theme(
             plot.margin = ggplot2::unit(c(0, 0, 0, 0), "null"),
             panel.margin = ggplot2::unit(c(0, 0, 0, 0), "null"),
