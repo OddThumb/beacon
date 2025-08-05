@@ -993,7 +993,8 @@ plot_lambda <- function(
         unlist(lapply(x$lamb, function(lam) lam[[extract_key]]))
     })
     tmp2 <- dplyr::bind_cols(tmp1)
-    tmp2$tt <- chunk_len * dplyr::row_number(tmp2)
+    tmp2$tt <- chunk_len * seq(nrow(tmp2))
+    # tmp2$tt <- chunk_len * dplyr::row_number(tmp2)
     tmp2 <- tmp2[, c("tt", setdiff(names(tmp2), "tt"))]
     result <- reshape2::melt(tmp2, id.vars = "tt")
 
