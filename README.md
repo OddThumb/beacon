@@ -44,8 +44,8 @@ BEACON is a fully data-driven pipeline designed to detect unmodeled gravitationa
 # If `devtools` is not installed
 # install.packages(“devtools”)
 devtools::install_github(
-    repo = “https://github.com/OddThumb/beacon.git”,
-    upgrade = “never”
+    repo = "https://github.com/OddThumb/beacon.git",
+    upgrade = "never"
 )
 ```
 
@@ -93,10 +93,10 @@ result <- stream(batch_set = batch_set, arch_params = cfg)
 
 ``` r
 # Install reticulate to incorporate python package
-install.packages(“reticulate”)
+install.packages("reticulate")
 
 # Register your conda envrionment path
-reticulate::use_condaenv(condaenv = “path/to/your/conda/env”)
+reticulate::use_condaenv(condaenv = "path/to/your/conda/env")
 ```
 
 > ⚙️ **Python Version (In Progress):** A Python version of the BEACON pipeline is currently under active development. While the core design is being ported from R, the Python version will support the same sequential anomaly detection and clustering logic. Stay tuned for updates in this repository 🔥.
