@@ -119,7 +119,7 @@ qseries <- function(fseries, Q, f0, return_complex = FALSE) {
     windowed <- cyclic(windowed, center)
 
     # calculate the time series for this q -value
-    windowed <- fs(windowed, df = deltaf(fseries))
+    windowed <- fs(windowed, df = deltaf(fseries), sampling.freq = attr(fseries, "sampling.freq"))
     ifft.res <- fftw::IFFT(windowed, plan = fftw::planFFT(tlen))
 
     if (return_complex) {
@@ -209,8 +209,7 @@ interp2d <- function(x, y, z, xout, yout, method = "linear") {
         # Inspired by fields::interp.surface
         nx <- length(x)
         ny <- length(y)
-        ll <- switch(
-            method,
+        ll <- switch(method,
             "linear" = list(
                 lx = approx(x = x, y = 1:nx, xout = loc[, 1], rule = 2)$y,
                 ly = approx(x = y, y = 1:ny, xout = loc[, 2], rule = 2)$y
@@ -282,8 +281,7 @@ qtransform <- function(
     frange = NULL,
     qrange = c(4, 64),
     mismatch = 0.2,
-    return_complex = FALSE
-) {
+    return_complex = FALSE) {
     if (is.null(frange)) {
         frange <- c(30, as.integer(frequency(ts) / 2 * 8))
     }
