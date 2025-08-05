@@ -16,25 +16,25 @@ BEACON is a fully data-driven pipeline designed to detect unmodeled gravitationa
 ## **Pipeline Overview**
 
 ``` text
-         ┌─────────────────────────┐
-         │        seqARIMA         │◀─── Denoising (seqarima)
-         └───────────┬─────────────┘
-                     ↓
-         ┌─────────────────────────┐
-         │    Anomaly Detection    │◀─── IQR method
-         └───────────┬─────────────┘
-                     ↓
-         ┌─────────────────────────┐
-         │       Clustering        │◀─── DBSCAN clustering
-         └───────────┬─────────────┘
-                     ↓
-         ┌─────────────────────────┐
-         │ Significance Evaluation │◀─── Significance (λₐ, λ꜀)
-         └───────────┬─────────────┘
-                     ↓
-         ┌─────────────────────────┐
-         │  Coincidence Analysis   │◀─── Across detectors
-         └─────────────────────────┘
+      ┌─────────────────────────┐
+      │        seqARIMA         │◀─── Denoising (seqarima)
+      └───────────┬─────────────┘
+                  ↓
+      ┌─────────────────────────┐
+      │    Anomaly Detection    │◀─── IQR method
+      └───────────┬─────────────┘
+                  ↓
+      ┌─────────────────────────┐
+      │       Clustering        │◀─── DBSCAN clustering
+      └───────────┬─────────────┘
+                  ↓
+      ┌─────────────────────────┐
+      │ Significance Evaluation │◀─── Significance (λₐ, λ꜀)
+      └───────────┬─────────────┘
+                  ↓
+      ┌─────────────────────────┐
+      │  Coincidence Analysis   │◀─── Across detectors
+      └─────────────────────────┘
 ```
 
 ## Installation
