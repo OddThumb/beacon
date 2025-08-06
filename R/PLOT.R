@@ -1031,15 +1031,16 @@ plot_lambda <- function(
 #' @param p_crit Critical p-value to draw significance threshold (default: 0.05).
 #' @param a Scaling factor for significance function (default: 3).
 #' @param legend.position Position of legend inside plot. One of "tr", "tl", "br", "bl".
+#' @param annotate.vals A logical. Annotate values above threshold (default: FALSE).
 #'
 #' @return A ggplot object with time-series of coincidence significance.
 #' @export
-plot_coinc <- function(
-    coinc.res,
-    tzero = NULL,
-    p_crit = 0.05,
-    a = 3,
-    legend.position = "tr") {
+plot_coinc <- function(coinc.res,
+                       tzero = NULL,
+                       p_crit = 0.05,
+                       a = 3,
+                       legend.position = "tr",
+                       annotate.vals = FALSE) {
     # Lazy way...
     P0_names <- c("P0_net", "P0_H1_bin", "P0_L1_bin")
     new_names <- structure(c("coinc", "H1", "L1"), names = P0_names)
@@ -1065,15 +1066,23 @@ plot_coinc <- function(
         tzero <- utc2gps(coinc.res$time_bin[1])
     }
 
-    ggplot2::ggplot(coinc_melt, ggplot2::aes(x = utc2gps(time_bin) - tzero)) +
+    yval <- Significance(coinc_melt$value, a)
+    coinc_melt$y <- yval
+    coinc_melt$label <- ifelse(
+        yval > Significance(p_crit, a),
+        sprintf("%.2f", yval),
+        NA_character_
+    )
+
+    p <- ggplot2::ggplot(coinc_melt, ggplot2::aes(x = utc2gps(time_bin) - tzero)) +
         ggplot2::geom_line(ggplot2::aes(
-            y = Significance(value, a),
+            y = y,
             color = variable,
             alpha = variable,
             linetype = variable
         )) +
         ggplot2::geom_point(ggplot2::aes(
-            y = Significance(value, a),
+            y = y,
             color = variable,
             alpha = variable
         )) +
@@ -1103,7 +1112,28 @@ plot_coinc <- function(
             jus = legpos$jus,
             legend.direction = "horizontal"
         )
+
+    if (annotate.vals) {
+        p <- p + ggrepel::geom_text_repel(
+            data = subset(coinc_melt, !is.na(label)),
+            ggplot2::aes(
+                x = utc2gps(time_bin) - tzero,
+                y = y,
+                label = label,
+                color = variable,
+                alpha = variable,
+            ),
+            size = 3,
+            # color = "black",
+            min.segment.length = 0,
+            max.overlaps = Inf,
+            show.legend = FALSE
+        )
+    }
+
+    return(p)
 }
+
 
 #' Theme wrapper for legend inside plot area
 #'

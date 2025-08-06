@@ -9,7 +9,8 @@ plot_coinc(
   tzero = NULL,
   p_crit = 0.05,
   a = 3,
-  legend.position = "tr"
+  legend.position = "tr",
+  annotate.vals = FALSE
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ plot_coinc(
 \item{a}{Scaling factor for significance function (default: 3).}
 
 \item{legend.position}{Position of legend inside plot. One of "tr", "tl", "br", "bl".}
+
+\item{annotate.vals}{A logical. Annotate values above threshold (default: FALSE).}
 }
 \value{
 A ggplot object with time-series of coincidence significance.
