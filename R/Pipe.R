@@ -2008,8 +2008,10 @@ reproduce <- function(
     names(res.net) <- dets
 
     # Coincidence analysis
-    if (is.null(window_size) | is.null(window_size)) {
+    if (is.null(window_size)) {
         window_size <- result$arch_params$window_size
+    }
+    if (is.null(overlap)) {
         overlap <- result$arch_params$overlap
     }
     coinc.res <- coincide_P0(
