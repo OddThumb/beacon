@@ -644,8 +644,8 @@ plot_spectro <- function(
                     )
                 ),
                 color = "grey92",
-                alpha = 0.3,
-                linewidth = 0.1
+                alpha = 0.4,
+                linewidth = 0.25
             )
     }
 
