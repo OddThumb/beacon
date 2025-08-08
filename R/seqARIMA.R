@@ -906,6 +906,8 @@ MovingAverage <- function(ts, q, verbose = TRUE, ...) {
 #' @param ma.args A named list of additional arguments to be passed to the `MovingAverage()` function.
 #'   This enables optional customization of the MA stage, for example by supplying `w.func`, custom weights,
 #'   or smoothing parameters. Like `ar.args`, these are passed using `do.call()`.
+#' @param bp.args A named list of additional arguments to be passed to the `BandPass()` function.
+#'   This enables optional customization of the MA stage, for example by supplying `resp` and `filt_order`, custom filter configurations.
 #' @param return.step Logical. If TRUE, intermediate stages are returned.
 #' @param verbose Logical. If TRUE, messages are printed during execution.
 #'
@@ -952,6 +954,7 @@ seqarima <- function(
     ma.collector = "median",
     ar.args = list(),
     ma.args = list(),
+    bp.args = list(),
     return.step = FALSE,
     verbose = TRUE) {
     # Argument matching
@@ -1023,8 +1026,13 @@ seqarima <- function(
     # 4) Band-pass filter
     if ((fl != 0 || fu != 0) && (!is.null(fl) || !is.null(fu))) {
         message_verb("> (4) Pass filter stage", v = verbose)
-
-        x_bp <- BandPass(out, fl, fu, verb = verbose)
+        bp_input <- c(list(
+            ts = out,
+            fl = fl,
+            fu = fu,
+            verb = verbose
+        ), bp.args)
+        x_bp <- do.call(BandPass, ma_input)
         if (return.step) {
             return.list[["steps"]][["BP"]] <- x_bp
         }

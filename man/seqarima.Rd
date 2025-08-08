@@ -16,6 +16,7 @@ seqarima(
   ma.collector = "median",
   ar.args = list(),
   ma.args = list(),
+  bp.args = list(),
   return.step = FALSE,
   verbose = TRUE
 )
@@ -46,6 +47,9 @@ These arguments are merged with the core inputs via `do.call()`.}
 \item{ma.args}{A named list of additional arguments to be passed to the `MovingAverage()` function.
 This enables optional customization of the MA stage, for example by supplying `w.func`, custom weights,
 or smoothing parameters. Like `ar.args`, these are passed using `do.call()`.}
+
+\item{bp.args}{A named list of additional arguments to be passed to the `BandPass()` function.
+This enables optional customization of the MA stage, for example by supplying `resp` and `filt_order`, custom filter configurations.}
 
 \item{return.step}{Logical. If TRUE, intermediate stages are returned.}
 
