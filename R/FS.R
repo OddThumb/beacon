@@ -5,6 +5,7 @@
 #'
 #' @param x A numeric vector representing frequency-domain data.
 #' @param df A numeric scalar. Frequency resolution (`delta_f`).
+#' @param sampling.freq A numeric. Sampling frequency.
 #'
 #' @return An object of class `fs`, with additional attributes such as `delta_f` and `flen`.
 #' @examples

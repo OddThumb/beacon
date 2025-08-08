@@ -10,6 +10,8 @@ fs(x, df, sampling.freq)
 \item{x}{A numeric vector representing frequency-domain data.}
 
 \item{df}{A numeric scalar. Frequency resolution (`delta_f`).}
+
+\item{sampling.freq}{A numeric. Sampling frequency.}
 }
 \value{
 An object of class `fs`, with additional attributes such as `delta_f` and `flen`.

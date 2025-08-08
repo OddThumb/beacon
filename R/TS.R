@@ -236,7 +236,7 @@ to_ts <- function(fs, start = 0, delta_t = NULL) {
         )
     }
 
-    tmp <- fs(double(tlen), df = deltaf(fs))
+    tmp <- fs(double(tlen), df = deltaf(fs), sampling.freq = attr(fs, "sampling.freq"))
     tmp[1:length(fs)] <- fs
     ifft.res <- fftw::IFFT(tmp, plan = fftw::planFFT(length(tmp)))
 
