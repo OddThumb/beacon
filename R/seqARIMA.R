@@ -1032,7 +1032,7 @@ seqarima <- function(
             fu = fu,
             verb = verbose
         ), bp.args)
-        x_bp <- do.call(BandPass, ma_input)
+        x_bp <- do.call(BandPass, bp_input)
         if (return.step) {
             return.list[["steps"]][["BP"]] <- x_bp
         }
