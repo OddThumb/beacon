@@ -10,7 +10,8 @@ plot_coinc(
   p_crit = 0.05,
   a = 3,
   legend.position = "tr",
-  annotate.vals = FALSE
+  annotate.vals = FALSE,
+  annotate.thresh = p_crit
 )
 }
 \arguments{

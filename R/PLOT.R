@@ -1040,7 +1040,8 @@ plot_coinc <- function(coinc.res,
                        p_crit = 0.05,
                        a = 3,
                        legend.position = "tr",
-                       annotate.vals = FALSE) {
+                       annotate.vals = FALSE,
+                       annotate.thresh = p_crit) {
     # Lazy way...
     P0_names <- c("P0_net", "P0_H1_bin", "P0_L1_bin")
     new_names <- structure(c("coinc", "H1", "L1"), names = P0_names)
@@ -1069,7 +1070,7 @@ plot_coinc <- function(coinc.res,
     yval <- Significance(coinc_melt$value, a)
     coinc_melt$y <- yval
     coinc_melt$label <- ifelse(
-        yval > Significance(p_crit, a),
+        yval > Significance(annotate.thresh, a),
         sprintf("%.2f", yval),
         NA_character_
     )
