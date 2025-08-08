@@ -62,14 +62,7 @@ to_fs <- function(ts, delta_f = NULL) {
     fs.out <- fft.res[1:flen]
 
     # Add attributes
-    attr(fs.out, "assoc.ts") <- deparse(substitute(ts))
-    attr(fs.out, "ti") <- ti(ts)
-    attr(fs.out, "sampling.freq") <- sampling.freq
-    attr(fs.out, "delta_f") <- delta_f
-    attr(fs.out, "flen") <- flen
-    attr(fs.out, "tlen") <- tlen
-    attr(fs.out, "frange") <- c(0, frequency(ts) / 2)
-    structure(fs.out, class = c("fs", "complex"))
+    fs(fs.out, df = delta_f, sampling.freq = sampling.freq)
 }
 
 #' Extract Frequency Resolution from `fs` Object
