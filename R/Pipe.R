@@ -801,7 +801,7 @@ anomaly <- function(
         ft <- decomp_freq_trend(ts,
             fac.f = 2.0, fac.t = 10.0,
             # fac.f=1.0, fac.t=1.5 are the Twitter design philosophy
-            max_period_frac = 0.2, lag.max = min(4096L, length(ts) - 1L)
+            max_period_frac = 1.0, lag.max = min(4096L, length(ts) - 1L)
         )
         expr_decomp_freq <- paste(ft$freq, "seconds")
         expr_decomp_trend <- paste(ft$trend, "seconds")
