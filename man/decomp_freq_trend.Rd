@@ -2,7 +2,7 @@
 % Please edit documentation in R/Pipe.R
 \name{decomp_freq_trend}
 \alias{decomp_freq_trend}
-\title{Estimate decomposition windows for frequency and trend components}
+\title{Estimate frequency/trend windows from ACF with spectral fallback}
 \usage{
 decomp_freq_trend(
   ts,
@@ -15,13 +15,76 @@ decomp_freq_trend(
 )
 }
 \arguments{
-\item{ts}{A \code{ts} object. Input time series.}
+\item{ts}{A numeric or \code{ts} time series. If \code{ts}, its
+\code{frequency(ts)} is used upstream when computing the ACF; here we only
+consume the ACF output assuming lags are already in seconds.}
 
-\item{fac.f}{A numeric multiplier (default: 2) for the frequency window length.}
+\item{fac.f}{Numeric scalar. Multiplier for the seasonal window
+(default \code{1.0}). For the Twitter method, \code{1.0} aligns with the
+base period; increase to widen the seasonal window.}
 
-\item{fac.t}{A numeric multiplier (default: 10) for the trend window length.}
+\item{fac.t}{Numeric scalar. Multiplier for the trend window
+(default \code{1.5}). Typical Twitter heuristic is \code{~1.5–2.0}.}
+
+\item{alpha}{Numeric in \code{(0,1)}. Significance level for the ACF
+white-noise CI (default \code{0.05}). Currently used to fetch the
+95\% CI embedded in \code{ACF()}.}
+
+\item{max_period_frac}{Numeric in \code{(0,1)}. Upper bound on the candidate
+period as a fraction of the series duration (default \code{0.2}). Prevents
+overly long periods relative to batch length.}
+
+\item{lag.max}{Integer. Maximum lag forwarded to \code{ACF()} (default:
+\code{min(4096, length(ts)-1)}).}
+
+\item{use_fft_fallback}{Logical. If \code{TRUE} (default), use
+\code{stats::spec.pgram} fallback when no significant ACF peak is found.}
+}
+\value{
+A list with two numeric scalars (in **seconds**):
+\itemize{
+  \item \code{freq}  — seasonal window length for \code{frequency=}
+  \item \code{trend} — trend window length for \code{trend=}
+}
+These strings are typically passed as \code{paste(value, "seconds")} to
+\code{anomalize::time_decompose()}.
 }
 \description{
-Heuristically determines suitable window lengths for frequency and trend decomposition
-based on the autocorrelation function (ACF) of a time series.
+Computes data-driven window lengths (in **seconds**) for seasonal
+(`frequency`) and trend (`trend`) components used by
+\code{anomalize::time_decompose} (works for both \code{method = "stl"} and
+\code{method = "twitter"}). The primary estimator selects the earliest
+statistically significant **local maximum** in the autocorrelation function
+(ACF). If no such peak exists, a fallback uses the dominant peak of the
+periodogram (excluding near-DC). The resulting base period is then scaled and
+clamped to avoid pathological window sizes.
+}
+\details{
+- Assumes the input \code{ACF()} returns \code{lag} in **seconds** (as in
+  your current implementation). The effective sampling interval \eqn{\Delta t}
+  is inferred as \code{median(diff(lag))}.
+- **Primary rule**: pick the first lag \eqn{\tau > 0} such that
+  \eqn{\mathrm{ACF}(\tau)} is a local maximum and exceeds the white-noise
+  95\% CI.
+- **Fallback**: choose \eqn{\tau = (1/f_\mathrm{dom}) \Delta t} from the
+  dominant periodogram frequency (excluding a small region near DC).
+- Windows are constructed as
+  \deqn{\mathrm{frequency} = \max(2\Delta t, \min(f_\mathrm{fac}\,\tau, \tau_\max))}
+  \deqn{\mathrm{trend}     = \max(1.1\,\mathrm{frequency}, \min(t_\mathrm{fac}\,\tau, \tau_\max))}
+  where \eqn{\tau_\max = \min(\max(\mathrm{lag}),\, \mathrm{max\_period\_frac}\cdot N\Delta t)}.
+}
+\examples{
+\dontrun{
+ft <- decomp_freq_trend(ts, fac.f = 1.0, fac.t = 1.5)
+anomalize::time_decompose(df, observed,
+    method = "twitter",
+    frequency = paste(ft$freq, "seconds"),
+    trend = paste(ft$trend, "seconds")
+)
+}
+
+}
+\seealso{
+\code{\link[stats]{acf}}, \code{\link[stats]{spec.pgram}},
+  \code{\link[anomalize]{time_decompose}}
 }
