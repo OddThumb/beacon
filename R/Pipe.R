@@ -215,7 +215,7 @@ batching.network <- function(ts.list, t_bch = 1, has.DQ = TRUE) {
 #' @param fac.t A numeric multiplier (default: 10) for the trend window length.
 #'
 decomp_freq_trend <- function(ts, fac.f = 2, fac.t = 10, ...) {
-    acf.test <- ACF(ts, plot = F, ...)
+    acf.test <- ACF(ts, lag.max = 4096, plot = F, ...)
 
     # trend criteria
     trend.crit <- acf.test$lag[tail(
