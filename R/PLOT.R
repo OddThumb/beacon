@@ -845,9 +845,16 @@ plot_anomalies <- function(
     )
 
     # Error bar
-    if (is.null(err_lwr) | is.null(err_upr)) {
-        err_lwr <- colnames(anom.df)[grepl("_l1", colnames(anom.df))][1L]
-        err_upr <- colnames(anom.df)[grepl("_l2", colnames(anom.df))][1L]
+    if (is.null(err_lwr) || is.null(err_upr)) {
+        if (all(c("recomposed_l1", "recomposed_l2") %in% names(anom.df))) {
+            err_lwr <- "recomposed_l1"
+            err_upr <- "recomposed_l2"
+        } else if (all(c("remainder_l1", "remainder_l2") %in% names(anom.df))) {
+            err_lwr <- "remainder_l1"
+            err_upr <- "remainder_l2"
+        } else {
+            stop("No recomposed_* or remainder_* columns found. Pass err_lwr/err_upr explicitly.")
+        }
     }
     p <- ggplot2::ggplot(
         anom.df,
