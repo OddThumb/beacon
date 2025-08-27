@@ -214,20 +214,86 @@ batching.network <- function(ts.list, t_bch = 1, has.DQ = TRUE) {
 #' @param fac.f A numeric multiplier (default: 2) for the frequency window length.
 #' @param fac.t A numeric multiplier (default: 10) for the trend window length.
 #'
-decomp_freq_trend <- function(ts, fac.f = 2, fac.t = 10, ...) {
-    acf.test <- ACF(ts, lag.max = 4096, plot = F, ...)
+# -- Minimal replacement: data-driven windows for twitter decomposition ----------
+decomp_freq_trend <- function(ts,
+                              fac.f = 1.0, # seasonal window = 1.0 * period
+                              fac.t = 1.5, # trend window    = 1.5 * period
+                              alpha = 0.05,
+                              max_period_frac = 0.2, # cap period <= 20% of series duration
+                              lag.max = NULL,
+                              use_fft_fallback = TRUE) {
+    N <- length(ts)
+    if (is.null(lag.max)) lag.max <- min(4096L, N - 1L)
 
-    # trend criteria
-    trend.crit <- acf.test$lag[tail(
-        which(abs(acf.test$acf) > acf.test$white95ci),
-        1L
-    )]
+    # ACF object from your existing ACF(); 'lag' is already in seconds
+    acf.obj <- ACF(ts, lag.max = lag.max, plot = FALSE)
+    lag_sec <- as.numeric(c(acf.obj$lag)) # seconds
+    acv <- as.numeric(c(acf.obj$acf))
+    ci <- acf.obj$white95ci
 
-    decomp_freq <- c(trunc(tail(acf.test$lag, 1L) * trend.crit * fac.f)) #  2 times longer than the trend criteria
-    decomp_trend <- c(trunc(tail(acf.test$lag, 1L) * trend.crit * fac.t)) # 10 times longer than the trend criteria
+    # Effective sampling interval (sec) inferred from ACF lags
+    dt <- suppressWarnings(median(diff(lag_sec), na.rm = TRUE))
+    if (!is.finite(dt) || dt <= 0) dt <- 1
 
-    return(list("freq" = decomp_freq, "trend" = decomp_trend))
+    # Search range: exclude lag=0, bound by max_period_frac of series duration
+    total_duration_sec <- N * dt
+    max_allow_sec <- min(max(lag_sec, na.rm = TRUE), total_duration_sec * max_period_frac)
+    k <- which(lag_sec > 0 & lag_sec < max_allow_sec)
+
+    # Find first significant local maximum: acv[i] > acv[i-1], >= acv[i+1], and > CI
+    locs <- k[k > min(k) & k < max(k)]
+    is_locmax <- acv[locs] > acv[locs - 1] & acv[locs] >= acv[locs + 1] & acv[locs] > ci
+    cand <- locs[is_locmax]
+
+    if (length(cand) > 0L) {
+        period_sec <- lag_sec[cand[1L]]
+    } else if (use_fft_fallback) {
+        # Fallback via dominant spectral peak (exclude near-DC)
+        sp <- stats::spec.pgram(ts, taper = 0.1, fast = TRUE, plot = FALSE)
+        f <- sp$freq # cycles per sample
+        S <- sp$spec
+        exc <- max(1L, floor(length(f) * 0.01))
+        if (length(S) > exc + 1L) {
+            idx <- which.max(S[(exc + 1L):length(S)]) + exc
+            f_dom <- f[idx]
+            if (is.finite(f_dom) && f_dom > .Machine$double.eps) {
+                period_sec <- (1 / f_dom) * dt # samples->seconds
+            } else {
+                period_sec <- 0.05 * total_duration_sec
+            }
+        } else {
+            period_sec <- 0.05 * total_duration_sec
+        }
+    } else {
+        period_sec <- 0.05 * total_duration_sec
+    }
+
+    # Build windows and clamp to sensible bounds
+    min_window_sec <- 2 * dt
+    max_window_sec <- max_allow_sec
+    freq_sec <- max(min_window_sec, min(fac.f * period_sec, max_window_sec))
+    trend_sec <- max(freq_sec * 1.1, min(fac.t * period_sec, max_window_sec))
+
+    # Keep neat numeric formatting (seconds)
+    freq_sec <- as.numeric(signif(freq_sec, 4))
+    trend_sec <- as.numeric(signif(trend_sec, 4))
+
+    list(freq = freq_sec, trend = trend_sec)
 }
+# decomp_freq_trend <- function(ts, fac.f = 2, fac.t = 10, ...) {
+#    acf.test <- ACF(ts, lag.max = 4096, plot = F, ...)
+#
+#    # trend criteria
+#    trend.crit <- acf.test$lag[tail(
+#        which(abs(acf.test$acf) > acf.test$white95ci),
+#        1L
+#    )]
+#
+#    decomp_freq <- c(trunc(tail(acf.test$lag, 1L) * trend.crit * fac.f)) #  2 #times longer than the trend criteria
+#    decomp_trend <- c(trunc(tail(acf.test$lag, 1L) * trend.crit * fac.t)) # #10 times longer than the trend criteria
+#
+#    return(list("freq" = decomp_freq, "trend" = decomp_trend))
+# }
 
 #' Identify outliers using robust IQR method
 #'
@@ -666,11 +732,18 @@ anomaly <- function(
 
     # Anomaly detection (time decomposition is an option)
     if (!is.null(decomp)) {
-        freq_trend <- decomp_freq_trend(ts)
-        decomp_freq <- freq_trend$freq * (1 / frequency(ts))
-        decomp_trend <- freq_trend$trend * (1 / frequency(ts))
-        expr_decomp_freq <- paste(decomp_freq, "seconds")
-        expr_decomp_trend <- paste(decomp_trend, "seconds")
+        ft <- decomp_freq_trend(ts,
+            fac.f = 1.0, fac.t = 1.5,
+            max_period_frac = 0.2, lag.max = min(4096L, length(ts) - 1L)
+        )
+        expr_decomp_freq <- paste(ft$freq, "seconds")
+        expr_decomp_trend <- paste(ft$trend, "seconds")
+
+        # freq_trend <- decomp_freq_trend(ts)
+        # decomp_freq <- freq_trend$freq * (1 / frequency(ts))
+        # decomp_trend <- freq_trend$trend * (1 / frequency(ts))
+        # expr_decomp_freq <- paste(decomp_freq, "seconds")
+        # expr_decomp_trend <- paste(decomp_trend, "seconds")
 
         anomalized <- anomalize::time_decompose(
             tbt,

@@ -6,7 +6,7 @@ BEACON is a fully data-driven pipeline designed to detect unmodeled gravitationa
 
 ## Key Features
 
--   **Denoising** via high-order ARIMA modeling (`seqarima`)
+-   **Denoising** via seqARIMA modeling (`seqarima`)
 -   **Anomaly Detection** using robust IQR-based statistical thresholds
 -   **Clustering** of temporal outliers with DBSCAN
 -   **Statistical Evaluation** via Poisson and Exponential models

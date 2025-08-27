@@ -4,7 +4,15 @@
 \alias{decomp_freq_trend}
 \title{Estimate decomposition windows for frequency and trend components}
 \usage{
-decomp_freq_trend(ts, fac.f = 2, fac.t = 10, ...)
+decomp_freq_trend(
+  ts,
+  fac.f = 1,
+  fac.t = 1.5,
+  alpha = 0.05,
+  max_period_frac = 0.2,
+  lag.max = NULL,
+  use_fft_fallback = TRUE
+)
 }
 \arguments{
 \item{ts}{A \code{ts} object. Input time series.}
