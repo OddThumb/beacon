@@ -272,7 +272,6 @@ batching.network <- function(ts.list, t_bch = 1, has.DQ = TRUE) {
 decomp_freq_trend <- function(ts,
                               fac.f = 1.0, # seasonal window = 1.0 * period
                               fac.t = 1.5, # trend window    = 1.5 * period
-                              alpha = 0.05,
                               max_period_frac = 0.2, # cap period <= 20% of series duration
                               lag.max = NULL,
                               use_fft_fallback = TRUE) {
@@ -800,7 +799,8 @@ anomaly <- function(
     # Anomaly detection (time decomposition is an option)
     if (!is.null(decomp)) {
         ft <- decomp_freq_trend(ts,
-            fac.f = 1.0, fac.t = 1.5,
+            fac.f = 2.0, fac.t = 10.0,
+            # fac.f=1.0, fac.t=1.5 are the Twitter design philosophy
             max_period_frac = 0.2, lag.max = min(4096L, length(ts) - 1L)
         )
         expr_decomp_freq <- paste(ft$freq, "seconds")

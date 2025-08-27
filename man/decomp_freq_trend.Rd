@@ -8,7 +8,6 @@ decomp_freq_trend(
   ts,
   fac.f = 1,
   fac.t = 1.5,
-  alpha = 0.05,
   max_period_frac = 0.2,
   lag.max = NULL,
   use_fft_fallback = TRUE
@@ -26,10 +25,6 @@ base period; increase to widen the seasonal window.}
 \item{fac.t}{Numeric scalar. Multiplier for the trend window
 (default \code{1.5}). Typical Twitter heuristic is \code{~1.5–2.0}.}
 
-\item{alpha}{Numeric in \code{(0,1)}. Significance level for the ACF
-white-noise CI (default \code{0.05}). Currently used to fetch the
-95\% CI embedded in \code{ACF()}.}
-
 \item{max_period_frac}{Numeric in \code{(0,1)}. Upper bound on the candidate
 period as a fraction of the series duration (default \code{0.2}). Prevents
 overly long periods relative to batch length.}
@@ -39,6 +34,10 @@ overly long periods relative to batch length.}
 
 \item{use_fft_fallback}{Logical. If \code{TRUE} (default), use
 \code{stats::spec.pgram} fallback when no significant ACF peak is found.}
+
+\item{alpha}{Numeric in \code{(0,1)}. Significance level for the ACF
+white-noise CI (default \code{0.05}). Currently used to fetch the
+95\% CI embedded in \code{ACF()}.}
 }
 \value{
 A list with two numeric scalars (in **seconds**):
