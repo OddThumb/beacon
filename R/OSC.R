@@ -343,10 +343,12 @@ list_gwosc_param <- function(verbose = FALSE) {
 #' }
 #'
 #' @export
-# Robust get_gwosc_param replacement
 get_gwosc_param <- function(source.names, param, verbose = FALSE) {
     if (missing(source.names) || length(source.names) == 0) stop("source.names must be provided")
     if (missing(param) || length(param) == 0) stop("param must be provided")
+
+    if (!requireNamespace("curl", quietly = TRUE)) stop("Please install 'curl' package")
+    if (!requireNamespace("jsonlite", quietly = TRUE)) stop("Please install 'jsonlite' package")
 
     canon_key <- function(x) {
         if (is.null(x)) {
@@ -356,7 +358,6 @@ get_gwosc_param <- function(source.names, param, verbose = FALSE) {
         gsub("[^a-z0-9]", "", x2, perl = TRUE)
     }
 
-    # try direct dot-walk like "parameters.mass_1.source"
     dot_walk <- function(obj, path) {
         if (is.null(path) || path == "") {
             return(NULL)
@@ -367,7 +368,6 @@ get_gwosc_param <- function(source.names, param, verbose = FALSE) {
             if (is.null(cur)) {
                 return(NULL)
             }
-            # numeric index?
             if (grepl("^[0-9]+$", part)) {
                 idx <- as.integer(part)
                 if ((is.list(cur) || is.vector(cur)) && length(cur) >= idx && idx >= 1) {
@@ -388,7 +388,6 @@ get_gwosc_param <- function(source.names, param, verbose = FALSE) {
         cur
     }
 
-    # extract sensible scalar from complex node (prefer mean/value/etc.)
     extract_preferred_value <- function(x) {
         if (is.null(x)) {
             return(NULL)
@@ -413,7 +412,6 @@ get_gwosc_param <- function(source.names, param, verbose = FALSE) {
         as.character(x)
     }
 
-    # recursive search by canonical key equality
     recursive_find_by_canon <- function(obj, target_canon) {
         if (is.null(obj)) {
             return(NULL)
@@ -437,8 +435,6 @@ get_gwosc_param <- function(source.names, param, verbose = FALSE) {
         NULL
     }
 
-    # token-based sequential match:
-    # tokens: character vector, try to find nested keys matching tokens in order.
     search_by_tokens <- function(obj, tokens) {
         if (is.null(obj) || length(tokens) == 0) {
             return(NULL)
@@ -446,32 +442,29 @@ get_gwosc_param <- function(source.names, param, verbose = FALSE) {
         tok0 <- tokens[1]
         rest <- if (length(tokens) > 1) tokens[-1] else character(0)
 
-        # try direct match on current object keys
         if (is.list(obj) && !is.null(names(obj))) {
             for (nm in names(obj)) {
                 if (is.null(nm)) next
-                # if current key matches tok0 (canonical), then if rest empty -> return this child
                 if (canon_key(nm) == canon_key(tok0)) {
                     child <- obj[[nm]]
                     if (length(rest) == 0) {
                         return(child)
                     }
-                    # recurse into child to match rest
                     res <- search_by_tokens(child, rest)
                     if (!is.null(res)) {
                         return(res)
                     }
                 }
-                # also allow combined key that contains all remaining tokens in order
+                # combined-key heuristic
                 combined <- canon_key(nm)
-                combined_tokens <- paste0(canon_key(tokens), collapse = "")
-                if (grepl(paste(canon_key(tok0), paste0(sapply(rest, canon_key), collapse = "")), combined, fixed = TRUE) ||
-                    grepl(paste0(canon_key(tokens), collapse = ""), combined, fixed = TRUE)) {
-                    return(obj[[nm]])
+                if (nchar(combined) > 0) {
+                    cand_all <- paste0(canon_key(tokens), collapse = "")
+                    if (grepl(cand_all, combined, fixed = TRUE)) {
+                        return(obj[[nm]])
+                    }
                 }
             }
         }
-        # try descending into children to find sequence starting deeper
         if (is.list(obj)) {
             for (el in obj) {
                 res <- search_by_tokens(el, tokens)
@@ -483,30 +476,71 @@ get_gwosc_param <- function(source.names, param, verbose = FALSE) {
         NULL
     }
 
-    # generate token candidates from user param like "mass-1-source"
     make_tokens <- function(s) {
-        # split on non-alnum
         toks <- unlist(strsplit(s, "[^a-zA-Z0-9]+", perl = TRUE))
         toks[toks != ""]
     }
 
-    # try several path variants (replace - -> _, ., etc.)
     make_variants <- function(s) {
-        v <- unique(c(
-            s,
-            gsub("-", "_", s),
-            gsub("-", ".", s),
-            gsub("\\.", "_", s),
-            gsub("_", "-", s)
-        ))
-        v
+        unique(c(s, gsub("-", "_", s), gsub("-", ".", s), gsub("\\.", "_", s), gsub("_", "-", s)))
     }
 
-    # ---- prerequisites ----
-    if (!requireNamespace("curl", quietly = TRUE)) stop("Please install 'curl' package")
-    if (!requireNamespace("jsonlite", quietly = TRUE)) stop("Please install 'jsonlite' package")
+    # flatten JSON into dot-path -> stringified value
+    flatten_json <- function(obj, prefix = NULL, out = list()) {
+        if (is.null(prefix)) prefix <- character(0)
+        # atomic scalar
+        if (is.atomic(obj) && length(obj) == 1) {
+            key <- paste(prefix, collapse = ".")
+            out[[key]] <- as.character(obj)
+            return(out)
+        }
+        # data.frame: treat each column, and also rows by index
+        if (is.data.frame(obj)) {
+            # columns
+            for (col in colnames(obj)) {
+                val <- obj[[col]]
+                nm <- c(prefix, col)
+                if (is.atomic(val) && length(val) == 1) {
+                    out[[paste(nm, collapse = ".")]] <- as.character(val)
+                } else {
+                    out <- flatten_json(val, nm, out)
+                }
+            }
+            # optionally rows (less common) - create indexed paths
+            nr <- nrow(obj)
+            if (nr > 1) {
+                for (r in seq_len(nr)) {
+                    row <- as.list(obj[r, , drop = FALSE])
+                    out <- flatten_json(row, c(prefix, paste0("row", r)), out)
+                }
+            }
+            return(out)
+        }
+        # list (possibly named or unnamed)
+        if (is.list(obj)) {
+            nm <- names(obj)
+            if (!is.null(nm)) {
+                for (i in seq_along(obj)) {
+                    namei <- nm[i]
+                    child <- obj[[i]]
+                    name_part <- if (!is.null(namei) && nzchar(namei)) namei else paste0("[[", i, "]]")
+                    out <- flatten_json(child, c(prefix, name_part), out)
+                }
+            } else {
+                for (i in seq_along(obj)) {
+                    child <- obj[[i]]
+                    out <- flatten_json(child, c(prefix, paste0(i)), out)
+                }
+            }
+            return(out)
+        }
+        # fallback: stringify
+        key <- paste(prefix, collapse = ".")
+        out[[key]] <- jsonlite::toJSON(obj, auto_unbox = TRUE)
+        out
+    }
 
-    # function to fetch event -> choose latest version detail JSON (same logic as earlier)
+    # fetch event version detail JSON (latest) - same robust logic as before
     fetch_event_version_json <- function(evname) {
         ev_url <- sprintf("https://gwosc.org/api/v2/events/%s", utils::URLencode(as.character(evname), reserved = TRUE))
         h <- curl::new_handle()
@@ -522,9 +556,16 @@ get_gwosc_param <- function(source.names, param, verbose = FALSE) {
         versions <- ev_json$versions
         if (is.null(versions) || length(versions) == 0) stop("No versions for event ", evname)
         vnums <- vapply(versions, function(v) if (!is.null(v$version)) as.integer(v$version) else NA_integer_, FUN.VALUE = integer(1))
-        if (all(is.na(vnums))) chosen <- versions[[1]] else chosen <- versions[[which.max(vnums)]]
-        ver_detail_url <- if (!is.null(chosen$detail_url) && nzchar(as.character(chosen$detail_url))) as.character(chosen$detail_url) else sprintf("https://gwosc.org/api/v2/event-versions/%s-v%d", utils::URLencode(as.character(evname), reserved = TRUE), as.integer(chosen$version))
-        # fetch version detail
+        chosen <- if (all(is.na(vnums))) versions[[1]] else versions[[which.max(vnums)]]
+
+        ver_detail_url <- NULL
+        if (!is.null(chosen$detail_url) && nzchar(as.character(chosen$detail_url))) {
+            ver_detail_url <- as.character(chosen$detail_url)
+        } else if (!is.null(chosen$version)) {
+            ver_detail_url <- sprintf("https://gwosc.org/api/v2/event-versions/%s-v%d", utils::URLencode(as.character(evname), reserved = TRUE), as.integer(chosen$version))
+        }
+        if (is.null(ver_detail_url)) stop("Could not determine event-version detail URL for ", evname)
+
         h3 <- curl::new_handle()
         curl::handle_setheaders(h3, "User-Agent" = "curl/8.7.1", "Accept" = "application/json")
         vres <- tryCatch(curl::curl_fetch_memory(ver_detail_url, handle = h3), error = function(e) e)
@@ -536,7 +577,7 @@ get_gwosc_param <- function(source.names, param, verbose = FALSE) {
         vjson
     }
 
-    # ---- main loop: fetch each event's vjson ----
+    # ---- main: fetch vjson for each source ----
     results_list <- vector("list", length(source.names))
     names(results_list) <- source.names
     for (i in seq_along(source.names)) {
@@ -549,10 +590,37 @@ get_gwosc_param <- function(source.names, param, verbose = FALSE) {
         results_list[[i]] <- vjson
     }
 
-    # ---- extraction per param ----
-    # if single param, return named vector; else data.frame
-    single_param_mode <- length(param) == 1
+    # ---- handle param == "all" ----
+    if (length(param) == 1 && identical(param, "all")) {
+        out <- lapply(results_list, function(vjson) {
+            if (is.null(vjson)) {
+                return(character(0))
+            }
+            flat <- flatten_json(vjson, prefix = character(0), out = list())
+            # convert list to named character vector
+            if (length(flat) == 0) {
+                return(character(0))
+            }
+            vec <- unlist(lapply(flat, function(x) {
+                if (is.null(x)) {
+                    return(NA_character_)
+                }
+                if (is.atomic(x) && length(x) == 1) {
+                    return(as.character(x))
+                }
+                jsonlite::toJSON(x, auto_unbox = TRUE)
+            }), use.names = FALSE)
+            names(vec) <- names(flat)
+            vec
+        })
+        # single source -> return vector, multiple -> return named list
+        if (length(out) == 1) {
+            return(out[[1]])
+        }
+        return(out)
+    }
 
+    # ---- otherwise: existing param-extraction logic (single/multi param) ----
     extract_one <- function(vjson, p) {
         if (is.null(vjson)) {
             return(NA_character_)
@@ -562,7 +630,7 @@ get_gwosc_param <- function(source.names, param, verbose = FALSE) {
         if (!is.null(v)) {
             return(as.character(extract_preferred_value(v)))
         }
-        # 2) variants of path
+        # 2) variants
         variants <- make_variants(p)
         for (vp in variants) {
             v2 <- dot_walk(vjson, vp)
@@ -574,14 +642,13 @@ get_gwosc_param <- function(source.names, param, verbose = FALSE) {
                 return(as.character(extract_preferred_value(v2b)))
             }
         }
-        # 3) token sequence search
+        # 3) token search
         toks <- make_tokens(p)
         if (length(toks) > 0) {
             vtok <- search_by_tokens(vjson, toks)
             if (!is.null(vtok)) {
                 return(as.character(extract_preferred_value(vtok)))
             }
-            # also try with "parameters" root
             if (!is.null(vjson$parameters)) {
                 vtok2 <- search_by_tokens(vjson$parameters, toks)
                 if (!is.null(vtok2)) {
@@ -589,7 +656,7 @@ get_gwosc_param <- function(source.names, param, verbose = FALSE) {
                 }
             }
         }
-        # 4) recursive key search by canonical last token
+        # 4) recursive canon search on last token
         target_canon <- canon_key(toks[length(toks)])
         if (nzchar(target_canon)) {
             vrec <- recursive_find_by_canon(vjson, target_canon)
@@ -597,10 +664,10 @@ get_gwosc_param <- function(source.names, param, verbose = FALSE) {
                 return(as.character(extract_preferred_value(vrec)))
             }
         }
-        # 5) no match
         NA_character_
     }
 
+    single_param_mode <- length(param) == 1
     if (single_param_mode) {
         p <- param[1]
         outv <- vapply(seq_along(source.names), function(ii) {
