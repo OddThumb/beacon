@@ -348,38 +348,133 @@ get_gwosc_param <- function(source.names, param, verbose = FALSE) {
     if (missing(param) || length(param) == 0) stop("param must be provided")
 
     pluck_field <- function(obj, path) {
-        if (is.null(path) || path == "") {
+        # helper: canonicalize key for fuzzy match
+        canon <- function(x) {
+            if (is.null(x)) return("")
+            x2 <- tolower(as.character(x))
+            # remove non-alphanumeric
+            gsub("[^a-z0-9]", "", x2)
+        }
+        
+        # direct dot-path walk (existing behavior)
+        dot_walk <- function(o, p) {
+            if (is.null(p) || p == "") return(NULL)
+            parts <- strsplit(p, "\\.", perl = TRUE)[[1]]
+            cur <- o
+            for (part in parts) {
+                if (is.null(cur)) return(NULL)
+                # numeric index?
+                if (grepl("^[0-9]+$", part)) {
+                    idx <- as.integer(part)
+                    if ((is.list(cur) || is.vector(cur)) && length(cur) >= idx && idx >= 1) {
+                        cur <- cur[[idx]]
+                    } else return(NULL)
+                } else {
+                    # use [[ so names with hyphen are accessible
+                    if (is.list(cur) && !is.null(cur[[part]])) {
+                        cur <- cur[[part]]
+                    } else if (is.data.frame(cur) && part %in% colnames(cur)) {
+                        cur <- cur[[part]]
+                    } else {
+                        return(NULL)
+                    }
+                }
+            }
+            cur
+        }
+        
+        # recursive fuzzy search for a key anywhere in nested structure
+        recursive_search <- function(o, target_canon) {
+            if (is.null(o)) return(NULL)
+            # if it's an atomic named vector
+            if (!is.null(names(o))) {
+                for (nm in names(o)) {
+                    if (is.null(nm)) next
+                    if (canon(nm) == target_canon) {
+                        return(o[[nm]])
+                    }
+                }
+            }
+            # if list-like, scan children
+            if (is.list(o)) {
+                for (el in o) {
+                    res <- recursive_search(el, target_canon)
+                    if (!is.null(res)) return(res)
+                }
+            }
             return(NULL)
         }
-        parts <- strsplit(path, "\\.", perl = TRUE)[[1]]
-        cur <- obj
-        for (p in parts) {
-            if (is.null(cur)) {
-                return(NA)
+        
+        # value postprocessing: if found is list with common summary keys, extract sensible scalar
+        extract_preferred_value <- function(x) {
+            if (is.null(x)) return(NULL)
+            if (is.atomic(x) && length(x) == 1) return(x)
+            if (is.list(x) || is.data.frame(x)) {
+                # prefer common keys
+                for (k in c("value", "mean", "median", "best", "central", "mode")) {
+                    if (!is.null(x[[k]])) return(x[[k]])
+                    if (is.data.frame(x) && k %in% colnames(x)) return(x[[k]][1])
+                }
+                # if it's a one-element list, return that element
+                if (length(x) == 1 && !is.null(x[[1]])) return(x[[1]])
+                # else return JSON string
+                return(jsonlite::toJSON(x, auto_unbox = TRUE))
             }
-            if (grepl("^[0-9]+$", p)) {
-                idx <- as.integer(p)
-                if (is.list(cur) || is.vector(cur)) {
-                    if (length(cur) < idx || idx < 1) {
-                        return(NA)
-                    }
-                    cur <- cur[[idx]]
-                } else {
-                    return(NA)
-                }
-            } else {
-                if (is.list(cur) && !is.null(cur[[p]])) {
-                    cur <- cur[[p]]
-                } else if (is.data.frame(cur) && p %in% colnames(cur)) {
-                    cur <- cur[[p]]
-                } else {
-                    return(NA)
-                }
+            # fallback: coerce to character
+            as.character(x)
+        }
+        
+        # 1) try direct dot path first
+        direct <- dot_walk(obj, path)
+        if (!is.null(direct)) return(extract_preferred_value(direct))
+        
+        # 2) try some simple normalizations of the last path-part (if dot path present)
+        parts <- strsplit(path, "\\.", perl = TRUE)[[1]]
+        if (length(parts) >= 1) {
+            last <- parts[length(parts)]
+            base <- if (length(parts) > 1) paste(parts[-length(parts)], collapse = ".") else NULL
+            candidates_last <- unique(c(
+                last,
+                gsub("-", "_", last),
+                gsub("-", ".", last),
+                gsub("\\.", "_", last),
+                gsub("_", "-", last)
+            ))
+            for (cand in candidates_last) {
+                newpath <- if (is.null(base) || base == "") cand else paste0(base, ".", cand)
+                v <- dot_walk(obj, newpath)
+                if (!is.null(v)) return(extract_preferred_value(v))
+                # also try prefixing with 'parameters.'
+                v2 <- dot_walk(obj, paste0("parameters.", newpath))
+                if (!is.null(v2)) return(extract_preferred_value(v2))
             }
         }
-        cur
+        
+        # 3) try full path variants (replace hyphens globally etc.)
+        variants <- unique(c(
+            path,
+            gsub("-", "_", path),
+            gsub("-", ".", path),
+            gsub("\\.", "_", path),
+            gsub("_", "-", path)
+        ))
+        for (vpath in variants) {
+            v <- dot_walk(obj, vpath)
+            if (!is.null(v)) return(extract_preferred_value(v))
+            v2 <- dot_walk(obj, paste0("parameters.", vpath))
+            if (!is.null(v2)) return(extract_preferred_value(v2))
+        }
+        
+        # 4) final fallback: recursive fuzzy key search using canonicalized names
+        target_canon <- canon(parts[length(parts)])
+        res_rec <- recursive_search(obj, target_canon)
+        if (!is.null(res_rec)) return(extract_preferred_value(res_rec))
+        
+        # nothing found
+        return(NULL)
     }
-
+    
+    
     if (!requireNamespace("curl", quietly = TRUE)) stop("Please install 'curl' package")
     if (!requireNamespace("jsonlite", quietly = TRUE)) stop("Please install 'jsonlite' package")
 
