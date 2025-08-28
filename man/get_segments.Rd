@@ -2,86 +2,61 @@
 % Please edit documentation in R/OSC.R
 \name{get_segments}
 \alias{get_segments}
-\title{Retrieve strain-file metadata from GWOSC (API v2)}
+\title{Get files (strain-file metadata) optionally filtered by timeline duty-cycle}
 \usage{
 get_segments(
   obsrun,
   detector,
   GPSstart,
-  GPSend,
+  GPSend = NULL,
   sampling.freq = 4096,
   dur = 4096,
   file.format = "hdf5",
-  duty.cycle.lwr = 95
+  duty.cycle.lwr = NULL,
+  require_full_coverage = TRUE,
+  timeline_name = NULL,
+  timeline_verbose = FALSE
 )
 }
 \arguments{
-\item{obsrun}{Character. Observation run name (e.g. \code{"O1"}). This value
-is used for informative messages and does not affect server-side filtering.}
+\item{obsrun}{Character run id (e.g. "O1").}
 
-\item{detector}{Character vector. One or more detector names (e.g.
-\code{c("H1", "L1")}).}
+\item{detector}{Character vector of detectors.}
 
-\item{GPSstart}{Integer. Start time in GPS seconds.}
+\item{GPSstart}{Integer start GPS.}
 
-\item{GPSend}{Integer. End time in GPS seconds. If omitted, defaults to
-\code{GPSstart + dur}.}
+\item{GPSend}{Integer stop GPS. If omitted, defaults to GPSstart + dur.}
 
-\item{sampling.freq}{Integer (default 4096). Sampling frequency in Hz. Only
-4096 (≈4 kHz) and 16384 (≈16 kHz) are supported because the API expects a
-sample-rate in kHz (4 or 16).}
+\item{sampling.freq}{Integer (default 4096).}
 
-\item{dur}{Integer (default 4096). Requested segment duration in seconds.}
+\item{dur}{Integer (default 4096).}
 
-\item{file.format}{Character (default \code{"hdf5"}). Desired file format;
-typical values are \code{"hdf5"} or \code{"gwf"}.}
+\item{file.format}{Character (default "hdf5").}
 
-\item{duty.cycle.lwr}{Numeric (default 95). NOTE: the \code{/strain-files}
-endpoint does **not** provide a \code{duty_cycle} field. This argument is
-accepted for compatibility with earlier code, but is ignored by the API
-query; see \code{Details} for how to perform timeline-based duty-cycle
-filtering if you need it.}
+\item{duty.cycle.lwr}{Numeric or NULL. If NULL (default) no duty filtering is applied.}
+
+\item{require_full_coverage}{Logical passed to filter_files_by_dutycycle.}
+
+\item{timeline_name}{Optional timeline name (single string) or NULL; if NULL a sensible default paste0(det, "_DATA") is used per detector.}
+
+\item{timeline_verbose}{Logical for timeline debug.}
 }
 \value{
-A data.frame with one row per matching file and columns including
-  \code{GPSstart} (integer), \code{utc_start} (ISO string or NA),
-  \code{detector}, \code{sample_rate_kHz}, \code{url} (download URL),
-  \code{detail_url} (if provided by the API), and \code{duration}.
+data.frame of file metadata (filtered if duty.cycle.lwr provided).
 }
 \description{
-Query GWOSC's v2 \code{/strain-files} endpoint and return a tidy data.frame
-describing available strain files that match the supplied criteria.
-}
-\details{
-This function is designed to be used as part of a simple workflow:
-\code{list_obsrun()} → \code{list_detector()} → \code{get_segments()} →
-\code{download_segments()}. You may pass multiple detectors (e.g.
-\code{c("H1", "L1")}) and the function will query each detector and merge the
-results.
-
-
-The API v2 \code{/strain-files} endpoint is queried for each detector in
-\code{detector}, and the per-detector results are combined. Because the
-server response does not include duty-cycle information, the function cannot
-filter by \code{duty_cycle} directly. If you require duty-cycle based
-filtering, retrieve timeline/segment information from the timeline segments
-endpoints and post-filter the returned file list (this is more advanced and
-not performed automatically by this helper).
+High-level helper that retrieves file metadata (get_filemeta()) and, only
+when duty.cycle.lwr is provided (non-NULL), applies timeline-based
+duty-cycle filtering using get_timeline() and filter_files_by_dutycycle().
 }
 \examples{
 \dontrun{
-# Discover a run + detectors, then get files
-runs <- list_obsrun()
-dets <- list_detector("O1")
-files <- get_segments("O1", dets, GPSstart = 1126051217, GPSend = 1126051217 + 86400)
-head(files)
-}
+# No duty filtering:
+files <- get_segments("O1", c("H1", "L1"), 1126051217, 1126051217 + 86400)
 
+# With duty filtering (95\%): timeline default is "<DET>_DATA"
+good <- get_segments("O1", c("H1", "L1"), 1126051217, 1126051217 + 86400,
+    duty.cycle.lwr = 95
+)
 }
-\references{
-\url{https://gwosc.org/api/}
-}
-\seealso{
-\code{\link{list_obsrun}}, \code{\link{list_detector}},
-  \code{\link{download_segments}}
 }

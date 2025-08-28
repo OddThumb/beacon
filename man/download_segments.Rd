@@ -5,7 +5,7 @@
 \title{Download files listed in a GWOSC segment-data frame}
 \usage{
 download_segments(
-  seg.df,
+  file.df,
   path,
   background = FALSE,
   background.wait = 30,
@@ -13,7 +13,7 @@ download_segments(
 )
 }
 \arguments{
-\item{seg.df}{A data.frame as returned by \code{get_segments()} that
+\item{file.df}{A data.frame as returned by \code{get_segments()} that
 contains a \code{url} column. The function will attempt to download each
 \code{url} into \code{path}.}
 
@@ -38,7 +38,7 @@ A character vector with full paths to the files that were (or will
   when this function returns.
 }
 \description{
-Download the files described by the \code{url} column of \code{seg.df} and
+Download the files described by the \code{url} column of \code{file.df} and
 save them into a local directory. This helper is intentionally simple: it
 takes the \code{url} values returned by \code{get_segments()} and preserves
 the original file basenames when saving.

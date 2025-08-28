@@ -2,20 +2,53 @@
 % Please edit documentation in R/OSC.R
 \name{get_gwosc_param}
 \alias{get_gwosc_param}
-\title{Extract specific parameters from GWOSC metadata}
+\title{Retrieve GWOSC event parameters via event-version detail (API v2)}
 \usage{
-get_gwosc_param(gwosc.list, source.names, param)
+get_gwosc_param(source.names, param, verbose = FALSE)
 }
 \arguments{
-\item{gwosc.list}{A data.frame returned by `get_gwosc()`.}
+\item{source.names}{Character vector of GWOSC event names (e.g. "GW151226").}
 
-\item{source.names}{Character vector. Names of the events (`commonName`) to extract.}
+\item{param}{Character or character vector. Field(s) to extract; supports dot notation for nested fields.}
 
-\item{param}{Character or character vector. Column name(s) to extract.}
+\item{verbose}{Logical. If TRUE, print progress messages.}
 }
 \value{
-A vector or data.frame depending on the number of requested parameters.
+Named character vector (if single param) or data.frame (if multiple params).
 }
 \description{
-Extract specific parameters from GWOSC metadata
+Query GWOSC API v2 for one or more events and extract specific fields from
+the event-version detail.
+}
+\details{
+When a single `param` is requested a named character vector is returned.
+When multiple `param`s are requested a data.frame is returned (rows correspond
+to `source.names`).
+}
+\examples{
+\dontrun{
+# 1) Single parameter (returns a named character vector)
+#    - get the event 'name' (simple top-level field)
+result1 <- get_gwosc_param("GW151226", param = "name")
+print(result1)
+
+# 2) Multiple parameters (returns a data.frame)
+#    - request name, catalog and gps for several events
+result2 <- get_gwosc_param(c("GW151226", "GW150914"), param = c("name", "catalog", "gps"))
+print(result2)
+
+# 3) Nested parameter using dot-notation (event-version parameters)
+#    - chirp mass mean (example nested path; actual keys can vary)
+cm <- get_gwosc_param("GW151226", param = "parameters.chirp_mass.mean")
+print(cm)
+
+# 4) If you don't remember exact parameter names, list available keys first:
+#    - list_gwosc_param() returns a character vector of known parameter keys
+available_params <- list_gwosc_param()
+head(available_params)
+
+# 5) Verbose mode to see progress messages (helpful for debugging)
+res_verbose <- get_gwosc_param(c("GW151226", "GW150914"), param = "name", verbose = TRUE)
+}
+
 }
