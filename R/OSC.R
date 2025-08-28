@@ -343,314 +343,219 @@ list_gwosc_param <- function(verbose = FALSE) {
 #' }
 #'
 #' @export
-get_gwosc_param <- function(source.names, param, verbose = FALSE) {
+get_gwosc_param <- function(source.names, param = "all", verbose = FALSE) {
     if (missing(source.names) || length(source.names) == 0) stop("source.names must be provided")
     if (missing(param) || length(param) == 0) stop("param must be provided")
+    if (!requireNamespace("httr", quietly = TRUE)) stop("Please install 'httr'")
+    if (!requireNamespace("jsonlite", quietly = TRUE)) stop("Please install 'jsonlite'")
 
-    if (!requireNamespace("curl", quietly = TRUE)) stop("Please install 'curl' package")
-    if (!requireNamespace("jsonlite", quietly = TRUE)) stop("Please install 'jsonlite' package")
-
-    # helpers
-    fetch_json_url <- function(url, accept_header = "application/json") {
-        h <- curl::new_handle()
-        curl::handle_setheaders(h, "User-Agent" = "curl/8.7.1", "Accept" = accept_header)
-        res <- tryCatch(curl::curl_fetch_memory(url, handle = h), error = function(e) e)
-        if (inherits(res, "error")) stop("Network error contacting ", url, ": ", res$message)
-        if (res$status >= 400) stop("HTTP ", res$status, " for ", url)
-        txt <- rawToChar(res$content)
-        if (grepl("^\\s*<", txt)) stop("HTML returned from ", url)
-        jsonlite::fromJSON(txt, simplifyVector = FALSE)
+    # helper to normalize keys for matching (underscore <-> hyphen, lower)
+    norm_key <- function(x) {
+        x2 <- tolower(as.character(x))
+        x2 <- gsub("-", "_", x2, fixed = TRUE)
+        x2 <- gsub("\\.", "_", x2)
+        x2
     }
 
-    # flatten utilities
-    flatten_named_params <- function(params_obj) {
-        # Return named character vector of parameter_name -> stringified value
-        if (is.null(params_obj)) {
-            return(character(0))
+    # fetch event info and choose latest version -> return chosen version number (int) and possibly direct detail fields
+    fetch_latest_version <- function(evname) {
+        url <- sprintf("https://gwosc.org/api/v2/events/%s", utils::URLencode(as.character(evname), reserved = TRUE))
+        res <- httr::GET(url, httr::user_agent("R (gwosc client)"))
+        if (httr::http_error(res)) {
+            stop("HTTP error fetching event ", evname, ": ", httr::status_code(res))
         }
-
-        # Case A: list-of-records with fields 'name' and some 'value' or nested metrics
-        if (is.list(params_obj) && length(params_obj) > 0 && all(vapply(params_obj, function(x) is.list(x) && (!is.null(x$name) || !is.null(x$id) || !is.null(x$key)), logical(1)), FUN.VALUE = logical(1))) {
-            res <- list()
-            for (p in params_obj) {
-                nm <- if (!is.null(p$name)) as.character(p$name) else if (!is.null(p$id)) as.character(p$id) else if (!is.null(p$key)) as.character(p$key) else NULL
-                if (is.null(nm)) next
-                # prefer explicit 'value' field; otherwise try typical fields
-                val <- NULL
-                if (!is.null(p$value)) {
-                    val <- p$value
-                } else {
-                    # try common numeric/stat fields
-                    for (k in c("mean", "median", "best", "mode", "value", "val")) {
-                        if (!is.null(p[[k]])) {
-                            val <- p[[k]]
-                            break
-                        }
-                    }
-                }
-                if (is.null(val)) {
-                    # if the parameter object contains other small fields, collapse them
-                    val <- p
-                }
-                # stringify val
-                if (is.atomic(val) && length(val) == 1) {
-                    res[[nm]] <- as.character(val)
-                } else {
-                    res[[nm]] <- jsonlite::toJSON(val, auto_unbox = TRUE)
-                }
-            }
-            return(unlist(res, use.names = TRUE))
-        }
-
-        # Case B: named list / map: each name is param name; value may be scalar or object
-        if (is.list(params_obj) && !is.null(names(params_obj))) {
-            res <- list()
-            for (nm in names(params_obj)) {
-                v <- params_obj[[nm]]
-                if (is.atomic(v) && length(v) == 1) res[[nm]] <- as.character(v) else res[[nm]] <- jsonlite::toJSON(v, auto_unbox = TRUE)
-            }
-            return(unlist(res, use.names = TRUE))
-        }
-
-        # Case C: data.frame where first column is name and second is value
-        if (is.data.frame(params_obj) && ncol(params_obj) >= 2 && all(c("name", "value") %in% colnames(params_obj))) {
-            vals <- as.character(params_obj$value)
-            names(vals) <- as.character(params_obj$name)
-            return(vals)
-        }
-
-        # last resort: flatten everything and return character vector
-        flat <- list()
-        flatten_recursive <- function(x, prefix = character(0)) {
-            if (is.atomic(x) && length(x) == 1) {
-                nm <- paste(prefix, collapse = ".")
-                flat[[nm]] <<- as.character(x)
-                return()
-            }
-            if (is.list(x)) {
-                nm <- names(x)
-                if (!is.null(nm)) {
-                    for (i in seq_along(x)) {
-                        namei <- if (nzchar(as.character(nm[i]))) nm[i] else paste0("X", i)
-                        flatten_recursive(x[[i]], c(prefix, namei))
-                    }
-                } else {
-                    for (i in seq_along(x)) flatten_recursive(x[[i]], c(prefix, paste0("X", i)))
-                }
-                return()
-            }
-            flat[[paste(prefix, collapse = ".")]] <<- jsonlite::toJSON(x, auto_unbox = TRUE)
-        }
-        flatten_recursive(params_obj, character(0))
-        if (length(flat) == 0) character(0) else unlist(flat, use.names = TRUE)
-    }
-
-    # fetch single event version detail and ensure parameters are actual objects (not URL string)
-    fetch_event_with_parameters <- function(evname, verbose = FALSE) {
-        ev_url <- sprintf("https://gwosc.org/api/v2/events/%s", utils::URLencode(as.character(evname), reserved = TRUE))
-        ev_json <- tryCatch(fetch_json_url(ev_url), error = function(e) {
-            warning("Failed to fetch event ", evname, ": ", e$message)
-            return(NULL)
-        })
-        if (is.null(ev_json)) {
-            return(NULL)
-        }
-
-        versions <- ev_json$versions
-        if (is.null(versions) || length(versions) == 0) {
-            warning("No versions for event ", evname)
-            return(list(vjson = ev_json, parameters = NULL))
-        }
-        vnums <- vapply(versions, function(v) if (!is.null(v$version)) as.integer(v$version) else NA_integer_, integer(1))
-        chosen <- if (all(is.na(vnums))) versions[[1]] else versions[[which.max(vnums)]]
-
-        ver_detail_url <- NULL
-        if (!is.null(chosen$detail_url) && nzchar(as.character(chosen$detail_url))) {
-            ver_detail_url <- as.character(chosen$detail_url)
-        } else if (!is.null(chosen$version)) {
-            ver_detail_url <- sprintf("https://gwosc.org/api/v2/event-versions/%s-v%d", utils::URLencode(as.character(evname), reserved = TRUE), as.integer(chosen$version))
-        }
-        if (is.null(ver_detail_url)) {
-            warning("No event-version detail URL for ", evname)
-            return(list(vjson = ev_json, parameters = NULL))
-        }
-
-        if (verbose) message("  fetching version detail: ", ver_detail_url)
-        vjson <- tryCatch(fetch_json_url(ver_detail_url), error = function(e) {
-            warning("Failed to fetch version detail for ", evname, ": ", e$message)
-            return(NULL)
-        })
-        if (is.null(vjson)) {
-            return(list(vjson = NULL, parameters = NULL))
-        }
-
-        params_obj <- NULL
-        # case 1: inline parameters object
-        if (!is.null(vjson$parameters)) {
-            params_obj <- vjson$parameters
-            # if it's a single string that looks like a URL -> fetch it
-            if (is.character(params_obj) && length(params_obj) == 1 && grepl("^https?://", params_obj)) {
-                if (verbose) message("   parameters field was URL; fetching: ", params_obj)
-                params_obj <- tryCatch(fetch_json_url(as.character(params_obj)), error = function(e) {
-                    warning("Failed to fetch parameters URL: ", e$message)
-                    NULL
-                })
-            }
+        txt <- httr::content(res, as = "text", encoding = "UTF-8")
+        if (grepl("^\\s*<", txt)) stop("GWOSC returned HTML for event: ", evname)
+        js <- tryCatch(jsonlite::fromJSON(txt, simplifyVector = FALSE), error = function(e) stop("Failed to parse JSON for event ", evname, ": ", e$message))
+        if (is.null(js$versions) || length(js$versions) == 0) stop("No versions for event ", evname)
+        vnums <- vapply(js$versions, function(v) if (!is.null(v$version)) as.integer(v$version) else NA_integer_, integer(1))
+        if (all(is.na(vnums))) {
+            chosen <- js$versions[[1]]
         } else {
-            # try candidate fields that point to parameters endpoint
-            pfields <- c("parameters_url", "parameters-url", "parametersUrl", "parametersURL")
-            purl <- NULL
-            for (pf in pfields) {
-                if (!is.null(vjson[[pf]])) {
-                    purl <- vjson[[pf]]
-                    break
-                }
-            }
-            if (!is.null(purl) && is.character(purl) && nzchar(purl)) {
-                if (verbose) message("   following parameters_url: ", purl)
-                params_obj <- tryCatch(fetch_json_url(as.character(purl)), error = function(e) {
-                    warning("Failed to fetch parameters_url: ", e$message)
-                    NULL
-                })
-            }
+            idx <- which.max(vnums)
+            chosen <- js$versions[[idx]]
         }
-
-        # if params_obj is a wrapper like {results: [...] } or {data: [...]}, descend
-        if (!is.null(params_obj) && is.list(params_obj)) {
-            if ("results" %in% names(params_obj) && length(params_obj$results) > 0) params_obj <- params_obj$results
-            if ("data" %in% names(params_obj) && length(params_obj$data) > 0) params_obj <- params_obj$data
-        }
-
-        list(vjson = vjson, parameters = params_obj)
+        list(chosen = chosen, event_json = js)
     }
 
-    # fetch all events
-    fetched <- lapply(source.names, function(s) {
-        if (verbose) message("Fetching ", s)
-        fetch_event_with_parameters(s, verbose = verbose)
-    })
-    names(fetched) <- source.names
+    # fetch default-parameters for an event-version (returns list of parameter objects)
+    fetch_default_parameters <- function(evname, version_obj) {
+        # version_obj may include 'detail_url' or 'parameters_url'; otherwise build URL
+        if (!is.null(version_obj$parameters_url) && nzchar(as.character(version_obj$parameters_url))) {
+            url <- as.character(version_obj$parameters_url)
+        } else if (!is.null(version_obj$detail_url) && nzchar(as.character(version_obj$detail_url))) {
+            # try to replace detail -> parameters if possible
+            url <- sub("/event-versions/", "/event-versions/", as.character(version_obj$detail_url), fixed = TRUE)
+            # prefer explicit default-parameters endpoint
+            url <- sprintf(
+                "https://gwosc.org/api/v2/event-versions/%s-v%d/default-parameters",
+                utils::URLencode(as.character(evname), reserved = TRUE),
+                as.integer(version_obj$version)
+            )
+        } else {
+            url <- sprintf(
+                "https://gwosc.org/api/v2/event-versions/%s-v%d/default-parameters",
+                utils::URLencode(as.character(evname), reserved = TRUE),
+                as.integer(version_obj$version)
+            )
+        }
+        if (verbose) message("  fetching parameters from: ", url)
+        res <- httr::GET(url, httr::user_agent("R (gwosc client)"))
+        if (httr::http_error(res)) {
+            stop("HTTP error fetching parameters for ", evname, ": ", httr::status_code(res))
+        }
+        txt <- httr::content(res, as = "text", encoding = "UTF-8")
+        if (grepl("^\\s*<", txt)) stop("GWOSC returned HTML when fetching parameters for ", evname)
+        js <- tryCatch(jsonlite::fromJSON(txt, simplifyVector = FALSE), error = function(e) stop("Failed to parse parameters JSON for ", evname, ": ", e$message))
+        # the response commonly has 'results' which is a list of parameter objects
+        if ("results" %in% names(js)) {
+            params <- js$results
+        } else if ("data" %in% names(js)) {
+            params <- js$data
+        } else {
+            params <- js
+        }
+        params
+    }
 
-    # param == "all": produce dataframe rows=events cols=parameters (union)
-    if (length(param) == 1 && identical(param, "all")) {
-        per_event_params <- lapply(fetched, function(x) {
-            if (is.null(x) || is.null(x$vjson)) {
-                return(NULL)
-            }
-            # prefer parameters object
-            if (!is.null(x$parameters)) {
-                vals <- flatten_named_params(x$parameters)
-                if (length(vals) > 0) {
-                    return(vals)
-                }
-            }
-            # fallback: flatten vjson top-level
-            # keep only scalars or stringify
-            flat <- list()
-            flatten_recursive_simple <- function(obj, prefix = character(0)) {
-                if (is.atomic(obj) && length(obj) == 1) {
-                    flat[[paste(prefix, collapse = ".")]] <<- as.character(obj)
-                    return()
-                }
-                if (is.list(obj)) {
-                    nm <- names(obj)
-                    if (!is.null(nm)) {
-                        for (i in seq_along(obj)) {
-                            namei <- if (!is.null(nm[i]) && nzchar(nm[i])) nm[i] else paste0("X", i)
-                            flatten_recursive_simple(obj[[i]], c(prefix, namei))
+    # loop: fetch parameter objects per event, convert to named list (name -> best)
+    per_event_params <- vector("list", length(source.names))
+    names(per_event_params) <- source.names
+
+    for (i in seq_along(source.names)) {
+        ev <- source.names[i]
+        if (verbose) message(sprintf("[%d/%d] resolving %s", i, length(source.names), ev))
+        ok <- tryCatch(
+            {
+                verinfo <- fetch_latest_version(ev)
+                params_obj <- fetch_default_parameters(ev, verinfo$chosen)
+                # params_obj is list-of-objects; each object typically has 'name' and 'best'
+                # build named vector of best values (converted to character for uniformity)
+                kv <- list()
+                if (is.list(params_obj) && length(params_obj) > 0) {
+                    # if results is a list-of-records
+                    for (po in params_obj) {
+                        nm <- NULL
+                        if (!is.null(po$name)) nm <- as.character(po$name)
+                        # fallback keys
+                        if (is.null(nm)) {
+                            # try common alternatives
+                            for (k in c("id", "key")) {
+                                if (!is.null(po[[k]])) {
+                                    nm <- as.character(po[[k]])
+                                    break
+                                }
+                            }
                         }
-                    } else {
-                        for (i in seq_along(obj)) flatten_recursive_simple(obj[[i]], c(prefix, paste0("X", i)))
+                        if (is.null(nm)) next
+                        val <- NA_character_
+                        # prefer 'best' if available, else try other fields
+                        if (!is.null(po$best) && !is.list(po$best)) {
+                            val <- as.character(po$best)
+                        } else if (!is.null(po$value) && !is.list(po$value)) {
+                            val <- as.character(po$value)
+                        } else if (!is.null(po$median) && !is.list(po$median)) {
+                            val <- as.character(po$median)
+                        } else {
+                            # if complex structure, stringify JSON
+                            val <- tryCatch(jsonlite::toJSON(po, auto_unbox = TRUE), error = function(e) NA_character_)
+                        }
+                        kv[[nm]] <- val
                     }
-                    return()
                 }
-                flat[[paste(prefix, collapse = ".")]] <<- jsonlite::toJSON(obj, auto_unbox = TRUE)
+                per_event_params[[i]] <- kv
+                TRUE
+            },
+            error = function(e) {
+                warning("Failed to fetch parameters for ", ev, ": ", e$message)
+                per_event_params[[i]] <<- list()
+                FALSE
             }
-            flatten_recursive_simple(x$vjson, character(0))
-            if (length(flat) > 0) {
-                return(unlist(flat, use.names = TRUE))
-            }
-            NULL
-        })
+        )
+    }
 
-        # union of all parameter names
-        all_names <- unique(unlist(lapply(per_event_params, names)))
-        if (length(all_names) == 0) {
-            # nothing found
-            return(data.frame())
-        }
-        # build data.frame
-        mat <- t(sapply(names(per_event_params), function(ev) {
-            pvals <- per_event_params[[ev]]
-            row <- rep(NA_character_, length(all_names))
-            names(row) <- all_names
-            if (!is.null(pvals) && length(pvals) > 0) {
-                row[names(pvals)] <- as.character(pvals)
+    # collect union of parameter names across events (preserve order of first appearance)
+    all_keys <- unique(unlist(lapply(per_event_params, names)))
+    if (length(all_keys) == 0) {
+        stop("No parameters found for any event.")
+    }
+
+    # Normalize requested param names for matching
+    if (length(param) == 1 && identical(tolower(param), "all")) {
+        # build data.frame with all keys (columns) and events as rows
+        mat <- matrix(NA_character_,
+            nrow = length(source.names), ncol = length(all_keys),
+            dimnames = list(source.names, all_keys)
+        )
+        for (i in seq_along(source.names)) {
+            kv <- per_event_params[[i]]
+            if (length(kv) > 0) {
+                for (k in names(kv)) {
+                    mat[i, k] <- as.character(kv[[k]])
+                }
             }
-            row
-        }, simplify = TRUE))
+        }
         df <- as.data.frame(mat, stringsAsFactors = FALSE, check.names = FALSE)
-        rownames(df) <- names(per_event_params)
         return(df)
-    }
-
-    # If single param requested -> return named vector; if multiple -> data.frame
-    single_mode <- length(param) == 1
-    extract_value_for <- function(fetched_obj, pth) {
-        if (is.null(fetched_obj) || is.null(fetched_obj$vjson)) {
-            return(NA_character_)
-        }
-        # try parameters first (exact name match)
-        if (!is.null(fetched_obj$parameters)) {
-            vals <- flatten_named_params(fetched_obj$parameters)
-            if (length(vals) > 0 && pth %in% names(vals)) {
-                return(vals[[pth]])
-            }
-            # also look for canonicalized name (replace punctuation with - or nothing)
-            # try simple replacement: change '.' and '_' to '-' and try variants
-            alt_names <- c(pth, gsub("\\.", "-", pth), gsub("_", "-", pth))
-            for (an in alt_names) if (an %in% names(vals)) {
-                return(vals[[an]])
-            }
-        }
-        # else try dot path on vjson
-        parts <- strsplit(pth, "\\.", perl = TRUE)[[1]]
-        cur <- fetched_obj$vjson
-        for (pr in parts) {
-            if (is.null(cur)) break
-            if (is.list(cur) && !is.null(cur[[pr]])) {
-                cur <- cur[[pr]]
-            } else if (is.data.frame(cur) && pr %in% colnames(cur)) {
-                cur <- cur[[pr]]
-            } else {
-                cur <- NULL
-                break
-            }
-        }
-        if (!is.null(cur)) {
-            if (is.atomic(cur) && length(cur) == 1) {
-                return(as.character(cur))
-            }
-            return(jsonlite::toJSON(cur, auto_unbox = TRUE))
-        }
-        NA_character_
-    }
-
-    if (single_mode) {
-        p <- param[1]
-        out <- sapply(fetched, function(x) extract_value_for(x, p), USE.NAMES = TRUE, simplify = TRUE)
-        names(out) <- names(fetched)
-        return(out)
     } else {
-        rows <- lapply(names(fetched), function(ev) {
-            fetched_obj <- fetched[[ev]]
-            vals <- vapply(param, function(p) extract_value_for(fetched_obj, p), FUN.VALUE = character(1))
-            as.data.frame(as.list(vals), stringsAsFactors = FALSE)
-        })
-        df <- do.call(rbind, rows)
-        rownames(df) <- names(fetched)
-        colnames(df) <- param
-        return(df)
+        # requested subset of parameters: accept hyphen/underscore variants, dot, case-insensitive
+        requested <- as.character(param)
+        # special-case single param -> return named vector
+        # build mapping from normalized key -> actual key
+        norm_map <- setNames(all_keys, sapply(all_keys, norm_key))
+        # for each requested name, find best matching actual key
+        selected_keys <- character(0)
+        for (r in requested) {
+            nr <- norm_key(r)
+            if (nr %in% names(norm_map)) {
+                selected_keys <- c(selected_keys, norm_map[[nr]])
+            } else {
+                # try exact match (maybe user provided exact API name)
+                if (r %in% all_keys) {
+                    selected_keys <- c(selected_keys, r)
+                } else {
+                    # not found -> return NA column (use requested name as column label)
+                    selected_keys <- c(selected_keys, NA_character_)
+                }
+            }
+        }
+
+        # If single requested param -> return named character vector
+        if (length(requested) == 1) {
+            outv <- vapply(seq_along(source.names), function(i) {
+                kv <- per_event_params[[i]]
+                actual <- selected_keys[1]
+                if (is.na(actual)) {
+                    return(NA_character_)
+                }
+                if (!is.null(kv[[actual]])) {
+                    return(as.character(kv[[actual]]))
+                }
+                return(NA_character_)
+            }, FUN.VALUE = character(1))
+            names(outv) <- source.names
+            return(outv)
+        } else {
+            # multiple requested -> data.frame columns correspond to user-specified request labels
+            df_rows <- lapply(seq_along(source.names), function(i) {
+                kv <- per_event_params[[i]]
+                vals <- vapply(seq_along(requested), function(j) {
+                    actual <- selected_keys[j]
+                    if (is.na(actual)) {
+                        return(NA_character_)
+                    }
+                    if (!is.null(kv[[actual]])) {
+                        return(as.character(kv[[actual]]))
+                    }
+                    return(NA_character_)
+                }, FUN.VALUE = character(1))
+                as.data.frame(as.list(vals), stringsAsFactors = FALSE)
+            })
+            df_out <- do.call(rbind, df_rows)
+            colnames(df_out) <- requested
+            rownames(df_out) <- source.names
+            return(df_out)
+        }
     }
 }
 
