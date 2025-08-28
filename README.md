@@ -89,7 +89,7 @@ result <- stream(batch_set = batch_set, arch_params = cfg)
 # ...
 ```
 
-> ⚠️ **Note:** If you plan to use the **PyCBC backend (e.g. functions in R/use_pycbc.R)**, make sure to link your environment with PyCBC installed. You can do so by specifying the path to your conda environment as shown below:
+> ⚠️ **Note1:** If you plan to use the **PyCBC backend (e.g. functions in R/use_pycbc.R)**, make sure to link your environment with PyCBC installed. You can do so by specifying the path to your conda environment as shown below:
 
 ``` r
 # Install reticulate to incorporate python package
@@ -98,6 +98,8 @@ install.packages("reticulate")
 # Register your conda envrionment path
 reticulate::use_condaenv(condaenv = "path/to/your/conda/env")
 ```
+
+> ⚠️ **Note2**: The sophisticated vignettes for detailed usage will be delivered soon.
 
 ## Python Version
 
