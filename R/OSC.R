@@ -588,7 +588,7 @@ download_segments <- function(
 
     filenames <- file.path(path, basename(seg.df$url))
 
-    download.expr <- expr({
+    download.expr <- dplyr::expr({
         for (i in seq_along(seg.df$url)) {
             download.file(
                 url = seg.df$url[i],
