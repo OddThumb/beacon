@@ -13,11 +13,11 @@ get_available_detectors <- function() {
     # functions from external libraries
     bind_rows <- dplyr::bind_rows
     Detector <- reticulate::import("pycbc.detector")$Detector
-    get_available_detectors <- reticulate::import(
+    pycbc.detector.get_available_detectors <- reticulate::import(
         "pycbc.detector"
     )$get_available_detectors
 
-    detector.list <- get_available_detectors()
+    detector.list <- pycbc.detector.get_available_detectors()
     det.df <- lapply(detector.list, function(idx) {
         abv <- idx[[1]]
         name <- idx[[2]]
@@ -88,7 +88,7 @@ get_light_travel_time_among_detectors <- function(dets) {
         det2 <- det_combn[ii, 2]
         dt_crit <- Detector(det1)$light_travel_time_to_detector(Detector(det2))
         dt_combn[ii] <- dt_crit
-        dt_names[ii] <- paste0(det1, '-', det2)
+        dt_names[ii] <- paste0(det1, "-", det2)
     }
     names(dt_combn) <- dt_names
     dt_combn
@@ -163,7 +163,7 @@ relpass_time <- function(deltat, dets, ra, dec, t_gps, verbose = T) {
         if (verbose) {
             message(
                 "> Time delays among detectors '",
-                paste(dets, collapse = ', '),
+                paste(dets, collapse = ", "),
                 "'"
             )
             print(det.df)
@@ -384,8 +384,7 @@ psd_noise <- function(
     sampling.freq = 4096,
     fl = 15,
     delta_f = 1 / 32,
-    seed = NULL
-) {
+    seed = NULL) {
     if (det == "H1" | det == "L1") {
         psd.name <- "aLIGODesignSensitivityT1800044"
     } else if (det == "V1") {
@@ -482,11 +481,10 @@ get_wave <- function(
     dec,
     pol,
     t_gps,
-    proj = FALSE
-) {
+    proj = FALSE) {
     # Generate waveforms
     get_td_waveform <- reticulate::import(
-        'pycbc.waveform',
+        "pycbc.waveform",
         convert = FALSE
     )$get_td_waveform
     waveforms <- get_td_waveform(
@@ -500,7 +498,7 @@ get_wave <- function(
         f_final = fu,
         delta_t = 1 / sampling.freq
     )
-    waveforms <- list('hp' = waveforms[[0]], 'hc' = waveforms[[1]])
+    waveforms <- list("hp" = waveforms[[0]], "hc" = waveforms[[1]])
 
     # Antenna Pattern
     if (
