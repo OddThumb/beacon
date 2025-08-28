@@ -12,7 +12,7 @@ filter_files_by_dutycycle(
 )
 }
 \description{
-files_df: output of get_segments() containing at least GPSstart, duration (seconds), detector
+files_df: output of get_segment() containing at least GPSstart, duration (seconds), detector
 segs_df: output of get_timeline_segments() containing start, stop, duty_cycle (or NA)
 duty.cycle.lwr: threshold in same units as segs_df$duty_cycle (e.g. percent 95)
 require_full_coverage: if TRUE require the file interval [GPSstart, GPSstart+duration) to be fully inside a segment

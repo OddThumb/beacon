@@ -20,7 +20,7 @@ A character vector of detector names available in the requested run.
 \description{
 Return the detector identifiers available for a particular GWOSC observation
 run (for example \code{"H1"}, \code{"L1"}, \code{"V1"}). Use this to avoid
-passing invalid detector names to \code{get_segments()}.
+passing invalid detector names to \code{get_segment()}.
 }
 \details{
 The function queries \code{https://gwosc.org/api/v2/runs/<obsrun>} and
@@ -40,5 +40,5 @@ print(detectors)
 \url{https://gwosc.org/api/}
 }
 \seealso{
-\code{\link{list_obsrun}}, \code{\link{get_segments}}
+\code{\link{list_obsrun}}, \code{\link{get_segment}}
 }

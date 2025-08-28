@@ -18,7 +18,7 @@ A character vector of available observation-run names (no attributes).
 Retrieve the canonical names of observation runs available on GWOSC (for
 example `"O1"`, `"O2"`, `"O3a"`, ...). This is the recommended first call
 for interactive usage: use the returned run names with \code{list_detector()}
-and \code{get_segments()} so you don't have to guess valid run identifiers.
+and \code{get_segment()} so you don't have to guess valid run identifiers.
 }
 \details{
 The function uses the GWOSC v2 API and robustly handles common JSON shapes
@@ -44,5 +44,5 @@ list_detector(runs[1])
 \url{https://gwosc.org/api/}
 }
 \seealso{
-\code{\link{list_detector}}, \code{\link{get_segments}}
+\code{\link{list_detector}}, \code{\link{get_segment}}
 }

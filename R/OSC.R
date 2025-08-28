@@ -847,7 +847,7 @@ download_event <- function(event_name,
 #' Retrieve the canonical names of observation runs available on GWOSC (for
 #' example `"O1"`, `"O2"`, `"O3a"`, ...). This is the recommended first call
 #' for interactive usage: use the returned run names with \code{list_detector()}
-#' and \code{get_segments()} so you don't have to guess valid run identifiers.
+#' and \code{get_segment()} so you don't have to guess valid run identifiers.
 #'
 #' The function uses the GWOSC v2 API and robustly handles common JSON shapes
 #' returned by the server.
@@ -873,7 +873,7 @@ download_event <- function(event_name,
 #' list_detector(runs[1])
 #' }
 #'
-#' @seealso \code{\link{list_detector}}, \code{\link{get_segments}}
+#' @seealso \code{\link{list_detector}}, \code{\link{get_segment}}
 #' @references \url{https://gwosc.org/api/}
 #' @export
 list_obsrun <- function(verbose = FALSE) {
@@ -927,7 +927,7 @@ list_obsrun <- function(verbose = FALSE) {
 #'
 #' Return the detector identifiers available for a particular GWOSC observation
 #' run (for example \code{"H1"}, \code{"L1"}, \code{"V1"}). Use this to avoid
-#' passing invalid detector names to \code{get_segments()}.
+#' passing invalid detector names to \code{get_segment()}.
 #'
 #' @param obsrun Character scalar. Observation run identifier (e.g. \code{"O1"},
 #'   \code{"O2"}, \code{"O3a"}). Must be a single string returned by
@@ -950,7 +950,7 @@ list_obsrun <- function(verbose = FALSE) {
 #' print(detectors)
 #' }
 #'
-#' @seealso \code{\link{list_obsrun}}, \code{\link{get_segments}}
+#' @seealso \code{\link{list_obsrun}}, \code{\link{get_segment}}
 #' @references \url{https://gwosc.org/api/}
 #' @export
 list_detector <- function(obsrun, verbose = FALSE) {
@@ -1241,7 +1241,7 @@ get_timeline <- function(obsrun, timeline, GPSstart, GPSend,
 
 #' Filter a files data.frame by timeline segment duty cycle
 #'
-#' files_df: output of get_segments() containing at least GPSstart, duration (seconds), detector
+#' files_df: output of get_segment() containing at least GPSstart, duration (seconds), detector
 #' segs_df: output of get_timeline_segments() containing start, stop, duty_cycle (or NA)
 #' duty.cycle.lwr: threshold in same units as segs_df$duty_cycle (e.g. percent 95)
 #' require_full_coverage: if TRUE require the file interval [GPSstart, GPSstart+duration) to be fully inside a segment
@@ -1358,18 +1358,18 @@ filter_files_by_dutycycle <- function(files_df, segs_df, duty.cycle.lwr = 95, re
 #' @examples
 #' \dontrun{
 #' # No duty filtering:
-#' files <- get_segments("O1", c("H1", "L1"), 1126051217, 1126051217 + 86400)
+#' files <- get_segment("O1", c("H1", "L1"), 1126051217, 1126051217 + 86400)
 #'
 #' # With duty filtering (95%): timeline default is "<DET>_DATA"
-#' good <- get_segments("O1", c("H1", "L1"), 1126051217, 1126051217 + 86400,
+#' good <- get_segment("O1", c("H1", "L1"), 1126051217, 1126051217 + 86400,
 #'     duty.cycle.lwr = 95
 #' )
 #' }
 #' @export
-get_segments <- function(obsrun, detector, GPSstart, GPSend = NULL,
-                         sampling.freq = 4096, dur = 4096, file.format = "hdf5",
-                         duty.cycle.lwr = NULL, require_full_coverage = TRUE,
-                         timeline_name = NULL, timeline_verbose = FALSE) {
+get_segment <- function(obsrun, detector, GPSstart, GPSend = NULL,
+                        sampling.freq = 4096, dur = 4096, file.format = "hdf5",
+                        duty.cycle.lwr = NULL, require_full_coverage = TRUE,
+                        timeline_name = NULL, timeline_verbose = FALSE) {
     if (missing(GPSend) || is.null(GPSend)) GPSend <- GPSstart + dur
 
     files_df <- get_filemeta(
@@ -1428,10 +1428,10 @@ get_segments <- function(obsrun, detector, GPSstart, GPSend = NULL,
 #'
 #' Download the files described by the \code{url} column of \code{file.df} and
 #' save them into a local directory. This helper is intentionally simple: it
-#' takes the \code{url} values returned by \code{get_segments()} and preserves
+#' takes the \code{url} values returned by \code{get_segment()} and preserves
 #' the original file basenames when saving.
 #'
-#' @param file.df A data.frame as returned by \code{get_segments()} that
+#' @param file.df A data.frame as returned by \code{get_segment()} that
 #'   contains a \code{url} column. The function will attempt to download each
 #'   \code{url} into \code{path}.
 #' @param path Character. Directory to save downloaded files. The directory is
@@ -1452,17 +1452,17 @@ get_segments <- function(obsrun, detector, GPSstart, GPSend = NULL,
 #'
 #' @examples
 #' \dontrun{
-#' files <- get_segments("O1", "H1", 1126051217, 1126051217 + 4096)
-#' outpaths <- download_segments(files, path = "data/O1_H1/")
+#' files <- get_segment("O1", "H1", 1126051217, 1126051217 + 4096)
+#' outpaths <- download_segment(files, path = "data/O1_H1/")
 #' print(outpaths)
 #' }
 #'
-#' @seealso \code{\link{get_segments}}
+#' @seealso \code{\link{get_segment}}
 #' @export
-download_segments <- function(file.df, path,
-                              background = FALSE,
-                              background.wait = 30,
-                              timeout = 300) {
+download_segment <- function(file.df, path,
+                             background = FALSE,
+                             background.wait = 30,
+                             timeout = 300) {
     if (!curl::has_internet()) stop("No internet connection")
     if (!dir.exists(path)) dir.create(path, recursive = TRUE)
 
