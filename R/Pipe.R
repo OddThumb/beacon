@@ -1643,52 +1643,63 @@ pipe <- function(
         n_missed <- arch_params$n_missed
         DQ <- arch_params$DQ
         P_update <- arch_params$P_update
-        proc <- arch(
-            concat_ts(
-                prev = prev_batch,
-                curr = curr_batch,
-                n_former = n_missed[["Mh"]]
-            ),
-            params = arch_params
+        ts_concat <- concat_ts(
+            prev = prev_batch,
+            curr = curr_batch,
+            n_former = n_missed[["Mh"]]
         )
-        proc <- adjust_proc(proc, curr_batch = curr_batch, n_missed = n_missed)
-        if (!is.null(DQ)) {
-            proc <- add_DQ(proc, curr_batch = curr_batch)
+
+        # Check the length of data with seqARIMA parameters
+        if (length(ts_concat) <= n_missed[["Mh"]]) {
+            res.list <- append_NA(res.list)
+            message_verb(
+                "WARNING: The length of concatenated batch (prev + current) is smaller than required length of seqARIMA: ",
+                length(ts_concat),
+                " <= ",
+                arch_params$n_missed[["Mh"]],
+                v = verb
+            )
+        } else {
+            proc <- arch(ts_concat, params = arch_params)
+            proc <- adjust_proc(proc, curr_batch = curr_batch, n_missed = n_missed)
+            if (!is.null(DQ)) {
+                proc <- add_DQ(proc, curr_batch = curr_batch)
+            }
+
+            # Compute statistics on current batch
+            prev_updated_stat <- dplyr::last(res.list$ustat)
+            prev_tcen <- prev_updated_stat$last_tcen
+            current_stat <- stat_anom(proc, last_tcen = prev_tcen)
+            proc <- add_stat(proc, stat_table = current_stat$table)
+
+            # Compute probabilities based on prev_updated_stat
+            proc <- add_Pstats(proc, prev_updated_stat)
+            if (!is.null(DQ)) {
+                proc <- add_P0_DQ(proc, DQ = DQ)
+            }
+
+            # Update statistics with previous updated & current one
+            # if P_update != NULL, `update_logic()` will use prev_tcen and proc inside
+            updated_stat <- update_logic(
+                updated = prev_updated_stat,
+                current = current_stat,
+                P_update = P_update
+            )
+
+            # Extract the last cluster's t_cen for the next batch
+            updated_stat[["last_tcen"]] <- get_last_tcen(proc)
+
+            # Store results
+            res.list <- list.append(res.list, "stat", current_stat)
+            res.list <- list.append(
+                res.list,
+                "lamb",
+                list(a = updated_stat$stats$lambda_a, c = updated_stat$stats$lambda_c)
+            )
+            res.list <- list.append(res.list, "ustat", updated_stat)
+            # res.list <- list.append(res.list, "proc", proc)
+            res.list[["proc"]] <- proc
         }
-
-        # Compute statistics on current batch
-        prev_updated_stat <- dplyr::last(res.list$ustat)
-        prev_tcen <- prev_updated_stat$last_tcen
-        current_stat <- stat_anom(proc, last_tcen = prev_tcen)
-        proc <- add_stat(proc, stat_table = current_stat$table)
-
-        # Compute probabilities based on prev_updated_stat
-        proc <- add_Pstats(proc, prev_updated_stat)
-        if (!is.null(DQ)) {
-            proc <- add_P0_DQ(proc, DQ = DQ)
-        }
-
-        # Update statistics with previous updated & current one
-        # if P_update != NULL, `update_logic()` will use prev_tcen and proc inside
-        updated_stat <- update_logic(
-            updated = prev_updated_stat,
-            current = current_stat,
-            P_update = P_update
-        )
-
-        # Extract the last cluster's t_cen for the next batch
-        updated_stat[["last_tcen"]] <- get_last_tcen(proc)
-
-        # Store results
-        res.list <- list.append(res.list, "stat", current_stat)
-        res.list <- list.append(
-            res.list,
-            "lamb",
-            list(a = updated_stat$stats$lambda_a, c = updated_stat$stats$lambda_c)
-        )
-        res.list <- list.append(res.list, "ustat", updated_stat)
-        # res.list <- list.append(res.list, "proc", proc)
-        res.list[["proc"]] <- proc
     }
     return(res.list)
 }
