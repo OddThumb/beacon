@@ -2,53 +2,43 @@
 % Please edit documentation in R/OSC.R
 \name{get_gwosc_param}
 \alias{get_gwosc_param}
-\title{Retrieve GWOSC event parameters via event-version detail (API v2)}
+\title{Retrieve GWOSC default parameters (+ gps) for one or more events}
 \usage{
-get_gwosc_param(source.names, param, verbose = FALSE)
+get_gwosc_param(source.names, param = "all", verbose = FALSE)
 }
 \arguments{
-\item{source.names}{Character vector of GWOSC event names (e.g. "GW151226").}
+\item{source.names}{Character vector of GWOSC event names (e.g. "GW150914").}
 
-\item{param}{Character or character vector. Field(s) to extract; supports dot notation for nested fields.}
+\item{param}{Either "all" (default) or a character vector of column names to keep.
+Column names must match exactly what the API exposes (e.g. "mass_1_source", "gps").}
 
-\item{verbose}{Logical. If TRUE, print progress messages.}
+\item{verbose}{Logical; if TRUE, print progress messages.}
 }
 \value{
-Named character vector (if single param) or data.frame (if multiple params).
+A data.frame with one row per event. Row names are the input event names.
 }
 \description{
-Query GWOSC API v2 for one or more events and extract specific fields from
-the event-version detail.
+For each event in `source.names`, this function:
+1) GET /api/v2/event-versions/<name>/default-parameters to obtain the
+   canonical astrophysical parameters (e.g., mass_1_source, redshift, ...),
+   and
+2) GET /api/v2/events/<name> to obtain the event GPS time ("gps").
 }
 \details{
-When a single `param` is requested a named character vector is returned.
-When multiple `param`s are requested a data.frame is returned (rows correspond
-to `source.names`).
+It returns a data.frame with one row per event. If `param = "all"`, all
+default-parameter columns plus `gps` are returned. If `param` is a character
+vector of column names, **only existing columns are allowed**; any unknown
+name triggers an error (no automatic renaming or aliasing).
 }
 \examples{
 \dontrun{
-# 1) Single parameter (returns a named character vector)
-#    - get the event 'name' (simple top-level field)
-result1 <- get_gwosc_param("GW151226", param = "name")
-print(result1)
+# 1) All parameters + gps for a single event
+get_gwosc_param("GW150914", "all")
 
-# 2) Multiple parameters (returns a data.frame)
-#    - request name, catalog and gps for several events
-result2 <- get_gwosc_param(c("GW151226", "GW150914"), param = c("name", "catalog", "gps"))
-print(result2)
+# 2) All parameters + gps for multiple events
+get_gwosc_param(c("GW150914", "GW151012"), "all")
 
-# 3) Nested parameter using dot-notation (event-version parameters)
-#    - chirp mass mean (example nested path; actual keys can vary)
-cm <- get_gwosc_param("GW151226", param = "parameters.chirp_mass.mean")
-print(cm)
-
-# 4) If you don't remember exact parameter names, list available keys first:
-#    - list_gwosc_param() returns a character vector of known parameter keys
-available_params <- list_gwosc_param()
-head(available_params)
-
-# 5) Verbose mode to see progress messages (helpful for debugging)
-res_verbose <- get_gwosc_param(c("GW151226", "GW150914"), param = "name", verbose = TRUE)
+# 3) Select only a few parameters (must exist exactly)
+get_gwosc_param("GW150914", c("mass_1_source", "mass_2_source", "gps"))
 }
-
 }
