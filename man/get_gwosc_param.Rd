@@ -4,7 +4,7 @@
 \alias{get_gwosc_param}
 \title{Retrieve GWOSC event parameters via event-version detail (API v2)}
 \usage{
-get_gwosc_param(source.names, param = "all", verbose = FALSE)
+get_gwosc_param(source.names, param, verbose = FALSE)
 }
 \arguments{
 \item{source.names}{Character vector of GWOSC event names (e.g. "GW151226").}
