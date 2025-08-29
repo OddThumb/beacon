@@ -371,44 +371,53 @@ get_gwosc_param <- function(name, param = "all") {
     }
 }
 
-#' Download dataset/strain-file for a GWOSC event (robust v2 logic)
+#' Download dataset/strain-file for a GWOSC event (v2, sampling.freq-aware)
 #'
 #' For a given GW event name (e.g. "GW150914") and detector (e.g. "H1"),
-#' try several GWOSC v2 endpoints in a sensible order to locate a matching
-#' strain-file URL and download it.
+#' this function tries several GWOSC v2 endpoints in a sensible order to find
+#' a matching strain-file URL and download it. Among multiple candidates, it
+#' prioritizes the one whose sample rate is closest to \code{sampling.freq}.
 #'
 #' The function attempts (in order):
 #'  1. /api/v2/events/<EVENT>/strain-files
-#'  2. /api/v2/events/<EVENT> -> choose latest version -> /event-versions/<EVENT>-vN/strain-files
-#'  3. /api/v2/event-versions/<EVENT>/dataset  -> use dataset$strain_files_url
+#'  2. /api/v2/events/<EVENT> -> latest version -> /event-versions/<EVENT>-vN/strain-files
+#'  3. /api/v2/event-versions/<EVENT>/dataset -> use \code{dataset$strain_files_url}
 #'
-#' It filters candidates by detector and file.format and chooses the best match
-#' (nearest gps_start when available). If load=TRUE and the file is HDF5, the
-#' function returns a `ts` object (and optionally removes the file).
+#' If \code{load=TRUE} and the file is HDF5, the function returns a \code{ts}
+#' object by delegating to \code{read_H5(file, sampling.freq, dq.level)}.
 #'
 #' @param event_name Character. GWOSC event name, e.g. "GW150914".
 #' @param det Character. Detector name, e.g. "H1".
 #' @param path Character. Directory to save file (created if missing).
 #' @param file.format Character. "hdf5" (default), "gwf", or "txt".
+#' @param sampling.freq Numeric scalar (Hz). Desired sampling frequency used to
+#'   prioritize candidates. Default \code{4096}.
 #' @param timeout Integer. Download timeout seconds (default 300).
-#' @param load Logical. If TRUE and hdf5, load file as `ts` and return it.
-#' @param remove Logical. If load=TRUE and remove=TRUE, delete file after loading.
+#' @param load Logical. If TRUE and HDF5, load via \code{read_H5()} and return a \code{ts}.
+#' @param remove Logical. If \code{load=TRUE} and \code{remove=TRUE}, delete file after loading.
 #' @param verbose Logical. Print progress messages.
-#' @return If load=FALSE, normalized path to downloaded file. If load=TRUE, a `ts` object.
+#'
+#' @return If \code{load=FALSE}, normalized path to downloaded file (character).
+#'         If \code{load=TRUE} and HDF5, a \code{ts} object from \code{read_H5()}.
 #' @export
 download_event <- function(event_name,
                            det,
                            path = ".",
                            file.format = "hdf5",
+                           sampling.freq = 4096,
                            timeout = 300,
                            load = FALSE,
                            remove = FALSE,
                            verbose = TRUE) {
     if (!curl::has_internet()) stop("No internet connection")
     if (missing(event_name) || missing(det)) stop("event_name and det must be provided")
+    if (!is.numeric(sampling.freq) || length(sampling.freq) != 1L || is.na(sampling.freq) || sampling.freq <= 0) {
+        stop("`sampling.freq` must be a positive numeric scalar (Hz).")
+    }
     if (!dir.exists(path)) dir.create(path, recursive = TRUE)
 
-    # small helper: GET JSON defensively
+    # [ Helpers ]
+    # Defensive JSON fetcher
     fetch_json <- function(url, verbose_local = FALSE) {
         if (verbose_local) message("  -> GET ", url)
         res <- httr::GET(url, httr::user_agent("R (gwosc client)"))
@@ -426,23 +435,22 @@ download_event <- function(event_name,
         list(ok = TRUE, status = res$status, json = js)
     }
 
-    # try endpoints in order and record attempted URLs for diagnostics
+    # Try endpoints in order
     tried_urls <- character(0)
     sf_results <- NULL
 
-    # 1) Try event-level strain-files
+    # 1) Event-level strain-files
     ev_sf_url <- sprintf("https://gwosc.org/api/v2/events/%s/strain-files", utils::URLencode(event_name, reserved = TRUE))
     tried_urls <- c(tried_urls, ev_sf_url)
     if (verbose) message("> Trying event-level strain-files: ", ev_sf_url)
     r1 <- fetch_json(ev_sf_url, verbose_local = verbose)
     if (isTRUE(r1$ok) && !is.null(r1$json)) {
-        # results may be top-level or under $results
-        if ("results" %in% names(r1$json)) sf_results <- r1$json$results else sf_results <- r1$json
+        sf_results <- if ("results" %in% names(r1$json)) r1$json$results else r1$json
     } else {
         if (verbose) message("|> event-level request failed (status=", r1$status, "). Will try versions/dataset.")
     }
 
-    # 2) If none, try event -> versions -> event-version strain-files
+    # 2) Event -> versions -> chosen version -> strain-files
     if (is.null(sf_results) || (is.list(sf_results) && length(sf_results) == 0)) {
         ev_url <- sprintf("https://gwosc.org/api/v2/events/%s", utils::URLencode(event_name, reserved = TRUE))
         tried_urls <- c(tried_urls, ev_url)
@@ -453,16 +461,10 @@ download_event <- function(event_name,
         } else {
             versions <- r2$json$versions
             if (!is.null(versions) && length(versions) > 0) {
-                # extract numeric version where possible
-                vnums <- vapply(versions, function(v) {
-                    if (!is.null(v$version)) {
-                        return(as.integer(v$version))
-                    }
-                    NA_integer_
-                }, integer(1))
+                vnums <- vapply(versions, function(v) if (!is.null(v$version)) as.integer(v$version) else NA_integer_, integer(1))
                 chosen_idx <- if (all(is.na(vnums))) 1L else which.max(vnums)
                 chosen_ver <- versions[[chosen_idx]]
-                # try direct strain_files_url on chosen version if present
+
                 if (!is.null(chosen_ver$strain_files_url) && nzchar(as.character(chosen_ver$strain_files_url))) {
                     sf_url <- as.character(chosen_ver$strain_files_url)
                     tried_urls <- c(tried_urls, sf_url)
@@ -472,7 +474,7 @@ download_event <- function(event_name,
                         sf_results <- if ("results" %in% names(r3$json)) r3$json$results else r3$json
                     }
                 }
-                # else try detail_url + "/strain-files" or constructed event-versions url
+
                 if (is.null(sf_results)) {
                     detail_url <- if (!is.null(chosen_ver$detail_url) && nzchar(as.character(chosen_ver$detail_url))) {
                         as.character(chosen_ver$detail_url)
@@ -498,15 +500,13 @@ download_event <- function(event_name,
         }
     }
 
-    # 3) If still none, try dataset endpoint (event-version dataset)
+    # 3) Event-version dataset -> strain_files_url
     if (is.null(sf_results) || (is.list(sf_results) && length(sf_results) == 0)) {
-        # try /api/v2/event-versions/<EVENT>/dataset  (note: user code used this)
         ds_url <- sprintf("https://gwosc.org/api/v2/event-versions/%s/dataset", utils::URLencode(event_name, reserved = TRUE))
         tried_urls <- c(tried_urls, ds_url)
         if (verbose) message("> Trying event-version dataset URL: ", ds_url)
         r5 <- fetch_json(ds_url, verbose_local = verbose)
         if (isTRUE(r5$ok) && !is.null(r5$json)) {
-            # dataset may contain 'strain_files_url'
             if (!is.null(r5$json$strain_files_url) && nzchar(as.character(r5$json$strain_files_url))) {
                 sf_url3 <- as.character(r5$json$strain_files_url)
                 tried_urls <- c(tried_urls, sf_url3)
@@ -523,13 +523,12 @@ download_event <- function(event_name,
         }
     }
 
-    # If still no results, error with diagnostics
+    # No results at all
     if (is.null(sf_results) || length(sf_results) == 0) {
         stop("No strain-files entries found for event '", event_name, "'. Tried URLs:\n", paste(tried_urls, collapse = "\n"))
     }
 
-    # coerce to data.frame if possible (sf_results may already be data.frame)
-    sf_df <- NULL
+    # Coerce to data.frame & normalize columns
     if (is.data.frame(sf_results)) {
         sf_df <- as.data.frame(sf_results, stringsAsFactors = FALSE)
     } else if (is.list(sf_results)) {
@@ -537,13 +536,10 @@ download_event <- function(event_name,
     } else {
         stop("Unexpected shape for strain-files response.")
     }
-
     if (nrow(sf_df) == 0) stop("No strain-file records after coercion for event ", event_name)
 
-    # normalize common column names
     if (!"gps_start" %in% colnames(sf_df) && "start" %in% colnames(sf_df)) sf_df$gps_start <- sf_df$start
     if (!"detector" %in% colnames(sf_df) && "detectors" %in% colnames(sf_df)) {
-        # detectors may be array; coerce to single detector string if needed
         sf_df$detector <- sapply(sf_df$detectors, function(x) {
             if (is.null(x)) {
                 return(NA_character_)
@@ -558,7 +554,15 @@ download_event <- function(event_name,
         })
     }
 
-    # find url field per file.format
+    # Derive sample_rate_hz (prefer kHz fields if present)
+    sr_hz <- rep(NA_real_, nrow(sf_df))
+    if ("sample_rate_kHz" %in% names(sf_df)) sr_hz <- as.numeric(sf_df$sample_rate_kHz) * 1000
+    if ("sample_rate_khz" %in% names(sf_df)) sr_hz <- ifelse(is.na(sr_hz), as.numeric(sf_df$sample_rate_khz) * 1000, sr_hz)
+    if ("sample_rate" %in% names(sf_df)) sr_hz <- ifelse(is.na(sr_hz), suppressWarnings(as.numeric(sf_df$sample_rate)), sr_hz)
+    if ("sampleRate" %in% names(sf_df)) sr_hz <- ifelse(is.na(sr_hz), suppressWarnings(as.numeric(sf_df$sampleRate)), sr_hz)
+    sf_df$sample_rate_hz <- sr_hz
+
+    # Determine URL field
     url_field <- switch(tolower(file.format),
         "hdf5" = "hdf5_url",
         "gwf"  = "gwf_url",
@@ -571,62 +575,30 @@ download_event <- function(event_name,
         if (length(found) > 0) url_field <- found[1] else stop("No download URL field found in strain-files records.")
     }
 
-    # filter by detector
+    # Filter/prioritize by detector and sampling.freq
+
     cand <- sf_df
     if (!is.null(det)) {
         cand <- cand[as.character(cand$detector) == as.character(det), , drop = FALSE]
     }
-
     if (nrow(cand) == 0) stop("No strain-file entries for detector=", det, " for event ", event_name)
 
-    # prefer candidates matching duration & sample-rate if such columns exist
-    # normalize sample_rate column names
-    sample_cols <- intersect(c("sample_rate_kHz", "sample_rate_khz", "sample_rate", "sampleRate"), colnames(cand))
-    duration_cols <- intersect(c("duration", "file_duration"), colnames(cand))
-
-    # if multiple candidates, choose best by (1) exact duration match (if available), (2) nearest gps_start to dataset gps_start (if present)
-    chosen_idx <- 1L
-    if (nrow(cand) > 1) {
-        # filter by duration if available
-        if (length(duration_cols) > 0) {
-            dur_vals <- as.integer(cand[[duration_cols[1]]])
-            target_dur <- if (!is.null(r5) && isTRUE(r5$ok) && !is.null(r5$json$duration)) as.integer(r5$json$duration) else NA_integer_
-            # but user didn't pass dur param; we prefer any exact duration if available (event dataset usually has duration)
-            exact_idx <- which(!is.na(dur_vals) & !is.na(target_dur) & dur_vals == target_dur)
-            if (length(exact_idx) > 0) {
-                chosen_idx <- exact_idx[1]
-            } else {
-                # else prefer the first; will refine with gps proximity if possible
-                chosen_idx <- 1L
-            }
-        }
-        # refine by gps_start proximity if event dataset gps_start available
-        if ("gps_start" %in% colnames(cand)) {
-            # try to take event dataset gps_start from earlier dataset JSON if present
-            ds_gps <- NULL
-            # try to extract ds_gps from r5$json (dataset) or r2$json (event)
-            if (exists("r5") && is.list(r5) && isTRUE(r5$ok) && !is.null(r5$json$gps_start)) ds_gps <- as.integer(r5$json$gps_start)
-            if (exists("r1") && is.list(r1) && isTRUE(r1$ok) && is.null(ds_gps)) {
-                # maybe event-level had gps? skip
-            }
-            # if ds_gps not available, try to use first candidate gps as tie-breaker
-            if (!is.null(ds_gps) && !is.na(ds_gps)) {
-                gps_vals <- as.integer(cand$gps_start)
-                diffs <- abs(gps_vals - ds_gps)
-                chosen_idx <- which.min(diffs)
-            } else {
-                # fallback: pick the candidate with smallest absolute difference to its own median (stable pick)
-                gps_vals <- as.integer(cand$gps_start)
-                na_idx <- is.na(gps_vals)
-                if (all(na_idx)) {
-                    chosen_idx <- chosen_idx
-                } else {
-                    chosen_idx <- which.min(abs(gps_vals - median(gps_vals, na.rm = TRUE)))
-                }
-            }
-        }
+    # Prefer closest sample rate to sampling.freq (if sample rates known)
+    if (any(!is.na(cand$sample_rate_hz))) {
+        known <- !is.na(cand$sample_rate_hz)
+        diffs <- abs(cand$sample_rate_hz[known] - sampling.freq)
+        nearest <- cand$sample_rate_hz[known][which.min(diffs)]
+        keep <- cand$sample_rate_hz == nearest
+        cand <- cand[ifelse(is.na(keep), FALSE, keep), , drop = FALSE]
     }
+    if (nrow(cand) == 0) stop("No strain-file entries after sampling.freq prioritization for event ", event_name)
 
+    # If multiple, refine by gps_start proximity (stable pick)
+    chosen_idx <- 1L
+    if (nrow(cand) > 1 && "gps_start" %in% colnames(cand)) {
+        gps_vals <- suppressWarnings(as.integer(cand$gps_start))
+        if (all(!is.na(gps_vals))) chosen_idx <- which.min(abs(gps_vals - median(gps_vals)))
+    }
     chosen_row <- cand[chosen_idx, , drop = FALSE]
 
     file_url <- as.character(chosen_row[[url_field]])
@@ -643,32 +615,18 @@ download_event <- function(event_name,
     utils::download.file(url = file_url, destfile = destfile, quiet = FALSE)
     options(timeout = original.timeout)
 
+    # Load via read_H5 if requested
     if (load) {
         if (tolower(file.format) != "hdf5") stop("'load=TRUE' only supported for hdf5 files")
-        tmp <- hdf5r::h5file(filename = destfile, mode = "r")
-        tstart <- tmp[["meta"]]$open(name = "GPSstart")$read()
-        Data <- tmp[["strain"]]$open(name = "Strain")$read()
-        tmp$close_all()
-        freq <- 4096
-        if (length(sample_cols) > 0) {
-            # sample_cols might be kHz: convert if necessary
-            s <- chosen_row[[sample_cols[1]]]
-            if (!is.null(s) && !is.na(s)) {
-                s_num <- as.numeric(s)
-                # if numeric and small (4/16) treat as kHz; if larger treat as Hz
-                if (s_num %in% c(4, 16)) freq <- as.integer(s_num * 1000) else if (s_num > 1000) freq <- as.integer(s_num)
-            }
-        }
-        Data <- ts(Data, start = tstart, frequency = freq)
-        attr(Data, "source.name") <- event_name
+        res <- read_H5(destfile, sampling.freq = sampling.freq, dq.level = "all")
         if (remove) {
             file.remove(destfile)
             if (verbose) message("|> removed ", destfile)
         }
-        return(Data)
+        return(res)
     }
 
-    return(normalizePath(destfile))
+    normalizePath(destfile)
 }
 
 # Segments----

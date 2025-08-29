@@ -2,13 +2,14 @@
 % Please edit documentation in R/OSC.R
 \name{download_event}
 \alias{download_event}
-\title{Download dataset/strain-file for a GWOSC event (robust v2 logic)}
+\title{Download dataset/strain-file for a GWOSC event (v2, sampling.freq-aware)}
 \usage{
 download_event(
   event_name,
   det,
   path = ".",
   file.format = "hdf5",
+  sampling.freq = 4096,
   timeout = 300,
   load = FALSE,
   remove = FALSE,
@@ -24,29 +25,33 @@ download_event(
 
 \item{file.format}{Character. "hdf5" (default), "gwf", or "txt".}
 
+\item{sampling.freq}{Numeric scalar (Hz). Desired sampling frequency used to
+prioritize candidates. Default \code{4096}.}
+
 \item{timeout}{Integer. Download timeout seconds (default 300).}
 
-\item{load}{Logical. If TRUE and hdf5, load file as `ts` and return it.}
+\item{load}{Logical. If TRUE and HDF5, load via \code{read_H5()} and return a \code{ts}.}
 
-\item{remove}{Logical. If load=TRUE and remove=TRUE, delete file after loading.}
+\item{remove}{Logical. If \code{load=TRUE} and \code{remove=TRUE}, delete file after loading.}
 
 \item{verbose}{Logical. Print progress messages.}
 }
 \value{
-If load=FALSE, normalized path to downloaded file. If load=TRUE, a `ts` object.
+If \code{load=FALSE}, normalized path to downloaded file (character).
+        If \code{load=TRUE} and HDF5, a \code{ts} object from \code{read_H5()}.
 }
 \description{
 For a given GW event name (e.g. "GW150914") and detector (e.g. "H1"),
-try several GWOSC v2 endpoints in a sensible order to locate a matching
-strain-file URL and download it.
+this function tries several GWOSC v2 endpoints in a sensible order to find
+a matching strain-file URL and download it. Among multiple candidates, it
+prioritizes the one whose sample rate is closest to \code{sampling.freq}.
 }
 \details{
 The function attempts (in order):
  1. /api/v2/events/<EVENT>/strain-files
- 2. /api/v2/events/<EVENT> -> choose latest version -> /event-versions/<EVENT>-vN/strain-files
- 3. /api/v2/event-versions/<EVENT>/dataset  -> use dataset$strain_files_url
+ 2. /api/v2/events/<EVENT> -> latest version -> /event-versions/<EVENT>-vN/strain-files
+ 3. /api/v2/event-versions/<EVENT>/dataset -> use \code{dataset$strain_files_url}
 
-It filters candidates by detector and file.format and chooses the best match
-(nearest gps_start when available). If load=TRUE and the file is HDF5, the
-function returns a `ts` object (and optionally removes the file).
+If \code{load=TRUE} and the file is HDF5, the function returns a \code{ts}
+object by delegating to \code{read_H5(file, sampling.freq, dq.level)}.
 }
