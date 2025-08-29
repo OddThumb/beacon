@@ -52,9 +52,11 @@ plot_spectro(
 
 \item{title}{Title of the plot.}
 
-\item{specScale}{Show colorbar for spectrogram.}
+\item{specScale}{Logical; Show colorbar for spectrogram.}
 
-\item{specXlabel, }{specYlabel Show axis labels for spectrogram.}
+\item{specXlabel}{Logical; Show x-axis label for spectrogram.}
+
+\item{specYlabel}{Logical; Show y-axis label for spectrogram.}
 
 \item{specGrid}{Show grid lines ("x", "y", "xy").}
 
@@ -66,7 +68,13 @@ plot_spectro(
 
 \item{specScalePos}{Position of colorbar ("ul", "ur", "bl", "br").}
 
-\item{osciLegend, }{osciXlabel, osciYlabel Options for oscillogram.}
+\item{linecolor}{Line color for oscillogram.}
+
+\item{osciLegend}{Logical; Show legends for oscillogram.}
+
+\item{osciXlabel}{Logical; Show x-axis label for oscillogram.}
+
+\item{osciYlabel}{Logical; Show y-axis label for oscillogram.}
 
 \item{stack}{Logical; stack spectrogram and oscillogram (default: TRUE).}
 

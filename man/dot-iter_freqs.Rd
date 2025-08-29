@@ -13,7 +13,7 @@
 
 \item{mismatch}{A numeric. Desired mismatch (e.g., 0.2).}
 
-\item{dur}{A numeric. Duration of the input time series in seconds.}
+\item{duration}{A numeric. Duration of the input time series in seconds.}
 }
 \value{
 A numeric vector of center frequencies (Hz).

@@ -47,7 +47,11 @@ Requires Python environment with \pkg{pycbc} available via \pkg{reticulate}.
 \dontrun{
 hp <- ts(sin(seq(0, 1, length.out = 4096)), start = 1000000000, fs = 4096)
 hc <- ts(cos(seq(0, 1, length.out = 4096)), start = 1000000000, fs = 4096)
-proj <- proj_network(hp, hc, dets = c("H1", "L1"), ra = 1.0, dec = -0.5, pol = 0.0, t_gps = 1126259462)
+proj <- proj_network(hp, hc,
+    dets = c("H1", "L1"),
+    ra = 1.0, dec = -0.5,
+    pol = 0.0, t_gps = 1126259462
+)
 }
 
 }

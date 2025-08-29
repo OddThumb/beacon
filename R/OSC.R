@@ -154,7 +154,9 @@ list_gwosc_event <- function(verbose = FALSE) {
 #'
 #' @return A character vector of parameter names.
 #' @examples
+#' \dontrun{
 #' list_gwosc_param()
+#' }
 #' @seealso \code{\link{get_gwosc_param}}
 #' @export
 list_gwosc_param <- function() {
@@ -187,7 +189,7 @@ list_gwosc_param <- function() {
 #' \itemize{
 #'   \item Selects the latest event version per event name.
 #'   \item Extracts GPS time from event-version details or, if missing, from the
-#'         preferred pipeline parameters (e.g., geocent\_time).
+#'         preferred pipeline parameters (e.g., geocent_time).
 #'   \item Uses only preferred (default) parameter values provided by GWOSC.
 #'   \item Returns absolute values for lower/upper errors.
 #' }
@@ -718,7 +720,7 @@ list_obsrun <- function(verbose = FALSE) {
             if (verbose) {
                 message("Top-level JSON structure:")
                 print(names(json))
-                str(json, max.level = 2)
+                utils::str(json, max.level = 2)
             }
 
             # 'results' may be a list-of-lists or a data.frame (depending on jsonlite options)
@@ -794,7 +796,7 @@ list_detector <- function(obsrun, verbose = FALSE) {
 
             if (verbose) {
                 message("Run JSON structure:")
-                str(json, max.level = 2)
+                utils::str(json, max.level = 2)
             }
 
             # detectors may be present at top-level of this JSON
@@ -840,7 +842,7 @@ list_timelines <- function(obsrun, verbose = FALSE) {
 
     if (verbose) {
         message("Top-level fields: ", paste(names(json), collapse = ", "))
-        str(json, max.level = 2)
+        utils::str(json, max.level = 2)
     }
 
     # results may be data.frame or list
@@ -1015,7 +1017,7 @@ get_timeline <- function(obsrun, timeline, GPSstart, GPSend,
     json <- jsonlite::fromJSON(txt, simplifyVector = FALSE)
     if (verbose) {
         message("Segments JSON fields: ", paste(names(json), collapse = ", "))
-        str(json, max.level = 1)
+        utils::str(json, max.level = 1)
     }
 
     resobj <- if ("results" %in% names(json)) json$results else json
@@ -1068,12 +1070,47 @@ get_timeline <- function(obsrun, timeline, GPSstart, GPSend,
 }
 
 
-#' Filter a files data.frame by timeline segment duty cycle
+#' Filter files by timeline segment duty cycle
 #'
-#' files_df: output of get_segment() containing at least GPSstart, duration (seconds), detector
-#' segs_df: output of get_timeline_segments() containing start, stop, duty_cycle (or NA)
-#' duty.cycle.lwr: threshold in same units as segs_df$duty_cycle (e.g. percent 95)
-#' require_full_coverage: if TRUE require the file interval [GPSstart, GPSstart+duration) to be fully inside a segment
+#' This internal utility checks whether data files (with GPS start times and durations)
+#' are covered by timeline segments with a sufficient duty cycle. It can operate
+#' with or without an explicit `detector` column in the segment table.
+#'
+#' @param files_df A `data.frame` with at least the columns:
+#'   \itemize{
+#'     \item \code{GPSstart} (numeric/integer): GPS start time of the file
+#'     \item \code{duration} (numeric/integer): file length in seconds
+#'     \item \code{detector} (character): detector identifier
+#'     \item \code{url} (character): file URL
+#'   }
+#'   Typically produced by \code{\link{get_segment}()}.
+#' @param segs_df A `data.frame` with at least the columns:
+#'   \itemize{
+#'     \item \code{start}, \code{stop}: GPS start and stop times of the segment
+#'     \item \code{duty_cycle} (numeric, optional): duty cycle in percent; if missing, added with \code{NA}.
+#'     \item \code{detector} (character, optional): if absent, all files are matched to the same segments.
+#'   }
+#'   Typically produced by \code{\link{get_timeline_segments}()}.
+#' @param duty.cycle.lwr Numeric scalar. Lower threshold for duty cycle
+#'   (in the same units as \code{segs_df$duty_cycle}, e.g. 95 for 95\%).
+#'   Defaults to 95.
+#' @param require_full_coverage Logical. If \code{TRUE}, the file interval
+#'   \code{[GPSstart, GPSstart + duration)} must be entirely contained within a segment.
+#'   If \code{FALSE}, partial overlap is sufficient.
+#'
+#' @return A subset of \code{files_df} retaining only the rows that pass
+#'   the duty cycle and coverage check. If no file passes, an empty
+#'   \code{data.frame} with the same columns is returned.
+#'
+#' @details
+#' For each file interval, the function finds all covering segments in \code{segs_df}
+#' (according to \code{require_full_coverage}). If multiple segments overlap,
+#' the maximum duty cycle among them is compared against \code{duty.cycle.lwr}.
+#' Files covered only by segments with \code{NA} duty cycle are rejected.
+#'
+#' @seealso \code{\link{get_segment}}, \code{\link{get_timeline}}
+#'
+#' @keywords internal
 filter_files_by_dutycycle <- function(files_df, segs_df, duty.cycle.lwr = 95, require_full_coverage = TRUE) {
     if (!all(c("GPSstart", "duration", "detector", "url") %in% colnames(files_df))) {
         stop("files_df must contain columns: GPSstart, duration, detector, url")
@@ -1123,7 +1160,6 @@ filter_files_by_dutycycle <- function(files_df, segs_df, duty.cycle.lwr = 95, re
         filtered <- do.call(rbind, filtered_list)
     } else {
         # segs_df has detector column -> perform efficient join-like check
-        library(dplyr)
         filtered_rows <- lapply(split(files_df, files_df$detector), function(files_sub) {
             det <- unique(files_sub$detector)
             segs_sub <- segs_df[segs_df$detector == det, , drop = FALSE]
@@ -1302,7 +1338,7 @@ download_segment <- function(file.df, path,
 
     download.expr <- expr({
         for (i in seq_along(file.df$url)) {
-            download.file(
+            utils::download.file(
                 url = file.df$url[i],
                 destfile = filenames[i],
                 quiet = FALSE

@@ -37,8 +37,9 @@ Applies the full analysis pipeline to a time series: denoising via \code{seqarim
 anomaly detection via \code{anomaly()}, and clustering of anomalies via \code{run_dbscan()}.
 }
 \examples{
+\dontrun{
 # Generate synthetic time series
-fs <- 1024
+fs <- 4096
 t <- seq(0, 1, by = 1 / fs)
 x <- sin(2 * pi * 60 * t) + rnorm(length(t), sd = 0.5)
 ts_obj <- ts(x, start = t[1], frequency = fs)
@@ -49,5 +50,5 @@ params <- config_pipe()
 # Run full analysis architecture
 result <- arch(ts_obj, params)
 head(result)
-
+}
 }

@@ -21,5 +21,7 @@ Wraps a numeric vector into an `fs` class, assigning appropriate attributes
 for frequency-domain analysis.
 }
 \examples{
+\dontrun{
 fs(c(1, 2, 3), df = 0.5)
+}
 }

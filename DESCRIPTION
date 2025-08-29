@@ -1,11 +1,11 @@
 Package: beacon
 Type: Package
-Title: Concise Summary of What the Package Does
+Title: BEACON: Burst Event Anomaly Clustering and Outlier Notification
 Version: 0.0.1
 Date: 2025-07-22
 Authors@R: person("Sangin", "Kim", role = c("aut", "cre"), email = "astrphscst@gmail.com")
-Description: More about what it does (maybe more than one line).
-License: MIT
+Description: BEACON is a fully data-driven pipeline designed to detect unmodeled gravitational wave (GW) transients. By combining sequential autoregressive modeling (seqARIMA) and anomaly clustering, BEACON provides a low-latency and model-agnostic framework for robust burst detection.
+License: GPL (>= 2)
 LinkingTo: Rcpp, RcppParallel
 SystemRequirements: GNU make
 Encoding: UTF-8
@@ -13,12 +13,16 @@ RoxygenNote: 7.3.2
 Imports:
     bspec,
     curl,
+    data.table,
+    dplyr,
     fftw,
-    forecast,
+    foreach,
+    ggplot2,
     ggpubr,
-    gsignal,
     hdf5r,
+    httr,
     insight,
+    jsonlite,
     latex2exp,
     nortest,
     parallel,
@@ -26,17 +30,22 @@ Imports:
     Rcpp (>= 1.1.0), 
     RcppParallel (>= 5.1.9),
     reshape2,
-    request,
-    rlist,
     scales,
     signal,
     tibbletime,
-    tidyverse,
     tseries,
-    tuneR,
     viridis
 Suggests:
+    tidyr,
+    tidyselect,
+    tidyverse,
+    forecast,
+    gsignal,
     reticulate,
     gamlss,
     gamlss.dist,
-    gamlss.add
+    gamlss.add,
+    knitr,
+    rmarkdown,
+    job
+VignetteBuilder: knitr

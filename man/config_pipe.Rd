@@ -7,6 +7,8 @@
 config_pipe(t_batch = 1L, replace = NULL)
 }
 \arguments{
+\item{t_batch}{A time length of batch data (Default is 1 in second).}
+
 \item{replace}{Optional named list to override default values.}
 }
 \value{
@@ -29,10 +31,11 @@ Returns a list of default options for the full anomaly detection and coincidence
 Can be used to initialize parameter settings prior to calling \code{arch()} or \code{pipe()}.
 }
 \examples{
+\dontrun{
 # Get default configuration
 opt <- config_pipe()
 
 # Override specific values
 opt2 <- config_pipe(list(p = 512, q = 10, fl = 16))
-
+}
 }

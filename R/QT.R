@@ -38,7 +38,7 @@ deltam_f <- function(mismatch) {
 #' @param q A numeric. The Q value.
 #' @param frange A numeric vector of length 2. Frequency range (Hz).
 #' @param mismatch A numeric. Desired mismatch (e.g., 0.2).
-#' @param dur A numeric. Duration of the input time series in seconds.
+#' @param duration A numeric. Duration of the input time series in seconds.
 #'
 #' @return A numeric vector of center frequencies (Hz).
 .iter_freqs <- function(q, frange, mismatch, duration) {

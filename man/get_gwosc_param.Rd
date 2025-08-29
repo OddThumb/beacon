@@ -29,7 +29,7 @@ The function automatically:
 \itemize{
   \item Selects the latest event version per event name.
   \item Extracts GPS time from event-version details or, if missing, from the
-        preferred pipeline parameters (e.g., geocent\_time).
+        preferred pipeline parameters (e.g., geocent_time).
   \item Uses only preferred (default) parameter values provided by GWOSC.
   \item Returns absolute values for lower/upper errors.
 }

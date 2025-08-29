@@ -12,7 +12,7 @@
 #' @return None.
 #' @export
 savemsg <- function(msg, ..., file, show = T) {
-    write.table(
+    utils::write.table(
         rbind(msg, ...),
         file = paste_wd(file),
         quote = F,
@@ -129,7 +129,7 @@ sinking <- function(expr, file) {
 #' }
 #' @export
 suppressALL <- function(expr) {
-    invisible(capture.output(suppressMessages(suppressWarnings(expr))))
+    invisible(utils::capture.output(suppressMessages(suppressWarnings(expr))))
 }
 
 
@@ -163,7 +163,7 @@ savetab <- function(
     ...) {
     message(" >>> Saving table in MD format...")
     if (append & !is.null(nsep)) {
-        write.table(
+        utils::write.table(
             paste(rep("-", nsep), collapse = ""),
             file = paste_wd(file),
             quote = F,
@@ -178,7 +178,7 @@ savetab <- function(
         x <- dplyr::relocate(dplyr::mutate(x, `_` = rn), `_`, .before = 1)
     }
 
-    write.table(
+    utils::write.table(
         insight::export_table(
             x,
             digits = paste("signif", signif, sep = ""),
@@ -206,7 +206,7 @@ savetab <- function(
 #' @export
 append.line <- function(x, file, show = T) {
     message(" >>> Appending lines in a file...")
-    write.table(
+    utils::write.table(
         x,
         file = paste_wd(file),
         append = T,
@@ -358,7 +358,7 @@ plot_oscillo_multi <- function(
     }
 
     if (is.null(trange)) {
-        trange <- c(ts.df$time[1], tail(ts.df$time, 1))
+        trange <- c(ts.df$time[1], utils::tail(ts.df$time, 1))
     }
 
     if (!("time" %in% colnames(ts.df))) {
@@ -478,14 +478,18 @@ oscillo_option <- function(ts, tzero = 0, title = NULL) {
 #' @param fres Frequency resolution.
 #' @param logf Logical; log-scale y-axis (default: TRUE).
 #' @param title Title of the plot.
-#' @param specScale Show colorbar for spectrogram.
-#' @param specXlabel, specYlabel Show axis labels for spectrogram.
+#' @param specScale Logical; Show colorbar for spectrogram.
+#' @param specXlabel Logical; Show x-axis label for spectrogram.
+#' @param specYlabel Logical; Show y-axis label for spectrogram.
 #' @param specGrid Show grid lines ("x", "y", "xy").
 #' @param specColorPal Color palette.
 #' @param trans Transformation function applied to spectrogram values.
 #' @param specScaleDir Direction of colorbar.
 #' @param specScalePos Position of colorbar ("ul", "ur", "bl", "br").
-#' @param osciLegend, osciXlabel, osciYlabel Options for oscillogram.
+#' @param linecolor Line color for oscillogram.
+#' @param osciLegend Logical; Show legends for oscillogram.
+#' @param osciXlabel Logical; Show x-axis label for oscillogram.
+#' @param osciYlabel Logical; Show y-axis label for oscillogram.
 #' @param stack Logical; stack spectrogram and oscillogram (default: TRUE).
 #' @param ... Additional arguments passed to \code{ggarrange}.
 #'
@@ -1041,6 +1045,7 @@ plot_lambda <- function(
 #' @param a Scaling factor for significance function (default: 3).
 #' @param legend.position Position of legend inside plot. One of "tr", "tl", "br", "bl".
 #' @param annotate.vals A logical. Annotate values above threshold (default: FALSE).
+#' @param annotate.thresh A numeric. Values will be annotated only if its corresponding probability is smaller than this `annotate.thresh`,
 #'
 #' @return A ggplot object with time-series of coincidence significance.
 #' @export
@@ -1193,7 +1198,7 @@ get_break_rngdgt <- function(x, bin = 0.2) {
 #' @return A ggplot object showing discrete histogram-like point distribution.
 #' @export
 plot_onsource <- function(S.vec, color = "black", shape = 24, binwidth = 0.2) {
-    his <- hist(S.vec, breaks = get_break_rngdgt(S.vec, binwidth), plot = F)
+    his <- graphics::hist(S.vec, breaks = get_break_rngdgt(S.vec, binwidth), plot = F)
     df_ons <- dplyr::filter(
         data.frame(x = his$breaks[-1], y = his$counts),
         y != 0
@@ -1227,7 +1232,7 @@ plot_background <- function(
     factor = 1) {
     # Histogram setup
     rng <- range.width(S.bkg.vec, binwidth)
-    his <- hist(S.bkg.vec, breaks = seq(rng[1], rng[2], binwidth), plot = FALSE)
+    his <- graphics::hist(S.bkg.vec, breaks = seq(rng[1], rng[2], binwidth), plot = FALSE)
 
     # Histogram plot only
     p <- ggplot2::ggplot() +

@@ -29,7 +29,8 @@ The head overlap is given by \code{Mh = max(d) + max(p) + floor(q / 2)},
 and the tail overlap is \code{Mt = floor(q / 2)}.
 }
 \examples{
+\dontrun{
 tr_overlap(d = 1, p = 500, q = 1000)
 tr_overlap(d = 1, p = 500, q = 1000, split = TRUE)
-
+}
 }

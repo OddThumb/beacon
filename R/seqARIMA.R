@@ -19,7 +19,7 @@
 get_MissingValues <- function(ts, ref) {
     NA.idx <- is.na(match(time(ref), time(ts)))
     head.NA.idx <- 1:(which(NA.idx == FALSE)[1] - 1)
-    tail.NA.idx <- (tail(which(NA.idx == FALSE), 1) + 1):length(NA.idx)
+    tail.NA.idx <- (utils::tail(which(NA.idx == FALSE), 1) + 1):length(NA.idx)
 
     NA.times <- time(ref)[NA.idx]
     NA.times.head <- time(ref)[head.NA.idx]
@@ -102,7 +102,7 @@ check_stationary <- function(ts, t.seg = 0.5) {
     chunk.length <- t.seg * sampling.freq
     split.times <- split(time(ts), ceiling(seq_along(ts) / chunk.length))
     split.trs <- lapply(split.times, function(times) {
-        c(head(times, 1), tail(times, 1))
+        c(utils::head(times, 1), utils::tail(times, 1))
     })
     suppressWarnings({
         p.values <- sapply(split.trs, function(tr) {
@@ -134,7 +134,7 @@ check_normality <- function(ts, t.seg = 0.5) {
     chunk.length <- t.seg * sampling.freq
     split.times <- split(time(ts), ceiling(seq_along(ts) / chunk.length))
     split.trs <- lapply(split.times, function(times) {
-        c(head(times, 1), tail(times, 1))
+        c(utils::head(times, 1), utils::tail(times, 1))
     })
     p.values <- sapply(split.trs, function(tr) {
         norm.test(window_to(ts, tr))
@@ -269,19 +269,17 @@ residual <- function(x, ar, numCores = parallel::detectCores()) {
     )
 }
 
-#' AR Burg core (C interface)
-#'
-#' @param x Input series.
-#' @param order.max Maximum AR order.
-#'
-#' @return List with AR coefficient matrix and prediction variances.
+#' AR Burg core (.Call)
+#' @param x numeric vector (time series)
+#' @param order.max integer, maximum AR order
+#' @return list(coefs = p x p numeric matrix, var.pred1 = numeric(p+1), var.pred2 = numeric(p+1))
 #' @export
-C_Burg <- function(x, order.max) {
-    z <- .Call(stats:::C_Burg, x, order.max)
+C.Burg <- function(x, order.max) {
+    z <- C_Burg_beacon(as.double(x), as.integer(order.max))
     list(
-        "coefs" = matrix(z[[1L]], order.max, order.max),
-        "var.pred1" = z[[2L]],
-        "var.pred2" = z[[3L]]
+        coefs     = matrix(z[[1L]], order.max, order.max),
+        var.pred1 = z[[2L]],
+        var.pred2 = z[[3L]]
     )
 }
 
@@ -294,6 +292,7 @@ C_Burg <- function(x, order.max) {
 #' @param demean Whether to subtract the mean.
 #' @param series Series name.
 #' @param var.method Method for innovation variance.
+#' @param numCores An integer. The number of cores for fast embed by C++ (See `embedParallelCpp()`).
 #' @param ... Additional args.
 #'
 #' @return An `ar` object.
@@ -365,7 +364,7 @@ burgar <- function(
 
     xic <- numeric(order.max + 1L)
 
-    z <- .Call(stats:::C_Burg, x, order.max)
+    z <- C.Burg(x, order.max)
     coefs <- matrix(z[[1L]], order.max, order.max)
 
     # partialacf
@@ -602,7 +601,7 @@ plot_aic <- function(ar) {
             ymax = log10(5e3 + ar.order$AIC)
         ) +
 
-        ggplot2::eom_rect(
+        ggplot2::geom_rect(
             ggplot2::aes(
                 xmin = 5,
                 xmax = 500,
@@ -776,6 +775,7 @@ Autoregressive <- function(ts, p, aic = TRUE, verbose = TRUE, ...) {
 #' }
 #'
 #' @examples
+#' \dontrun{
 #' ts_data <- ts(rnorm(100))
 #' ma(ts_data, order = 5)
 #'
@@ -783,7 +783,7 @@ Autoregressive <- function(ts, p, aic = TRUE, verbose = TRUE, ...) {
 #' if (requireNamespace("bspec", quietly = TRUE)) {
 #'     ma(ts_data, order = 11, w.func = bspec::tukeywindow, r = 0.3)
 #' }
-#'
+#' }
 #' @export
 ma <- function(ts, order, na.rm = T, w.func = NULL, ...) {
     if (!is.null(w.func)) {
@@ -914,6 +914,7 @@ MovingAverage <- function(ts, q, verbose = TRUE, ...) {
 #' @return A `ts` object with processed output and meta attributes.
 #'
 #' @examples
+#' \dontrun{
 #' # Generate noisy sinusoid
 #' set.seed(123)
 #' fs <- 1024
@@ -940,7 +941,7 @@ MovingAverage <- function(ts, q, verbose = TRUE, ...) {
 #'
 #' # View AR model metadata
 #' attr(out, "meta")$ar_feat
-#'
+#' }
 #' @export
 seqarima <- function(
     ts,

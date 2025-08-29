@@ -123,6 +123,7 @@ write_H5 <- function(file, tsobj, meta.list = NULL) {
 #' \code{"level"} attribute (e.g. \code{"all"} vs specific level) is preserved.
 #'
 #' @examples
+#' \dontrun{
 #' # Example for univariate case:
 #' res <- read_H5("example.h5", sampling.freq = 1000, dq.level = "CAT1")
 #' dq_ts <- get_dqmask(res)
@@ -132,7 +133,7 @@ write_H5 <- function(file, tsobj, meta.list = NULL) {
 #' res2 <- read_H5("example_multi.h5", sampling.freq = 1000, dq.level = "all")
 #' dq_ts2 <- get_dqmask(res2)
 #' str(dq_ts2)
-#'
+#' }
 #' @export
 get_dqmask <- function(obj) {
     dq <- attr(obj, "dqmask", exact = TRUE)

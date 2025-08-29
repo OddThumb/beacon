@@ -10,6 +10,18 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// C_Burg_beacon
+SEXP C_Burg_beacon(SEXP xS, SEXP pS);
+RcppExport SEXP _beacon_C_Burg_beacon(SEXP xSSEXP, SEXP pSSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xS(xSSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type pS(pSSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_Burg_beacon(xS, pS));
+    return rcpp_result_gen;
+END_RCPP
+}
 // embedParallelCpp
 NumericMatrix embedParallelCpp(NumericVector x, int dimension, int numCores);
 RcppExport SEXP _beacon_embedParallelCpp(SEXP xSEXP, SEXP dimensionSEXP, SEXP numCoresSEXP) {
@@ -25,6 +37,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_beacon_C_Burg_beacon", (DL_FUNC) &_beacon_C_Burg_beacon, 2},
     {"_beacon_embedParallelCpp", (DL_FUNC) &_beacon_embedParallelCpp, 3},
     {NULL, NULL, 0}
 };

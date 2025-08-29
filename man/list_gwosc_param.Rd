@@ -14,7 +14,9 @@ Returns a character vector of all valid parameter names
 that can be used in \code{\link{get_gwosc_param}}.
 }
 \examples{
+\dontrun{
 list_gwosc_param()
+}
 }
 \seealso{
 \code{\link{get_gwosc_param}}

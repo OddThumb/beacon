@@ -54,6 +54,7 @@ Coincidence analysis is conducted using \code{\link{coincide_P0}} when all detec
 }
 \examples{
 # Run detection pipeline over current batch
+\dontrun{
 pipe_net(batch_net, prev_batch, res.net, coinc.lis, arch_params)
-
+}
 }

@@ -66,5 +66,7 @@ Adapted from \code{anomalize::anomalize()}:
 \url{https://business-science.github.io/anomalize/reference/anomalize.html}
 }
 \seealso{
-\code{\link{iqr2}}, \code{\link{gesd2}}, \code{\link{anomalize::anomalize}}, \code{\link{anomalize::iqr}}, \code{\link{anomalize::gesd}}
+\code{\link[anomalize]{anomalize}},
+  \code{\link[anomalize]{iqr}},
+  \code{\link[anomalize]{gesd}}
 }

@@ -9,7 +9,9 @@
 #'
 #' @return An object of class `fs`, with additional attributes such as `delta_f` and `flen`.
 #' @examples
+#' \dontrun{
 #' fs(c(1, 2, 3), df = 0.5)
+#' }
 #' @export
 fs <- function(x, df, sampling.freq) {
     attr(x, "assoc.ts") <- NULL
@@ -100,24 +102,25 @@ deltaf <- function(x) {
 print.fs <- function(x, ..., ts.info = TRUE) {
     # Title of printing
     cat("Frequency Series:\n")
-    cat("├─ delta_f = ", attr(x, "delta_f"), "\n", sep = "")
+    cat("\u251c\u2500 delta_f = ", attr(x, "delta_f"), "\n", sep = "")
     # If ts.info=TRUE, print "Associated ts info", too.
     if (
-        !ts.info |
-            (is.null(attr(x, "assoc.ts")) &
-                is.null(attr(x, "ti")) &
-                is.null(attr(x, "sampling.freq")))
+        !ts.info || (
+            is.null(attr(x, "assoc.ts")) &&
+                is.null(attr(x, "ti")) &&
+                is.null(attr(x, "sampling.freq"))
+        )
     ) {
-        cat("└─ flen    = ", attr(x, "flen"), "\n", sep = "")
+        cat("\u2514\u2500 flen    = ", attr(x, "flen"), "\n", sep = "")
     } else {
-        cat("├─ flen    = ", attr(x, "flen"), "\n", sep = "")
-        cat("└─ Associated ts info:\n")
+        cat("\u251c\u2500 flen    = ", attr(x, "flen"), "\n", sep = "")
+        cat("\u2514\u2500 Associated ts info:\n")
         # Associated ts object name
-        cat('   ├─ ts name       = "', attr(x, "assoc.ts"), '"\n', sep = "")
+        cat('   \u251c\u2500 ts name       = "', attr(x, "assoc.ts"), '"\n', sep = "")
         # Associated ts object start time
-        cat("   ├─ Start time    = ", attr(x, "ti"), "\n", sep = "")
+        cat("   \u251c\u2500 Start time    = ", attr(x, "ti"), "\n", sep = "")
         # Associated ts object sampling frequency
-        cat("   └─ sampling.freq = ", attr(x, "sampling.freq"), "\n", sep = "")
+        cat("   \u2514\u2500 sampling.freq = ", attr(x, "sampling.freq"), "\n", sep = "")
     }
 
     # Default printing
@@ -140,7 +143,7 @@ str.fs <- function(x) {
         "df=",
         format(signif(attr(x, "delta_f"), 3), scientific = T)
     )
-    str.default <- capture.output(str(`class<-`(x, "complex")))
+    str.default <- utils::capture.output(utils::str(`class<-`(x, "complex")))
 
     cat(paste0(class.cat, " (", df.cat, ")", str.default[1], "\n"))
 }
@@ -149,7 +152,8 @@ str.fs <- function(x) {
 #'
 #' Visualizes the amplitude (or PSD) of an `fs` object using ggplot2.
 #'
-#' @param fs An `fs` object.
+#' @param x An `fs` object.
+#' @param ... Additional arguments in `geom_line()`.
 #' @param log A character ("x", "y", or "xy") to control log scaling.
 #' @param xlab A character. X-axis label (default: "Frequency (Hz)").
 #' @param ylab A character. Y-axis label (default: "PSD").
@@ -160,7 +164,7 @@ str.fs <- function(x) {
 #'
 #' @export
 plot.fs <- function(
-    fs,
+    x, ...,
     log = "xy",
     xlab = "Frequency (Hz)",
     ylab = "PSD",
@@ -168,15 +172,15 @@ plot.fs <- function(
     ylim = NULL) {
     base_breaks <- function(n = 10) {
         function(x) {
-            axisTicks(log10(range(x, na.rm = TRUE)), log = TRUE, n = n)
+            grDevices::axisTicks(log10(range(x, na.rm = TRUE)), log = TRUE, n = n)
         }
     }
 
-    fs_df <- data.frame("freqs" = freqs(fs), "PSD" = abs(fs))
+    fs_df <- data.frame("freqs" = freqs(x), "PSD" = abs(x))
 
     # plot
     pl <- ggplot2::ggplot(fs_df, ggplot2::aes(x = freqs, y = PSD)) +
-        ggplot2::geom_line()
+        ggplot2::geom_line(...)
 
     # log axis vs lin axis
     if ("x" %in% strsplit(log, split = "")[[1]]) {
@@ -254,6 +258,7 @@ fs_df <- function(fs) {
 #'
 #' @param fs A `fs` object (frequency series).
 #' @param ref A vector with elements: `c(min, max)`, indicating index range.
+#' @param frange A vector of frequency range. `frange[1]` can be larger than `ref[1]` and `frange[2]` can be smaller than `ref[2]`, so as to consider the specific frequency range.
 #' @return A cropped `fs` object with preserved attributes.
 #'
 #' @export

@@ -5,7 +5,7 @@
 #' @return A numeric vector of length `n`.
 #' @export
 ti <- function(ts, n = 1) {
-    head(c(time(ts)), n)
+    utils::head(c(time(ts)), n)
 }
 
 #' Final timestamp of a time series
@@ -15,7 +15,7 @@ ti <- function(ts, n = 1) {
 #' @return A numeric vector of length `n`.
 #' @export
 tf <- function(ts, n = 1) {
-    tail(c(time(ts)), n)
+    utils::tail(c(time(ts)), n)
 }
 
 #' Time range of a time series
@@ -258,7 +258,7 @@ to_ts <- function(fs, start = 0, delta_t = NULL) {
 #' @export
 window_to <- function(ts, ref) {
     if (is.ts(ref)) {
-        window(ts, start = time(ref)[1], end = tail(time(ref), 1))
+        window(ts, start = time(ref)[1], end = utils::tail(time(ref), 1))
     } else if (length(ref) == 2) {
         window(ts, start = ref[1], end = ref[2])
     } else {
@@ -273,7 +273,7 @@ window_to <- function(ts, ref) {
 #' @return A cropped time series (`ts`) object.
 #' @export
 crop_to <- function(ts, ind.range) {
-    if (class(ts) != "ts") {
+    if (inherits(ts, "ts")) {
         stop("(InputError) Given data is not a class of `ts`")
     }
     if (!all(ind.range %in% seq_along(ts))) {
@@ -303,7 +303,7 @@ cyclic <- function(x, n) {
     if (n == 0) {
         x
     } else {
-        c(tail(x, -n), head(x, n))
+        c(utils::tail(x, -n), utils::head(x, n))
     }
 }
 
@@ -391,6 +391,7 @@ resize <- function(ts, nlen) {
 #'
 #' @return A padded `ts` object.
 #' @examples
+#' \dontrun{
 #' # Original signal from t = 0 with 0.1 sec spacing
 #' x <- ts(c(1, 2, 3, 4, 5), deltat = 0.1)
 #'
@@ -400,7 +401,7 @@ resize <- function(ts, nlen) {
 #' time(padded)
 #' # shows inserted values at 1.3, 1.4, ..., 1.7
 #' padded
-#'
+#' }
 #' @export
 pad <- function(ts, tstart, tend, at = 0) {
     sampling_freq <- frequency(ts)

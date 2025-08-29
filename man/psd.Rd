@@ -2,20 +2,44 @@
 % Please edit documentation in R/MF.R
 \name{psd}
 \alias{psd}
-\title{Generate PSD}
+\title{Generate power spectral density (PSD) estimate using Welch’s method}
 \usage{
 psd(ts, sl = 4, fl = 15, delf = NULL, window_func = bspec::hannwindow)
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{ts}{A `ts` time-series object.}
 
-\item{sl}{A numeric. A segment length.}
+\item{sl}{Numeric scalar. Segment length for the Welch method (in time units).}
 
-\item{fl}{A numeric. Low-frequency-cutoff.}
+\item{fl}{Numeric scalar. Low-frequency cutoff for filter truncation (same units as `ts` frequency).}
+
+\item{delf}{Numeric scalar, optional. Frequency resolution; defaults to `frequency(ts) / length(ts)`.}
+
+\item{window_func}{Function. A window function (e.g., `bspec::hannwindow`) to shape each segment prior to PSD estimation.}
 }
 \value{
-A `fs` object. PSD with interpolated and inverse-spectrum-truncated.
+An object of class `fs`, representing the estimated PSD:
+  - rows by frequency bin,
+  - interpolated to align with spacing `delf`, and
+  - processed via inverse-spectrum truncation at `fl`.
 }
 \description{
-Generate PSD
+This function mimics the PSD estimation behavior of PyCBC's `welch()` function
+within an R pipeline. It computes the power spectral density of a time series
+by applying the Welch method—segmenting the data, applying a window, taking
+the median average (robust to outliers), then interpolating and truncating the
+inverse spectrum as needed.
+}
+\details{
+The core estimation pipeline proceeds as follows:
+  1. **Welch PSD estimation** using `bspec::welchPSD()`, with median averaging for robustness.
+  2. Conversion to `fs` object via `fs()`, pairing PSD power with `frequency(ts)`-based spacing.
+  3. **Interpolation** to uniform frequency resolution via `interp_psd()`.
+  4. **Inverse-spectrum truncation** using `inv_spec_trunc_psd()` to filter low-frequency components below `fl` using the provided window.
+
+This mirrors the standard usage of `pycbc.psd.welch()` for PSD estimates via Welch’s method in gravitational-wave data analysis. [oai_citation:1‡PyCBC](https://pycbc.org/pycbc/latest/html/_modules/pycbc/psd/estimate.html)
+}
+\references{
+- PyCBC `welch()` documentation via Sphinx: input parameters `seg_len`, `window`, `avg_method='median'`, returns `FrequencySeries` PSD estimates. [oai_citation:2‡PyCBC](https://pycbc.org/pycbc/latest/html/_modules/pycbc/psd/estimate.html)
+ - General methodology: Welch (1967), The use of smoothing windows in spectral estimation.
 }

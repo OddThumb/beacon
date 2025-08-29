@@ -10,6 +10,8 @@ cutoff_to(fs, ref, frange = NULL)
 \item{fs}{A `fs` object (frequency series).}
 
 \item{ref}{A vector with elements: `c(min, max)`, indicating index range.}
+
+\item{frange}{A vector of frequency range. `frange[1]` can be larger than `ref[1]` and `frange[2]` can be smaller than `ref[2]`, so as to consider the specific frequency range.}
 }
 \value{
 A cropped `fs` object with preserved attributes.

@@ -40,18 +40,19 @@ proc2ts <- function(
 #' @return A named list of lists, with outer and inner structure transposed.
 #'
 #' @examples
+#' \dontrun{
 #' x <- list(
 #'     list(a = 1, b = 2),
 #'     list(a = 3, b = 4)
 #' )
 #' transpose.List(x)
 #' # Returns: list(a = list(1, 3), b = list(2, 4))
-#'
+#' }
 #' @export
 transpose.List <- function(list) {
     # Same result as purrr::list_transpose()
     # But shorter codes
-    nm <- el(lapply(list, names))
+    nm <- methods::el(lapply(list, names))
     setNames(lapply(nm, \(i) lapply(list, "[[", i)), nm)
 }
 
@@ -74,9 +75,10 @@ transpose.List <- function(list) {
 #' and the tail overlap is \code{Mt = floor(q / 2)}.
 #'
 #' @examples
+#' \dontrun{
 #' tr_overlap(d = 1, p = 500, q = 1000)
 #' tr_overlap(d = 1, p = 500, q = 1000, split = TRUE)
-#'
+#' }
 #' @export
 tr_overlap <- function(d, p, q, split = F) {
     max.d <- max(d)
@@ -236,9 +238,6 @@ batching.network <- function(ts.list, t_bch = 1, has.DQ = TRUE) {
 #'   base period; increase to widen the seasonal window.
 #' @param fac.t Numeric scalar. Multiplier for the trend window
 #'   (default \code{1.5}). Typical Twitter heuristic is \code{~1.5–2.0}.
-#' @param alpha Numeric in \code{(0,1)}. Significance level for the ACF
-#'   white-noise CI (default \code{0.05}). Currently used to fetch the
-#'   95\% CI embedded in \code{ACF()}.
 #' @param max_period_frac Numeric in \code{(0,1)}. Upper bound on the candidate
 #'   period as a fraction of the series duration (default \code{0.2}). Prevents
 #'   overly long periods relative to batch length.
@@ -333,33 +332,6 @@ decomp_freq_trend <- function(ts,
 
     list(freq = freq_sec, trend = trend_sec)
 }
-
-## Within anomaly()
-#
-## Estimate decomposition windows for frequency and trend components
-##
-## Heuristically determines suitable window lengths for frequency and trend #decomposition
-## based on the autocorrelation function (ACF) of a time series.
-##
-## @param ts A \code{ts} object. Input time series.
-## @param fac.f A numeric multiplier (default: 2) for the frequency window #length.
-## @param fac.t A numeric multiplier (default: 10) for the trend window #length.
-##
-## -- Minimal replacement: data-driven windows for twitter decomposition #----------
-# decomp_freq_trend <- function(ts, fac.f = 2, fac.t = 10, ...) {
-#    acf.test <- ACF(ts, lag.max = 4096, plot = F, ...)
-#
-#    # trend criteria
-#    trend.crit <- acf.test$lag[tail(
-#        which(abs(acf.test$acf) > acf.test$white95ci),
-#        1L
-#    )]
-#
-#    decomp_freq <- c(trunc(tail(acf.test$lag, 1L) * trend.crit * fac.f)) #  2 #times longer than the trend criteria
-#    decomp_trend <- c(trunc(tail(acf.test$lag, 1L) * trend.crit * fac.t)) # #10 times longer than the trend criteria
-#
-#    return(list("freq" = decomp_freq, "trend" = decomp_trend))
-# }
 
 #' Identify outliers using robust IQR method
 #'
@@ -674,7 +646,9 @@ gesd2 <- function(x, alpha = 0.05, max_anoms = 0.2, verbose = FALSE) {
 #'   \item \strong{GESD}: Generalized Extreme Studentized Deviate test with robust statistics (median, MAD).
 #' }
 #'
-#' @seealso \code{\link{iqr2}}, \code{\link{gesd2}}, \code{\link{anomalize::anomalize}}, \code{\link{anomalize::iqr}}, \code{\link{anomalize::gesd}}
+#' @seealso \code{\link[anomalize]{anomalize}},
+#'   \code{\link[anomalize]{iqr}},
+#'   \code{\link[anomalize]{gesd}}
 #'
 #' @references
 #' Adapted from \code{anomalize::anomalize()}:
@@ -777,10 +751,11 @@ anomalize2 <- function(
 #' @seealso \code{\link{anomalize2}}, \code{\link{iqr2}}, \code{\link{gesd2}}, \code{\link{decomp_freq_trend}}
 #'
 #' @examples
+#' \dontrun{
 #' x <- ts(c(rnorm(100), 10, 15), frequency = 1)
 #' anomaly(x, method = "iqr")
 #' anomaly(x, method = "gesd", scale = 2)
-#'
+#' }
 #' @export
 anomaly <- function(
     ts,
@@ -874,13 +849,14 @@ get_gps <- function(df, ref.ts) {
 #' Clustering is performed on a 2D space defined by the specified time and value columns.
 #'
 #' @examples
+#' \dontrun{
 #' df <- tibble::tibble(
 #'     GPS = seq(0, 1, length.out = 100),
 #'     observed = sin(2 * pi * GPS * 5),
 #'     anomaly = sample(0:1, 100, replace = TRUE)
 #' )
 #' run_dbscan(df, eps = 0.02)
-#'
+#' }
 #' @export
 run_dbscan <- function(
     anom.df,
@@ -933,8 +909,9 @@ run_dbscan <- function(
 #'   }
 #'
 #' @examples
+#' \dontrun{
 #' # Generate synthetic time series
-#' fs <- 1024
+#' fs <- 4096
 #' t <- seq(0, 1, by = 1 / fs)
 #' x <- sin(2 * pi * 60 * t) + rnorm(length(t), sd = 0.5)
 #' ts_obj <- ts(x, start = t[1], frequency = fs)
@@ -945,7 +922,7 @@ run_dbscan <- function(
 #' # Run full analysis architecture
 #' result <- arch(ts_obj, params)
 #' head(result)
-#'
+#' }
 #' @export
 arch <- function(ts, params) {
     N_anom_max <- ifelse(is.null(params$nmax), 100, params$nmax)
@@ -987,6 +964,7 @@ arch <- function(ts, params) {
 #' Returns a list of default options for the full anomaly detection and coincidence pipeline.
 #' Can be used to initialize parameter settings prior to calling \code{arch()} or \code{pipe()}.
 #'
+#' @param t_batch A time length of batch data (Default is 1 in second).
 #' @param replace Optional named list to override default values.
 #'
 #' @return A named list containing the following fields:
@@ -1004,12 +982,13 @@ arch <- function(ts, params) {
 #' }
 #'
 #' @examples
+#' \dontrun{
 #' # Get default configuration
 #' opt <- config_pipe()
 #'
 #' # Override specific values
 #' opt2 <- config_pipe(list(p = 512, q = 10, fl = 16))
-#'
+#' }
 #' @export
 config_pipe <- function(t_batch = 1L, replace = NULL) {
     def <- list(
@@ -1063,10 +1042,11 @@ config_pipe <- function(t_batch = 1L, replace = NULL) {
 #' @return A new concatenated `ts` object.
 #'
 #' @examples
+#' \dontrun{
 #' prev <- ts(1:100, start = 0, frequency = 1)
 #' curr <- ts(101:105, start = 100, frequency = 1)
 #' concat_ts(prev, curr, n_former = 5)
-#'
+#' }
 #' @export
 concat_ts <- function(prev = NA, curr, n_former) {
     if (all(is.na(prev))) {
@@ -1846,9 +1826,10 @@ coincide_P0 <- function(
 #'
 #' @examples
 #' # Run detection pipeline over current batch
+#' \dontrun{
 #' pipe_net(batch_net, prev_batch, res.net, coinc.lis, arch_params)
-#'
-#' @import foreach
+#' }
+#' @importFrom foreach %dopar% foreach
 #' @import data.table
 #' @export
 pipe_net <- function(
@@ -1900,9 +1881,9 @@ pipe_net <- function(
             cat(paste0(
                 "  ",
                 det,
-                ": λ_c=",
+                ": \u03bb_c=",
                 sprintf("%.03f", dplyr::last(res.net[[det]]$lamb)$c),
-                ", λ_N=",
+                ", \u03bb_N=",
                 sprintf("%.03f", dplyr::last(res.net[[det]]$lamb)$a),
                 "\n"
             ))
@@ -1994,7 +1975,6 @@ stream <- function(
     }
 
     # foreach config
-    library(foreach)
     cl <- snow::makeCluster(length(dets), type = "SOCK", outfile = "/dev/null")
     invisible({
         snow::clusterEvalQ(cl, expr = {
@@ -2006,7 +1986,6 @@ stream <- function(
     # Run pipe_net()
     eta.lis <- vector(mode = "list", length = length(batch_set))
     for (ibch in seq_along(batch_set)) {
-        # for (ibch in 1:5) { #
         cat(paste0(ibch, "-th batch:\n"))
         eta.lis[[ibch]] <- system.time({
             pipe_net(
@@ -2099,14 +2078,14 @@ reproduce <- function(
     window_size = NULL,
     overlap = NULL) {
     # Find which batch is going to be reproduced
-    if (hasArg(batch_at) & is.null(batch_num)) {
+    if (methods::hasArg(batch_at) & is.null(batch_num)) {
         # Find which batch contains the time "batch_at"
         logical_bch <- sapply(batch_set, function(bnet_i) {
             trange <- tr(bnet_i[[1]])
             batch_at >= trange[1] & batch_at <= trange[2]
         })
         i_bch <- which(logical_bch)
-    } else if (hasArg(batch_num) & is.null(batch_at)) {
+    } else if (methods::hasArg(batch_num) & is.null(batch_at)) {
         i_bch <- batch_num
     } else {
         stop("InputError) Only one of batch_at and batch_num must be provided")

@@ -5,7 +5,8 @@
 \title{Plot a Frequency Series (`fs`)}
 \usage{
 \method{plot}{fs}(
-  fs,
+  x,
+  ...,
   log = "xy",
   xlab = "Frequency (Hz)",
   ylab = "PSD",
@@ -14,7 +15,9 @@
 )
 }
 \arguments{
-\item{fs}{An `fs` object.}
+\item{x}{An `fs` object.}
+
+\item{...}{Additional arguments in `geom_line()`.}
 
 \item{log}{A character ("x", "y", or "xy") to control log scaling.}
 

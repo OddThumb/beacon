@@ -21,8 +21,9 @@ Concatenates the tail of the previous time series (`prev`) with the current one 
 keeping only the last `n_former` points from `prev`. If `prev` is `NA`, returns `curr` unchanged.
 }
 \examples{
+\dontrun{
 prev <- ts(1:100, start = 0, frequency = 1)
 curr <- ts(101:105, start = 100, frequency = 1)
 concat_ts(prev, curr, n_former = 5)
-
+}
 }

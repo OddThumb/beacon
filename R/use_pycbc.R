@@ -80,7 +80,7 @@ travel_times <- function(dets = c("H1", "L1", "V1", "K1")) {
 #' @export
 get_light_travel_time_among_detectors <- function(dets) {
     Detector <- reticulate::import("pycbc.detector")$Detector
-    det_combn <- t(combn(dets, 2))
+    det_combn <- t(utils::combn(dets, 2))
     dt_combn <- c()
     dt_names <- c()
     for (ii in 1:nrow(det_combn)) {
@@ -213,11 +213,11 @@ get_antpatt <- function(det, ra, dec, pol, t_gps, online = F) {
     set_iers(online)
     if (
         any(
-            !hasArg(det),
-            !hasArg(ra),
-            !hasArg(dec),
-            !hasArg(pol),
-            !hasArg(t_gps)
+            !methods::hasArg(det),
+            !methods::hasArg(ra),
+            !methods::hasArg(dec),
+            !methods::hasArg(pol),
+            !methods::hasArg(t_gps)
         )
     ) {
         stop(
@@ -314,7 +314,11 @@ proj_wave <- function(hp, hc, det, ra, dec, pol, t_gps) {
 #' \dontrun{
 #' hp <- ts(sin(seq(0, 1, length.out = 4096)), start = 1000000000, fs = 4096)
 #' hc <- ts(cos(seq(0, 1, length.out = 4096)), start = 1000000000, fs = 4096)
-#' proj <- proj_network(hp, hc, dets = c("H1", "L1"), ra = 1.0, dec = -0.5, pol = 0.0, t_gps = 1126259462)
+#' proj <- proj_network(hp, hc,
+#'     dets = c("H1", "L1"),
+#'     ra = 1.0, dec = -0.5,
+#'     pol = 0.0, t_gps = 1126259462
+#' )
 #' }
 #'
 #' @export
@@ -503,11 +507,11 @@ get_wave <- function(
     # Antenna Pattern
     if (
         all(
-            !hasArg(det),
-            !hasArg(ra),
-            !hasArg(dec),
-            !hasArg(pol),
-            !hasArg(t_gps)
+            !methods::hasArg(det),
+            !methods::hasArg(ra),
+            !methods::hasArg(dec),
+            !methods::hasArg(pol),
+            !methods::hasArg(t_gps)
         )
     ) {
         message("> Waveform WITHOUT the antenna pattern is calculated")

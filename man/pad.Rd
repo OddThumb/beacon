@@ -22,6 +22,7 @@ A padded `ts` object.
 Pad a `ts` with zeros
 }
 \examples{
+\dontrun{
 # Original signal from t = 0 with 0.1 sec spacing
 x <- ts(c(1, 2, 3, 4, 5), deltat = 0.1)
 
@@ -31,5 +32,5 @@ padded <- pad(x, tstart = 1, tend = 2, at = 1.3)
 time(padded)
 # shows inserted values at 1.3, 1.4, ..., 1.7
 padded
-
+}
 }

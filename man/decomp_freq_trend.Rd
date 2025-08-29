@@ -34,10 +34,6 @@ overly long periods relative to batch length.}
 
 \item{use_fft_fallback}{Logical. If \code{TRUE} (default), use
 \code{stats::spec.pgram} fallback when no significant ACF peak is found.}
-
-\item{alpha}{Numeric in \code{(0,1)}. Significance level for the ACF
-white-noise CI (default \code{0.05}). Currently used to fetch the
-95\% CI embedded in \code{ACF()}.}
 }
 \value{
 A list with two numeric scalars (in **seconds**):

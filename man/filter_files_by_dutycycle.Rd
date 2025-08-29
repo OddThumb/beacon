@@ -2,7 +2,7 @@
 % Please edit documentation in R/OSC.R
 \name{filter_files_by_dutycycle}
 \alias{filter_files_by_dutycycle}
-\title{Filter a files data.frame by timeline segment duty cycle}
+\title{Filter files by timeline segment duty cycle}
 \usage{
 filter_files_by_dutycycle(
   files_df,
@@ -11,9 +11,49 @@ filter_files_by_dutycycle(
   require_full_coverage = TRUE
 )
 }
-\description{
-files_df: output of get_segment() containing at least GPSstart, duration (seconds), detector
-segs_df: output of get_timeline_segments() containing start, stop, duty_cycle (or NA)
-duty.cycle.lwr: threshold in same units as segs_df$duty_cycle (e.g. percent 95)
-require_full_coverage: if TRUE require the file interval [GPSstart, GPSstart+duration) to be fully inside a segment
+\arguments{
+\item{files_df}{A `data.frame` with at least the columns:
+\itemize{
+  \item \code{GPSstart} (numeric/integer): GPS start time of the file
+  \item \code{duration} (numeric/integer): file length in seconds
+  \item \code{detector} (character): detector identifier
+  \item \code{url} (character): file URL
 }
+Typically produced by \code{\link{get_segment}()}.}
+
+\item{segs_df}{A `data.frame` with at least the columns:
+\itemize{
+  \item \code{start}, \code{stop}: GPS start and stop times of the segment
+  \item \code{duty_cycle} (numeric, optional): duty cycle in percent; if missing, added with \code{NA}.
+  \item \code{detector} (character, optional): if absent, all files are matched to the same segments.
+}
+Typically produced by \code{\link{get_timeline_segments}()}.}
+
+\item{duty.cycle.lwr}{Numeric scalar. Lower threshold for duty cycle
+(in the same units as \code{segs_df$duty_cycle}, e.g. 95 for 95\%).
+Defaults to 95.}
+
+\item{require_full_coverage}{Logical. If \code{TRUE}, the file interval
+\code{[GPSstart, GPSstart + duration)} must be entirely contained within a segment.
+If \code{FALSE}, partial overlap is sufficient.}
+}
+\value{
+A subset of \code{files_df} retaining only the rows that pass
+  the duty cycle and coverage check. If no file passes, an empty
+  \code{data.frame} with the same columns is returned.
+}
+\description{
+This internal utility checks whether data files (with GPS start times and durations)
+are covered by timeline segments with a sufficient duty cycle. It can operate
+with or without an explicit `detector` column in the segment table.
+}
+\details{
+For each file interval, the function finds all covering segments in \code{segs_df}
+(according to \code{require_full_coverage}). If multiple segments overlap,
+the maximum duty cycle among them is compared against \code{duty.cycle.lwr}.
+Files covered only by segments with \code{NA} duty cycle are rejected.
+}
+\seealso{
+\code{\link{get_segment}}, \code{\link{get_timeline}}
+}
+\keyword{internal}

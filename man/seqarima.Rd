@@ -63,6 +63,7 @@ Applies a pipeline of (1) differencing, (2) autoregressive (AR) modeling,
 (3) moving average smoothing, and (4) band-pass filtering.
 }
 \examples{
+\dontrun{
 # Generate noisy sinusoid
 set.seed(123)
 fs <- 1024
@@ -89,5 +90,5 @@ plot(out, main = "Output of seqarima()")
 
 # View AR model metadata
 attr(out, "meta")$ar_feat
-
+}
 }

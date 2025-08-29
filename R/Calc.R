@@ -94,7 +94,7 @@ uniqdif <- function(x, tol = 1e-8) {
 #' @return A vector of the first n elements.
 #' @export
 vi <- function(x, n = 1) {
-    head(x, n)
+    utils::head(x, n)
 }
 
 #' Simple final value extractor
@@ -104,7 +104,7 @@ vi <- function(x, n = 1) {
 #' @return A vector of the last n elements.
 #' @export
 vf <- function(x, n = 1) {
-    tail(x, n)
+    utils::tail(x, n)
 }
 
 #' Simple range extractor
@@ -193,7 +193,7 @@ geo_mean <- function(x, na.rm = T) {
 #'
 #' @return A numeric vector with values floored to specified digits.
 #' @export
-floor.digit <- function(x, digits = 0) {
+floor_digit <- function(x, digits = 0) {
     floor(x * 10^digits) / 10^digits
 }
 
@@ -206,7 +206,7 @@ floor.digit <- function(x, digits = 0) {
 #'
 #' @return A numeric vector with values ceiled to specified digits.
 #' @export
-ceiling.digit <- function(x, digits = 0) {
+ceiling_digit <- function(x, digits = 0) {
     ceiling(x * 10^digits) / 10^digits
 }
 
@@ -231,15 +231,15 @@ oom <- function(x) {
 #'
 #' @return A numeric vector of length 2 indicating start and end of adjusted range.
 #' @export
-range.width <- function(x, width) {
+range_width <- function(x, width) {
     rng <- range(x)
-    rng[1] <- floor.digit(
-        floor.digit(rng[1], digits = -oom(width)) / width,
+    rng[1] <- floor_digit(
+        floor_digit(rng[1], digits = -oom(width)) / width,
         digits = 0
     ) *
         width
-    rng[2] <- ceiling.digit(
-        ceiling.digit(rng[2], digits = -oom(width)) / width,
+    rng[2] <- ceiling_digit(
+        ceiling_digit(rng[2], digits = -oom(width)) / width,
         digits = 0
     ) *
         width

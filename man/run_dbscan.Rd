@@ -42,11 +42,12 @@ Only rows where \code{anomaly == 1L} are included in the clustering.
 Clustering is performed on a 2D space defined by the specified time and value columns.
 }
 \examples{
+\dontrun{
 df <- tibble::tibble(
     GPS = seq(0, 1, length.out = 100),
     observed = sin(2 * pi * GPS * 5),
     anomaly = sample(0:1, 100, replace = TRUE)
 )
 run_dbscan(df, eps = 0.02)
-
+}
 }

@@ -18,11 +18,12 @@ effectively performing a transpose operation. It is equivalent to `purrr::list_t
 but implemented in base R with minimal code.
 }
 \examples{
+\dontrun{
 x <- list(
     list(a = 1, b = 2),
     list(a = 3, b = 4)
 )
 transpose.List(x)
 # Returns: list(a = list(1, 3), b = list(2, 4))
-
+}
 }

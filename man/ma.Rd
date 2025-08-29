@@ -32,6 +32,7 @@ Applies a centered moving average filter to a time series using either a rectang
 of length \code{order}.
 }
 \examples{
+\dontrun{
 ts_data <- ts(rnorm(100))
 ma(ts_data, order = 5)
 
@@ -39,5 +40,5 @@ ma(ts_data, order = 5)
 if (requireNamespace("bspec", quietly = TRUE)) {
     ma(ts_data, order = 11, w.func = bspec::tukeywindow, r = 0.3)
 }
-
+}
 }

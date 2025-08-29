@@ -12,6 +12,8 @@ inv_spec_trunc_psd(fs, max_filter_len, fl = NULL, trunc_method = NULL)
 \item{max_filter_len}{A numeric.}
 
 \item{fl}{A numeric. Low-frequency-cutoff.}
+
+\item{trunc_method}{A window function. For truncating spectrum.}
 }
 \description{
 Inverse Spectrum Truncation

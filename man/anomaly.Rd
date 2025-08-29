@@ -54,10 +54,11 @@ estimates the trend period automatically via ACF using \code{\link{decomp_freq_t
 to the remainder component only. The final result is then recomposed using \code{time_recompose()}.
 }
 \examples{
+\dontrun{
 x <- ts(c(rnorm(100), 10, 15), frequency = 1)
 anomaly(x, method = "iqr")
 anomaly(x, method = "gesd", scale = 2)
-
+}
 }
 \seealso{
 \code{\link{anomalize2}}, \code{\link{iqr2}}, \code{\link{gesd2}}, \code{\link{decomp_freq_trend}}

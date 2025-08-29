@@ -26,6 +26,8 @@ plot_coinc(
 \item{legend.position}{Position of legend inside plot. One of "tr", "tl", "br", "bl".}
 
 \item{annotate.vals}{A logical. Annotate values above threshold (default: FALSE).}
+
+\item{annotate.thresh}{A numeric. Values will be annotated only if its corresponding probability is smaller than this `annotate.thresh`,}
 }
 \value{
 A ggplot object with time-series of coincidence significance.
