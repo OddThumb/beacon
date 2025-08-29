@@ -11,11 +11,11 @@
 #' @return Character vector of event names.
 #' @examples
 #' \dontrun{
-#' events <- list_event()
+#' events <- list_gwosc_event()
 #' head(events)
 #' }
 #' @export
-list_event <- function(verbose = FALSE) {
+list_gwosc_event <- function(verbose = FALSE) {
     if (!requireNamespace("httr", quietly = TRUE)) stop("Please install the 'httr' package.")
     if (!requireNamespace("jsonlite", quietly = TRUE)) stop("Please install the 'jsonlite' package.")
 
