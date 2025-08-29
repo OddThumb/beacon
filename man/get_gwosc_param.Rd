@@ -10,17 +10,19 @@ get_gwosc_param(name, param = "all")
 \item{name}{Character vector. One or more event names (e.g., \code{c("GW150914","GW151012")}).}
 
 \item{param}{Character. Either \code{"all"} (default) for all parameters, or a
-single column name from \code{list_gwosc_param()}.}
+character vector of column names from \code{list_gwosc_param()} to select.
+The output preserves the order of \code{param}.}
 }
 \value{
 A \code{data.frame} whose rows correspond to the requested events
   (in the same order as \code{name}) and whose columns are either all allowed
-  parameters or a single requested parameter. Row names are set to event names.
+  parameters or the requested subset. Row names are set to event names.
 }
 \description{
 This function queries the GWOSC API v2 to fetch, for each requested event,
 the latest-event-version GPS time and the preferred (default) physical
-parameters. It returns either all allowed parameters or a single parameter.
+parameters. It returns either all allowed parameters or a user-specified
+subset of parameter columns.
 }
 \details{
 The function automatically:
@@ -36,6 +38,9 @@ The function automatically:
 \dontrun{
 # All parameters for multiple events
 get_gwosc_param(c("GW150914", "GW151012"), "all")
+
+# A subset of parameters (order preserved)
+get_gwosc_param("GW150914", c("luminosity_distance", "GPS"))
 
 # Single parameter for multiple events
 get_gwosc_param(c("GW150914", "GW151012"), "chirp_mass_source")

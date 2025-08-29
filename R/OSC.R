@@ -180,7 +180,8 @@ list_gwosc_param <- function() {
 #'
 #' This function queries the GWOSC API v2 to fetch, for each requested event,
 #' the latest-event-version GPS time and the preferred (default) physical
-#' parameters. It returns either all allowed parameters or a single parameter.
+#' parameters. It returns either all allowed parameters or a user-specified
+#' subset of parameter columns.
 #'
 #' The function automatically:
 #' \itemize{
@@ -193,16 +194,20 @@ list_gwosc_param <- function() {
 #'
 #' @param name Character vector. One or more event names (e.g., \code{c("GW150914","GW151012")}).
 #' @param param Character. Either \code{"all"} (default) for all parameters, or a
-#'   single column name from \code{list_gwosc_param()}.
+#'   character vector of column names from \code{list_gwosc_param()} to select.
+#'   The output preserves the order of \code{param}.
 #'
 #' @return A \code{data.frame} whose rows correspond to the requested events
 #'   (in the same order as \code{name}) and whose columns are either all allowed
-#'   parameters or a single requested parameter. Row names are set to event names.
+#'   parameters or the requested subset. Row names are set to event names.
 #'
 #' @examples
 #' \dontrun{
 #' # All parameters for multiple events
 #' get_gwosc_param(c("GW150914", "GW151012"), "all")
+#'
+#' # A subset of parameters (order preserved)
+#' get_gwosc_param("GW150914", c("luminosity_distance", "GPS"))
 #'
 #' # Single parameter for multiple events
 #' get_gwosc_param(c("GW150914", "GW151012"), "chirp_mass_source")
@@ -217,15 +222,21 @@ get_gwosc_param <- function(name, param = "all") {
     # Allowed parameter names (physical params + GPS)
     allowed <- list_gwosc_param()
 
-    # Validate `param`
-    if (!(length(param) == 1L && is.character(param))) {
-        stop("`param` must be a single character value (e.g., 'all' or a column name).")
+    # Validate `param`: can be "all" or a character vector subset of allowed
+    if (!is.character(param) || length(param) < 1L) {
+        stop("`param` must be 'all' or a character vector of column names.")
     }
-    if (!identical(param, "all") && !param %in% allowed) {
-        stop("`param` must be 'all' or one of: ", paste(allowed, collapse = ", "))
+    if (!identical(param, "all")) {
+        unknown <- setdiff(param, allowed)
+        if (length(unknown) > 0L) {
+            stop(
+                "Unknown parameter(s): ", paste(unknown, collapse = ", "),
+                ". Use list_gwosc_param() to see valid names."
+            )
+        }
     }
 
-    # Helpers (HTTP/JSON and coercions)
+    # --- Helpers (HTTP/JSON and coercions) ---
     get_json <- function(url) jsonlite::fromJSON(url, simplifyVector = TRUE)
     enc <- function(x) utils::URLencode(x, reserved = TRUE)
     base <- "https://gwosc.org/api/v2"
@@ -236,7 +247,7 @@ get_gwosc_param <- function(name, param = "all") {
         suppressWarnings(as.numeric(x)[1L])
     }
 
-    # Core worker: fetch one event and return a one-row data.frame
+    # --- Core worker: fetch one event and return a one-row data.frame ---
     .get_one <- function(one_name) {
         # Initialize an empty row with all allowed columns (filled with NA)
         make_empty_row <- function() {
@@ -344,11 +355,16 @@ get_gwosc_param <- function(name, param = "all") {
     rows <- lapply(name, .get_one)
     out <- do.call(rbind, rows)
 
-    # Apply `param` filter at the end to preserve row order
+    # Apply `param` selection at the end to preserve row order and column order
     if (identical(param, "all")) {
         return(out)
     } else {
-        if (!param %in% names(out)) out[[param]] <- NA_real_
+        # Ensure all requested columns exist; if not, create NA columns
+        missing_cols <- setdiff(param, names(out))
+        if (length(missing_cols) > 0L) {
+            for (mc in missing_cols) out[[mc]] <- NA_real_
+        }
+        # Return only requested columns, in the requested order
         return(out[, param, drop = FALSE])
     }
 }
