@@ -176,56 +176,56 @@ list_gwosc_param <- function() {
     )
 }
 
-#' Get GWOSC parameters for a specific GW event
+#' Get GWOSC parameters for one or more GW events
 #'
-#' This function queries the GWOSC API v2 to fetch the latest version of
-#' gravitational-wave event metadata and its preferred physical parameters.
-#' It returns either all available parameters or a user-specified parameter.
+#' This function queries the GWOSC API v2 to fetch, for each requested event,
+#' the latest-event-version GPS time and the preferred (default) physical
+#' parameters. It returns either all allowed parameters or a single parameter.
 #'
 #' The function automatically:
 #' \itemize{
-#'   \item Selects the latest event version.
-#'   \item Extracts GPS time from event-version details or parameter lists.
+#'   \item Selects the latest event version per event name.
+#'   \item Extracts GPS time from event-version details or, if missing, from the
+#'         preferred pipeline parameters (e.g., geocent\_time).
 #'   \item Uses only preferred (default) parameter values provided by GWOSC.
 #'   \item Returns absolute values for lower/upper errors.
 #' }
 #'
-#' @param name Character. Event name (e.g. `"GW150914"`, `"GW190521"`).
-#' @param param Character. Either `"all"` (default) to return all parameters,
-#'   or one of the valid parameter names from \code{list_gwosc_param()}.
+#' @param name Character vector. One or more event names (e.g., \code{c("GW150914","GW151012")}).
+#' @param param Character. Either \code{"all"} (default) for all parameters, or a
+#'   single column name from \code{list_gwosc_param()}.
 #'
-#' @return A \code{data.frame} with one row named by the event.
-#'   \itemize{
-#'     \item If \code{param = "all"}, all allowed parameters are returned.
-#'     \item If \code{param} is a single column name, only that parameter is returned.
-#'   }
+#' @return A \code{data.frame} whose rows correspond to the requested events
+#'   (in the same order as \code{name}) and whose columns are either all allowed
+#'   parameters or a single requested parameter. Row names are set to event names.
 #'
 #' @examples
 #' \dontrun{
-#' # List all available parameter names
-#' list_gwosc_param()
+#' # All parameters for multiple events
+#' get_gwosc_param(c("GW150914", "GW151012"), "all")
 #'
-#' # Fetch all parameters for GW150914
-#' get_gwosc_param("GW150914", "all")
-#'
-#' # Fetch only the chirp mass source for GW150914
-#' get_gwosc_param("GW150914", "chirp_mass_source")
+#' # Single parameter for multiple events
+#' get_gwosc_param(c("GW150914", "GW151012"), "chirp_mass_source")
 #' }
 #'
 #' @seealso \code{\link{list_gwosc_param}}
 #' @export
 get_gwosc_param <- function(name, param = "all") {
-    stopifnot(is.character(name), length(name) == 1L)
+    stopifnot(is.character(name), length(name) >= 1L)
     if (!requireNamespace("jsonlite", quietly = TRUE)) stop("Package 'jsonlite' is required.")
 
-    # Allowed parameters
+    # Allowed parameter names (physical params + GPS)
     allowed <- list_gwosc_param()
-    if (!(length(param) == 1L && is.character(param))) stop("`param` must be a single character value.")
+
+    # Validate `param`
+    if (!(length(param) == 1L && is.character(param))) {
+        stop("`param` must be a single character value (e.g., 'all' or a column name).")
+    }
     if (!identical(param, "all") && !param %in% allowed) {
         stop("`param` must be 'all' or one of: ", paste(allowed, collapse = ", "))
     }
 
-    # Helper functions
+    # Helpers (HTTP/JSON and coercions)
     get_json <- function(url) jsonlite::fromJSON(url, simplifyVector = TRUE)
     enc <- function(x) utils::URLencode(x, reserved = TRUE)
     base <- "https://gwosc.org/api/v2"
@@ -236,107 +236,120 @@ get_gwosc_param <- function(name, param = "all") {
         suppressWarnings(as.numeric(x)[1L])
     }
 
-    # 1) Resolve the latest event version
-    ev <- tryCatch(get_json(sprintf("%s/events/%s", base, enc(name))), error = function(e) NULL)
-    if (is.null(ev) || is.null(ev$versions) || length(ev$versions) == 0) {
-        out_cols <- if (identical(param, "all")) allowed else param
-        df0 <- as.data.frame(setNames(replicate(length(out_cols), logical(0)), out_cols))
-        rownames(df0) <- name
-        return(df0)
-    }
-    vdf <- as.data.frame(ev$versions)
-    vmax <- max(as.integer(vdf$version), na.rm = TRUE)
+    # Core worker: fetch one event and return a one-row data.frame
+    .get_one <- function(one_name) {
+        # Initialize an empty row with all allowed columns (filled with NA)
+        make_empty_row <- function() {
+            lst <- setNames(vector("list", length(allowed)), allowed)
+            for (nm in allowed) lst[[nm]] <- NA_real_
+            df <- as.data.frame(lst, check.names = FALSE, optional = TRUE)
+            rownames(df) <- one_name
+            df
+        }
 
-    # 2) Try to extract GPS from event-version details
-    evv <- tryCatch(
-        get_json(sprintf("%s/event-versions/%s-v%d?format=api", base, enc(name), vmax)),
-        error = function(e) NULL
-    )
-    GPS <- NA_real_
-    if (!is.null(evv)) {
-        if (!is.null(evv$gps)) GPS <- as_num(evv$gps)
-        if (is.na(GPS) && !is.null(evv$gps_time)) GPS <- as_num(evv$gps_time)
-    }
+        # 1) Resolve the latest version for this event
+        ev <- tryCatch(get_json(sprintf("%s/events/%s", base, enc(one_name))), error = function(e) NULL)
+        if (is.null(ev) || is.null(ev$versions) || length(ev$versions) == 0) {
+            return(make_empty_row())
+        }
+        vdf <- as.data.frame(ev$versions)
+        vmax <- max(as.integer(vdf$version), na.rm = TRUE)
 
-    # 3) Default parameters (preferred values only)
-    dpar <- tryCatch(
-        get_json(sprintf("%s/event-versions/%s-v%d/default-parameters", base, enc(name), vmax)),
-        error = function(e) NULL
-    )
-    pref <- if (!is.null(dpar) && !is.null(dpar$results)) as.data.frame(dpar$results, stringsAsFactors = FALSE) else NULL
-
-    # 4) If GPS is still NA, try to extract from /parameters (preferred pipelines)
-    if (is.na(GPS)) {
-        parlist <- tryCatch(
-            get_json(sprintf("%s/event-versions/%s-v%d/parameters", base, enc(name), vmax)),
+        # 2) GPS from event-version details (primary)
+        evv <- tryCatch(
+            get_json(sprintf("%s/event-versions/%s-v%d?format=api", base, enc(one_name), vmax)),
             error = function(e) NULL
         )
-        if (!is.null(parlist) && !is.null(parlist$results) && length(parlist$results) > 0) {
-            res <- parlist$results
-            if ("is_preferred" %in% names(res)) res <- res[res$is_preferred %in% TRUE, , drop = FALSE]
-            if (nrow(res) > 0 && "parameters" %in% names(res)) {
-                time_keys <- c("geocent_time", "t_geocent", "tc", "time", "gps", "gps_time")
-                for (i in seq_len(nrow(res))) {
-                    pi <- res$parameters[[i]]
-                    if (is.null(pi)) next
-                    pdf <- as.data.frame(pi, stringsAsFactors = FALSE)
-                    hit <- which(pdf$name %in% time_keys)[1L]
-                    if (!is.na(hit)) {
-                        GPS <- as_num(pdf$best[hit])
-                        if (!is.na(GPS)) break
+        GPS <- NA_real_
+        if (!is.null(evv)) {
+            if (!is.null(evv$gps)) GPS <- as_num(evv$gps)
+            if (is.na(GPS) && !is.null(evv$gps_time)) GPS <- as_num(evv$gps_time)
+        }
+
+        # 3) Preferred/default parameters (used for physical params)
+        dpar <- tryCatch(
+            get_json(sprintf("%s/event-versions/%s-v%d/default-parameters", base, enc(one_name), vmax)),
+            error = function(e) NULL
+        )
+        pref <- if (!is.null(dpar) && !is.null(dpar$results)) as.data.frame(dpar$results, stringsAsFactors = FALSE) else NULL
+
+        # 4) If GPS still NA, try preferred pipelines from /parameters (time-like names)
+        if (is.na(GPS)) {
+            parlist <- tryCatch(
+                get_json(sprintf("%s/event-versions/%s-v%d/parameters", base, enc(one_name), vmax)),
+                error = function(e) NULL
+            )
+            if (!is.null(parlist) && !is.null(parlist$results) && length(parlist$results) > 0) {
+                res <- parlist$results
+                if ("is_preferred" %in% names(res)) res <- res[res$is_preferred %in% TRUE, , drop = FALSE]
+                if (nrow(res) > 0 && "parameters" %in% names(res)) {
+                    time_keys <- c("geocent_time", "t_geocent", "tc", "time", "gps", "gps_time")
+                    for (i in seq_len(nrow(res))) {
+                        pi <- res$parameters[[i]]
+                        if (is.null(pi)) next
+                        pdf <- as.data.frame(pi, stringsAsFactors = FALSE)
+                        hit <- which(pdf$name %in% time_keys)[1L]
+                        if (!is.na(hit)) {
+                            GPS <- as_num(pdf$best[hit])
+                            if (!is.na(GPS)) break
+                        }
                     }
                 }
             }
         }
-    }
 
-    # Helper to pull best/err/unit for a parameter
-    get_triplet <- function(base_name) {
-        if (is.null(pref) || nrow(pref) == 0) {
-            return(list(val = NA_real_, lo = NA_real_, up = NA_real_, unit = ""))
+        # Helper to pull best/err/unit for a parameter from preferred list
+        get_triplet <- function(base_name) {
+            if (is.null(pref) || nrow(pref) == 0) {
+                return(list(val = NA_real_, lo = NA_real_, up = NA_real_, unit = ""))
+            }
+            row <- pref[pref$name == base_name, , drop = FALSE]
+            if (nrow(row) == 0) {
+                return(list(val = NA_real_, lo = NA_real_, up = NA_real_, unit = ""))
+            }
+            val <- as_num(row$best[1L])
+            lo <- abs(as_num(row$lower_error[1L]))
+            up <- abs(as_num(row$upper_error[1L]))
+            unit <- ifelse(is.null(row$unit[1L]) || is.na(row$unit[1L]), "", as.character(row$unit[1L]))
+            list(val = val, lo = lo, up = up, unit = unit)
         }
-        row <- pref[pref$name == base_name, , drop = FALSE]
-        if (nrow(row) == 0) {
-            return(list(val = NA_real_, lo = NA_real_, up = NA_real_, unit = ""))
+
+        # 5) Build one-row data.frame for this event
+        row <- setNames(vector("list", length(allowed)), allowed)
+        for (nm in allowed) row[[nm]] <- NA_real_
+        row[["GPS"]] <- GPS
+
+        bases <- c(
+            "mass_1_source", "mass_2_source", "chi_eff", "total_mass_source",
+            "chirp_mass_source", "chirp_mass", "redshift", "far", "p_astro",
+            "final_mass_source", "network_matched_filter_snr", "luminosity_distance"
+        )
+        for (b in bases) {
+            t <- get_triplet(b)
+            row[[b]] <- t$val
+            lo_nm <- paste0(b, "_lower")
+            up_nm <- paste0(b, "_upper")
+            unit_nm <- paste0(b, "_unit")
+            if (lo_nm %in% allowed) row[[lo_nm]] <- t$lo
+            if (up_nm %in% allowed) row[[up_nm]] <- t$up
+            if (unit_nm %in% allowed) row[[unit_nm]] <- t$unit
         }
-        val <- as_num(row$best[1L])
-        lo <- abs(as_num(row$lower_error[1L]))
-        up <- abs(as_num(row$upper_error[1L]))
-        unit <- ifelse(is.null(row$unit[1L]) || is.na(row$unit[1L]), "", as.character(row$unit[1L]))
-        list(val = val, lo = lo, up = up, unit = unit)
+
+        df <- as.data.frame(row, check.names = FALSE, optional = TRUE)
+        rownames(df) <- one_name
+        df
     }
 
-    # 5) Build one-row output
-    out <- setNames(vector("list", length(allowed)), allowed)
-    for (nm in allowed) out[[nm]] <- NA_real_
-    out[["GPS"]] <- GPS
+    # --- Vectorized over `name` ---
+    rows <- lapply(name, .get_one)
+    out <- do.call(rbind, rows)
 
-    bases <- c(
-        "mass_1_source", "mass_2_source", "chi_eff", "total_mass_source",
-        "chirp_mass_source", "chirp_mass", "redshift", "far", "p_astro",
-        "final_mass_source", "network_matched_filter_snr", "luminosity_distance"
-    )
-    for (b in bases) {
-        t <- get_triplet(b)
-        out[[b]] <- t$val
-        lo_nm <- paste0(b, "_lower")
-        up_nm <- paste0(b, "_upper")
-        unit_nm <- paste0(b, "_unit")
-        if (lo_nm %in% allowed) out[[lo_nm]] <- t$lo
-        if (up_nm %in% allowed) out[[up_nm]] <- t$up
-        if (unit_nm %in% allowed) out[[unit_nm]] <- t$unit
-    }
-
-    df <- as.data.frame(out, check.names = FALSE, optional = TRUE)
-    rownames(df) <- name
-
+    # Apply `param` filter at the end to preserve row order
     if (identical(param, "all")) {
-        return(df)
+        return(out)
     } else {
-        if (!param %in% names(df)) df[[param]] <- NA_real_
-        one <- df[, param, drop = FALSE]
-        rownames(one) <- name
-        return(one)
+        if (!param %in% names(out)) out[[param]] <- NA_real_
+        return(out[, param, drop = FALSE])
     }
 }
 
