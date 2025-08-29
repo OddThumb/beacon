@@ -2,30 +2,20 @@
 % Please edit documentation in R/OSC.R
 \name{list_gwosc_param}
 \alias{list_gwosc_param}
-\title{List available GWOSC event parameter names (API v2)}
+\title{List all available GWOSC parameter names}
 \usage{
-list_gwosc_param(verbose = FALSE)
-}
-\arguments{
-\item{verbose}{Logical. If FALSE (default) return character vector of names;
-if TRUE return a data.frame with columns 'name' and 'description' when
-available.}
+list_gwosc_param()
 }
 \value{
-Character vector of parameter names (verbose=FALSE) or data.frame
-  (verbose=TRUE).
+A character vector of parameter names.
 }
 \description{
-Query the GWOSC API v2 `/default-parameters` endpoint and return the list
-of available parameter names that can be requested from event-version
-details. By default the function returns a character vector of parameter
-keys. If `verbose = TRUE` the function returns a data.frame with name and
-description columns (when available).
+Returns a character vector of all valid parameter names
+that can be used in \code{\link{get_gwosc_param}}.
 }
 \examples{
-\dontrun{
-params <- list_gwosc_param()
-head(params)
-df <- list_gwosc_param(verbose = TRUE)
+list_gwosc_param()
 }
+\seealso{
+\code{\link{get_gwosc_param}}
 }

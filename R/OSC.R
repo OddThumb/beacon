@@ -147,280 +147,197 @@ list_event <- function(verbose = FALSE) {
     return(unique_names)
 }
 
-#' List available GWOSC event parameter names (API v2)
+#' List all available GWOSC parameter names
 #'
-#' Query the GWOSC API v2 `/default-parameters` endpoint and return the list
-#' of available parameter names that can be requested from event-version
-#' details. By default the function returns a character vector of parameter
-#' keys. If `verbose = TRUE` the function returns a data.frame with name and
-#' description columns (when available).
+#' Returns a character vector of all valid parameter names
+#' that can be used in \code{\link{get_gwosc_param}}.
 #'
-#' @param verbose Logical. If FALSE (default) return character vector of names;
-#'   if TRUE return a data.frame with columns 'name' and 'description' when
-#'   available.
-#' @return Character vector of parameter names (verbose=FALSE) or data.frame
-#'   (verbose=TRUE).
+#' @return A character vector of parameter names.
 #' @examples
-#' \dontrun{
-#' params <- list_gwosc_param()
-#' head(params)
-#' df <- list_gwosc_param(verbose = TRUE)
-#' }
+#' list_gwosc_param()
+#' @seealso \code{\link{get_gwosc_param}}
 #' @export
-list_gwosc_param <- function(verbose = FALSE) {
-    if (!requireNamespace("curl", quietly = TRUE)) stop("Please install 'curl' package")
-    if (!requireNamespace("jsonlite", quietly = TRUE)) stop("Please install 'jsonlite' package")
-
-    url <- "https://gwosc.org/api/v2/default-parameters"
-    accept_header <- "application/json"
-
-    h <- curl::new_handle()
-    curl::handle_setheaders(h, "User-Agent" = "curl/8.7.1", "Accept" = accept_header)
-
-    res <- tryCatch(curl::curl_fetch_memory(url, handle = h), error = function(e) e)
-    if (inherits(res, "error")) stop("Network error when contacting GWOSC: ", res$message)
-    status <- res$status
-    body_text <- rawToChar(res$content)
-
-    # If HTML unexpectedly returned, retry without Accept
-    if (grepl("^\\s*<", body_text)) {
-        h2 <- curl::new_handle()
-        curl::handle_setheaders(h2, "User-Agent" = "curl/8.7.1")
-        res2 <- tryCatch(curl::curl_fetch_memory(url, handle = h2), error = function(e) e)
-        if (inherits(res2, "error")) stop("Network error on retry: ", res2$message)
-        status <- res2$status
-        body_text <- rawToChar(res2$content)
-        if (grepl("^\\s*<", body_text)) stop("GWOSC returned HTML instead of JSON for default-parameters endpoint.")
-    }
-
-    if (status >= 400) stop("GWOSC API returned HTTP ", status, " for default-parameters endpoint. Snippet: ", substr(body_text, 1, 400))
-
-    json <- tryCatch(jsonlite::fromJSON(body_text, simplifyVector = FALSE), error = function(e) stop("Failed to parse JSON: ", e$message))
-
-    # locate candidate parameter objects
-    param_objs <- NULL
-    if ("results" %in% names(json) && length(json$results) > 0) {
-        param_objs <- json$results
-    } else if ("data" %in% names(json) && length(json$data) > 0) {
-        param_objs <- json$data
-    } else if ("parameters" %in% names(json) && length(json$parameters) > 0) {
-        param_objs <- json$parameters
-    } else if (is.list(json) && length(json) > 0) {
-        param_objs <- json
-    } else {
-        stop("Unexpected JSON shape from default-parameters endpoint; cannot locate parameter objects.")
-    }
-
-    # Defensive extraction of name & description
-    names_vec <- character(0)
-    desc_vec <- character(0)
-
-    extract_name_desc <- function(po) {
-        # returns list(name=..., desc=...)
-        # if po is character scalar => use it as name
-        if (is.null(po)) {
-            return(NULL)
-        }
-        if (is.character(po) && length(po) == 1) {
-            return(list(name = po, desc = NA_character_))
-        }
-        # if po is atomic vector length>1, take first as name
-        if (is.atomic(po) && length(po) > 0) {
-            return(list(name = as.character(po[1]), desc = NA_character_))
-        }
-        # if data.frame row
-        if (is.data.frame(po)) {
-            # try columns 'name' or 'id' or first column
-            if ("name" %in% colnames(po)) {
-                return(list(name = as.character(po[["name"]][1]), desc = if ("description" %in% colnames(po)) as.character(po[["description"]][1]) else NA_character_))
-            } else if ("id" %in% colnames(po)) {
-                return(list(name = as.character(po[["id"]][1]), desc = NA_character_))
-            } else {
-                return(list(name = as.character(as.vector(po[[1]][1])), desc = NA_character_))
-            }
-        }
-        # if list: try a variety of candidate fields
-        if (is.list(po)) {
-            cand_names <- c("name", "id", "key")
-            nm <- NULL
-            for (cn in cand_names) {
-                if (!is.null(po[[cn]])) {
-                    nm <- as.character(po[[cn]])
-                    break
-                }
-            }
-            # sometimes the object may be nested: po$parameter$name etc.
-            if (is.null(nm) && !is.null(po$parameter) && is.list(po$parameter) && !is.null(po$parameter$name)) {
-                nm <- as.character(po$parameter$name)
-            }
-            # fallback: if list has a single unnamed character element
-            if (is.null(nm)) {
-                # try to find first character scalar inside
-                chars <- NULL
-                for (el in po) {
-                    if (is.character(el) && length(el) == 1) {
-                        chars <- el
-                        break
-                    }
-                }
-                if (!is.null(chars)) nm <- as.character(chars)
-            }
-            # description candidates
-            desc <- NULL
-            for (dc in c("description", "doc", "label")) {
-                if (!is.null(po[[dc]])) {
-                    desc <- as.character(po[[dc]])
-                    break
-                }
-            }
-            if (is.null(nm)) {
-                return(NULL)
-            }
-            return(list(name = nm, desc = ifelse(is.null(desc), NA_character_, desc)))
-        }
-        return(NULL)
-    }
-
-    for (po in param_objs) {
-        info <- tryCatch(extract_name_desc(po), error = function(e) NULL)
-        if (is.null(info)) next
-        names_vec <- c(names_vec, info$name)
-        desc_vec <- c(desc_vec, ifelse(is.null(info$desc), NA_character_, info$desc))
-    }
-
-    if (length(names_vec) == 0) stop("No parameter names found in API response.")
-
-    # deduplicate while keeping order
-    keep_idx <- !duplicated(names_vec)
-    names_out <- names_vec[keep_idx]
-    desc_out <- desc_vec[keep_idx]
-
-    if (verbose) {
-        return(data.frame(name = names_out, description = desc_out, stringsAsFactors = FALSE))
-    } else {
-        return(names_out)
-    }
+list_gwosc_param <- function() {
+    c(
+        "GPS",
+        "mass_1_source", "mass_1_source_lower", "mass_1_source_upper", "mass_1_source_unit",
+        "mass_2_source", "mass_2_source_lower", "mass_2_source_upper", "mass_2_source_unit",
+        "chi_eff", "chi_eff_lower", "chi_eff_upper", "chi_eff_unit",
+        "total_mass_source", "total_mass_source_lower", "total_mass_source_upper", "total_mass_source_unit",
+        "chirp_mass_source", "chirp_mass_source_lower", "chirp_mass_source_upper", "chirp_mass_source_unit",
+        "chirp_mass", "chirp_mass_lower", "chirp_mass_upper", "chirp_mass_unit",
+        "redshift", "redshift_lower", "redshift_upper", "redshift_unit",
+        "far", "far_unit",
+        "p_astro", "p_astro_unit",
+        "final_mass_source", "final_mass_source_lower", "final_mass_source_upper", "final_mass_source_unit",
+        "network_matched_filter_snr",
+        "network_matched_filter_snr_lower", "network_matched_filter_snr_upper", "network_matched_filter_snr_unit",
+        "luminosity_distance", "luminosity_distance_lower", "luminosity_distance_upper", "luminosity_distance_unit"
+    )
 }
 
-#' Retrieve GWOSC default parameters (+ gps) for one or more events
+#' Get GWOSC parameters for a specific GW event
 #'
-#' For each event in `source.names`, this function:
-#' 1) GET /api/v2/event-versions/<name>/default-parameters to obtain the
-#'    canonical astrophysical parameters (e.g., mass_1_source, redshift, ...),
-#'    and
-#' 2) GET /api/v2/events/<name> to obtain the event GPS time ("gps").
+#' This function queries the GWOSC API v2 to fetch the latest version of
+#' gravitational-wave event metadata and its preferred physical parameters.
+#' It returns either all available parameters or a user-specified parameter.
 #'
-#' It returns a data.frame with one row per event. If `param = "all"`, all
-#' default-parameter columns plus `gps` are returned. If `param` is a character
-#' vector of column names, **only existing columns are allowed**; any unknown
-#' name triggers an error (no automatic renaming or aliasing).
+#' The function automatically:
+#' \itemize{
+#'   \item Selects the latest event version.
+#'   \item Extracts GPS time from event-version details or parameter lists.
+#'   \item Uses only preferred (default) parameter values provided by GWOSC.
+#'   \item Returns absolute values for lower/upper errors.
+#' }
 #'
-#' @param source.names Character vector of GWOSC event names (e.g. "GW150914").
-#' @param param Either "all" (default) or a character vector of column names to keep.
-#'              Column names must match exactly what the API exposes (e.g. "mass_1_source", "gps").
-#' @param verbose Logical; if TRUE, print progress messages.
-#' @return A data.frame with one row per event. Row names are the input event names.
+#' @param name Character. Event name (e.g. `"GW150914"`, `"GW190521"`).
+#' @param param Character. Either `"all"` (default) to return all parameters,
+#'   or one of the valid parameter names from \code{list_gwosc_param()}.
+#'
+#' @return A \code{data.frame} with one row named by the event.
+#'   \itemize{
+#'     \item If \code{param = "all"}, all allowed parameters are returned.
+#'     \item If \code{param} is a single column name, only that parameter is returned.
+#'   }
+#'
 #' @examples
 #' \dontrun{
-#' # 1) All parameters + gps for a single event
+#' # List all available parameter names
+#' list_gwosc_param()
+#'
+#' # Fetch all parameters for GW150914
 #' get_gwosc_param("GW150914", "all")
 #'
-#' # 2) All parameters + gps for multiple events
-#' get_gwosc_param(c("GW150914", "GW151012"), "all")
-#'
-#' # 3) Select only a few parameters (must exist exactly)
-#' get_gwosc_param("GW150914", c("mass_1_source", "mass_2_source", "gps"))
+#' # Fetch only the chirp mass source for GW150914
+#' get_gwosc_param("GW150914", "chirp_mass_source")
 #' }
+#'
+#' @seealso \code{\link{list_gwosc_param}}
 #' @export
-get_gwosc_param <- function(source.names, param = "all", verbose = FALSE) {
-    if (missing(source.names) || length(source.names) == 0) {
-        stop("source.names must be provided")
+get_gwosc_param <- function(name, param = "all") {
+    stopifnot(is.character(name), length(name) == 1L)
+    if (!requireNamespace("jsonlite", quietly = TRUE)) stop("Package 'jsonlite' is required.")
+
+    # Allowed parameters
+    allowed <- list_gwosc_param()
+    if (!(length(param) == 1L && is.character(param))) stop("`param` must be a single character value.")
+    if (!identical(param, "all") && !param %in% allowed) {
+        stop("`param` must be 'all' or one of: ", paste(allowed, collapse = ", "))
     }
 
-    # base R `%||%` small helper
-    `%||%` <- function(a, b) if (!is.null(a)) a else b
-
-    # small helper: GET -> JSON (no Accept header to avoid 406)
-    fetch_json <- function(url) {
-        res <- httr::GET(url, httr::user_agent("R (gwosc client)"))
-        if (httr::http_error(res)) {
-            stop("HTTP error ", httr::status_code(res), " for ", url)
+    # Helper functions
+    get_json <- function(url) jsonlite::fromJSON(url, simplifyVector = TRUE)
+    enc <- function(x) utils::URLencode(x, reserved = TRUE)
+    base <- "https://gwosc.org/api/v2"
+    as_num <- function(x) {
+        if (is.null(x) || length(x) == 0) {
+            return(NA_real_)
         }
-        txt <- httr::content(res, as = "text", encoding = "UTF-8")
-        if (grepl("^\\s*<", txt)) stop("GWOSC returned HTML for ", url)
-        jsonlite::fromJSON(txt, simplifyVector = FALSE)
+        suppressWarnings(as.numeric(x)[1L])
     }
 
-    rows <- vector("list", length(source.names))
-    names(rows) <- source.names
+    # 1) Resolve the latest event version
+    ev <- tryCatch(get_json(sprintf("%s/events/%s", base, enc(name))), error = function(e) NULL)
+    if (is.null(ev) || is.null(ev$versions) || length(ev$versions) == 0) {
+        out_cols <- if (identical(param, "all")) allowed else param
+        df0 <- as.data.frame(setNames(replicate(length(out_cols), logical(0)), out_cols))
+        rownames(df0) <- name
+        return(df0)
+    }
+    vdf <- as.data.frame(ev$versions)
+    vmax <- max(as.integer(vdf$version), na.rm = TRUE)
 
-    for (i in seq_along(source.names)) {
-        ev <- source.names[i]
-        if (verbose) message(sprintf("[%d/%d] %s", i, length(source.names), ev))
+    # 2) Try to extract GPS from event-version details
+    evv <- tryCatch(
+        get_json(sprintf("%s/event-versions/%s-v%d?format=api", base, enc(name), vmax)),
+        error = function(e) NULL
+    )
+    GPS <- NA_real_
+    if (!is.null(evv)) {
+        if (!is.null(evv$gps)) GPS <- as_num(evv$gps)
+        if (is.na(GPS) && !is.null(evv$gps_time)) GPS <- as_num(evv$gps_time)
+    }
 
-        # 1) default-parameters for this event-version name
-        dp_url <- sprintf(
-            "https://gwosc.org/api/v2/event-versions/%s/default-parameters",
-            utils::URLencode(as.character(ev), reserved = TRUE)
+    # 3) Default parameters (preferred values only)
+    dpar <- tryCatch(
+        get_json(sprintf("%s/event-versions/%s-v%d/default-parameters", base, enc(name), vmax)),
+        error = function(e) NULL
+    )
+    pref <- if (!is.null(dpar) && !is.null(dpar$results)) as.data.frame(dpar$results, stringsAsFactors = FALSE) else NULL
+
+    # 4) If GPS is still NA, try to extract from /parameters (preferred pipelines)
+    if (is.na(GPS)) {
+        parlist <- tryCatch(
+            get_json(sprintf("%s/event-versions/%s-v%d/parameters", base, enc(name), vmax)),
+            error = function(e) NULL
         )
-        dp_js <- fetch_json(dp_url)
-
-        # dp_js$results is a list of objects with fields: name, unit, best, upper_error, ...
-        if (!("results" %in% names(dp_js)) || length(dp_js$results) == 0) {
-            warning("No default-parameters for event ", ev, " — returning only gps if available")
-            param_map <- list()
-        } else {
-            items <- dp_js$results
-            # build a named list of BEST values keyed by 'name'
-            nms <- vapply(items, function(x) as.character(x$name %||% NA_character_), FUN.VALUE = character(1))
-            bst <- lapply(items, function(x) x$best %||% NA)
-            names(bst) <- nms
-            # coerce to simple list with valid names
-            param_map <- bst[!is.na(names(bst)) & nzchar(names(bst))]
+        if (!is.null(parlist) && !is.null(parlist$results) && length(parlist$results) > 0) {
+            res <- parlist$results
+            if ("is_preferred" %in% names(res)) res <- res[res$is_preferred %in% TRUE, , drop = FALSE]
+            if (nrow(res) > 0 && "parameters" %in% names(res)) {
+                time_keys <- c("geocent_time", "t_geocent", "tc", "time", "gps", "gps_time")
+                for (i in seq_len(nrow(res))) {
+                    pi <- res$parameters[[i]]
+                    if (is.null(pi)) next
+                    pdf <- as.data.frame(pi, stringsAsFactors = FALSE)
+                    hit <- which(pdf$name %in% time_keys)[1L]
+                    if (!is.na(hit)) {
+                        GPS <- as_num(pdf$best[hit])
+                        if (!is.na(GPS)) break
+                    }
+                }
+            }
         }
-
-        # 2) gps from /api/v2/events/<name>
-        ev_url <- sprintf(
-            "https://gwosc.org/api/v2/events/%s",
-            utils::URLencode(as.character(ev), reserved = TRUE)
-        )
-        ev_js <- fetch_json(ev_url)
-        gps_val <- ev_js$gps %||% NA
-
-        # assemble one-row data.frame (all default params + gps)
-        one <- as.data.frame(as.list(c(param_map, list(gps = gps_val))),
-            stringsAsFactors = FALSE, check.names = FALSE
-        )
-        rows[[i]] <- one
     }
 
-    # union columns across events; fill missing with NA
-    all_cols <- unique(unlist(lapply(rows, names)))
-    rows2 <- lapply(rows, function(df) {
-        missing <- setdiff(all_cols, names(df))
-        if (length(missing)) df[missing] <- NA
-        df[all_cols]
-    })
+    # Helper to pull best/err/unit for a parameter
+    get_triplet <- function(base_name) {
+        if (is.null(pref) || nrow(pref) == 0) {
+            return(list(val = NA_real_, lo = NA_real_, up = NA_real_, unit = ""))
+        }
+        row <- pref[pref$name == base_name, , drop = FALSE]
+        if (nrow(row) == 0) {
+            return(list(val = NA_real_, lo = NA_real_, up = NA_real_, unit = ""))
+        }
+        val <- as_num(row$best[1L])
+        lo <- abs(as_num(row$lower_error[1L]))
+        up <- abs(as_num(row$upper_error[1L]))
+        unit <- ifelse(is.null(row$unit[1L]) || is.na(row$unit[1L]), "", as.character(row$unit[1L]))
+        list(val = val, lo = lo, up = up, unit = unit)
+    }
 
-    out <- do.call(rbind, rows2)
-    rownames(out) <- source.names
+    # 5) Build one-row output
+    out <- setNames(vector("list", length(allowed)), allowed)
+    for (nm in allowed) out[[nm]] <- NA_real_
+    out[["GPS"]] <- GPS
+
+    bases <- c(
+        "mass_1_source", "mass_2_source", "chi_eff", "total_mass_source",
+        "chirp_mass_source", "chirp_mass", "redshift", "far", "p_astro",
+        "final_mass_source", "network_matched_filter_snr", "luminosity_distance"
+    )
+    for (b in bases) {
+        t <- get_triplet(b)
+        out[[b]] <- t$val
+        lo_nm <- paste0(b, "_lower")
+        up_nm <- paste0(b, "_upper")
+        unit_nm <- paste0(b, "_unit")
+        if (lo_nm %in% allowed) out[[lo_nm]] <- t$lo
+        if (up_nm %in% allowed) out[[up_nm]] <- t$up
+        if (unit_nm %in% allowed) out[[unit_nm]] <- t$unit
+    }
+
+    df <- as.data.frame(out, check.names = FALSE, optional = TRUE)
+    rownames(df) <- name
 
     if (identical(param, "all")) {
-        return(out)
+        return(df)
+    } else {
+        if (!param %in% names(df)) df[[param]] <- NA_real_
+        one <- df[, param, drop = FALSE]
+        rownames(one) <- name
+        return(one)
     }
-
-    # enforce: only existing columns allowed; no auto-mapping
-    unknown <- setdiff(param, colnames(out))
-    if (length(unknown)) {
-        stop(
-            "Unknown parameter name(s): ",
-            paste(unknown, collapse = ", "),
-            "\nAvailable columns include: ",
-            paste(colnames(out), collapse = ", ")
-        )
-    }
-
-    return(out[, param, drop = FALSE])
 }
 
 #' Download dataset/strain-file for a GWOSC event (robust v2 logic)

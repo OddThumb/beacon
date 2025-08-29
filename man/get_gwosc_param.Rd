@@ -2,43 +2,50 @@
 % Please edit documentation in R/OSC.R
 \name{get_gwosc_param}
 \alias{get_gwosc_param}
-\title{Retrieve GWOSC default parameters (+ gps) for one or more events}
+\title{Get GWOSC parameters for a specific GW event}
 \usage{
-get_gwosc_param(source.names, param = "all", verbose = FALSE)
+get_gwosc_param(name, param = "all")
 }
 \arguments{
-\item{source.names}{Character vector of GWOSC event names (e.g. "GW150914").}
+\item{name}{Character. Event name (e.g. `"GW150914"`, `"GW190521"`).}
 
-\item{param}{Either "all" (default) or a character vector of column names to keep.
-Column names must match exactly what the API exposes (e.g. "mass_1_source", "gps").}
-
-\item{verbose}{Logical; if TRUE, print progress messages.}
+\item{param}{Character. Either `"all"` (default) to return all parameters,
+or one of the valid parameter names from \code{list_gwosc_param()}.}
 }
 \value{
-A data.frame with one row per event. Row names are the input event names.
+A \code{data.frame} with one row named by the event.
+  \itemize{
+    \item If \code{param = "all"}, all allowed parameters are returned.
+    \item If \code{param} is a single column name, only that parameter is returned.
+  }
 }
 \description{
-For each event in `source.names`, this function:
-1) GET /api/v2/event-versions/<name>/default-parameters to obtain the
-   canonical astrophysical parameters (e.g., mass_1_source, redshift, ...),
-   and
-2) GET /api/v2/events/<name> to obtain the event GPS time ("gps").
+This function queries the GWOSC API v2 to fetch the latest version of
+gravitational-wave event metadata and its preferred physical parameters.
+It returns either all available parameters or a user-specified parameter.
 }
 \details{
-It returns a data.frame with one row per event. If `param = "all"`, all
-default-parameter columns plus `gps` are returned. If `param` is a character
-vector of column names, **only existing columns are allowed**; any unknown
-name triggers an error (no automatic renaming or aliasing).
+The function automatically:
+\itemize{
+  \item Selects the latest event version.
+  \item Extracts GPS time from event-version details or parameter lists.
+  \item Uses only preferred (default) parameter values provided by GWOSC.
+  \item Returns absolute values for lower/upper errors.
+}
 }
 \examples{
 \dontrun{
-# 1) All parameters + gps for a single event
+# List all available parameter names
+list_gwosc_param()
+
+# Fetch all parameters for GW150914
 get_gwosc_param("GW150914", "all")
 
-# 2) All parameters + gps for multiple events
-get_gwosc_param(c("GW150914", "GW151012"), "all")
-
-# 3) Select only a few parameters (must exist exactly)
-get_gwosc_param("GW150914", c("mass_1_source", "mass_2_source", "gps"))
+# Fetch only the chirp mass source for GW150914
+get_gwosc_param("GW150914", "chirp_mass_source")
 }
+
+}
+\seealso{
+\code{\link{list_gwosc_param}}
 }
