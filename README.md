@@ -1,6 +1,6 @@
 # BEACON: Burst Event Anomaly Clustering and Outlier Notification
 
-[![License: MIT\|82x20](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: GPL v2+](https://img.shields.io/badge/License-GPL%20v2+-blue.svg)](LICENSE)
 
 BEACON is a fully data-driven pipeline designed to detect unmodeled gravitational wave (GW) transients. By combining sequential autoregressive modeling ([seqARIMA](https://doi.org/10.1103/PhysRevD.109.102003)) and anomaly clustering, BEACON provides a low-latency and model-agnostic framework for robust burst detection.
 
@@ -121,7 +121,3 @@ Or data can be downloaded via `list_event()` and `download_event()`.
 If you use BEACON in your work, please cite: Kim et al., “Autoregressive Search of Gravitational Waves: Design of low-latency search pipeline for unmodeled transients — BEACON”, in prep.
 
 If you use only `seqarima` in your work, please cite: [Kim et al., PRD, 2024, “Autoregressive Search of Gravitational Waves: Denoising”](https://doi.org/10.1103/PhysRevD.109.102003).
-
-## **License**
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
