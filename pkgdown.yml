@@ -3,7 +3,7 @@ pkgdown: 2.1.3
 pkgdown_sha: ~
 articles:
   Getting-started: Getting-started.html
-last_built: 2025-08-30T08:26Z
+last_built: 2025-08-30T08:36Z
 urls:
   reference: https://OddThumb.github.io/beacon/reference
   article: https://OddThumb.github.io/beacon/articles
