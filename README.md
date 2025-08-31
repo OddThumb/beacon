@@ -107,14 +107,23 @@ reticulate::use_condaenv(condaenv = "path/to/your/conda/env")
 
 ## **Documentation**
 
--   Full function documentation is provided via Roxygen2 in the R source files.
--   Python bindings (if any) follow NumPy-style docstrings.
+-   Repository: <https://github.com/OddThumb/beacon>
+
+-   Pages: <https://oddthumb.github.io/beacon/index.html>
 
 ## **Example Datasets**
 
 See [GWOSC](https://www.gw-openscience.org/) compatible tools to fetch real event data.
 
 Or data can be downloaded via `list_event()` and `download_event()`.
+
+For demo data, you can find it by:
+
+```{r}
+system.file("extdata", "demo_4kHz.h5", package = "beacon")
+```
+
+(The demo data was created by using Python's `pycbc` package)
 
 ## **Publications**
 
