@@ -12,14 +12,14 @@ knitr::opts_chunk$set(
   collapse = TRUE, warning = FALSE,
   comment = "#>"
 )
-```
-
-```{r setup}
-library(beacon)
 
 # shorten print output for the illustration
 old.max.print <- getOption('max.print')
 options(max.print = 20)
+```
+
+```{r setup}
+library(beacon)
 ```
 
 ------------------------------------------------------------------------
@@ -55,7 +55,7 @@ print(head(GW_event_list))
 
 Here we test with GW150914. Download event data using `download_event()`.
 
-```{r eval=FALSE, include=FALSE}
+```{r eval=FALSE, include=TRUE}
 download_event(event_name = "GW150914", # event name
                det = "H1",              # Detector name
                path = "test_data/",     # download path
@@ -81,9 +81,6 @@ If you want to:
 2.  save your storage.
 
 Set `load=TRUE`, and `remove=TRUE` . In this case you don't need to specify path (default path is "`./` ").
-
-```         
-```
 
 ## (3) Check parameters
 
@@ -135,7 +132,7 @@ print(params) # returns 1x4 data.frame
 
 Or just all the available parameters for an event:
 
-```{r}
+```{r eval=FALSE, include=TRUE}
 params <- get_gwosc_param(
     name = 'GW150914',
     param = 'all'
@@ -245,7 +242,7 @@ write_H5(
 
 > ⚠️ **Note**: In current version, `read_H5` does not read all the meta information in hdf5 file's directory.
 
-```{r}
+```{r, include=FALSE}
 # get back the original max.print
 options(max.print = old.max.print)
 ```
