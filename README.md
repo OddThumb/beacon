@@ -112,7 +112,7 @@ reticulate::use_condaenv(condaenv = "path/to/your/conda/env")
 
 ## **Example Datasets**
 
-See data/ or use [GWOSC](https://www.gw-openscience.org/) compatible tools to fetch real event data.
+See [GWOSC](https://www.gw-openscience.org/) compatible tools to fetch real event data.
 
 Or data can be downloaded via `list_event()` and `download_event()`.
 
