@@ -442,8 +442,10 @@ oscillo_option <- function(ts, tzero = 0, title = NULL, xlim = NULL, ylim = NULL
     if (is.null(ylim)) {
         ylim <- get_limit(ts, 1.5)
         value.order <- floor(log10(amax(ts)))
+        om <- 10^value.order
     } else {
         value.order <- floor(log10(amax(ylim)))
+        om <- 10^value.order
     }
 
     list(
@@ -455,7 +457,7 @@ oscillo_option <- function(ts, tzero = 0, title = NULL, xlim = NULL, ylim = NULL
         ggplot2::scale_y_continuous(
             expand = c(0, 0),
             breaks = scales::breaks_pretty(5),
-            labels = scales::label_number(scale = 1 / get_order(ts)),
+            labels = scales::label_number(scale = 1 / om),
             limits = ylim
         ),
         ggplot2::labs(
