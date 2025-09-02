@@ -433,21 +433,27 @@ plot_oscillo_multi <- function(
 #' @param ts A time series object.
 #' @param tzero A numeric value for time offset.
 #' @param title A character string for the plot title.
+#' @param xlim A numeric vector. X axis limits (default: NULL).
+#' @param ylim A numeric vector. Y axis limits (default: NULL).
 #'
 #' @return A list of ggplot2 elements.
 #' @export
-oscillo_option <- function(ts, tzero = 0, title = NULL) {
+oscillo_option <- function(ts, tzero = 0, title = NULL, xlim = NULL, ylim = NULL) {
+    if (is.null(ylim)) {
+        ylim <- get_limit(ts, 1.5)
+    }
     value.order <- floor(log10(amax(ts)))
     list(
         ggplot2::scale_x_continuous(
             expand = c(0, 0),
-            breaks = scales::breaks_pretty(5)
+            breaks = scales::breaks_pretty(5),
+            limits = xlim
         ),
         ggplot2::scale_y_continuous(
             expand = c(0, 0),
             breaks = scales::breaks_pretty(5),
             labels = scales::label_number(scale = 1 / get_order(ts)),
-            limits = get_limit(ts, 1.5)
+            limits = ylim
         ),
         ggplot2::labs(
             x = ifelse(tzero != 0, paste0("Time (s) from ", tzero), "Time (s)"),
@@ -822,6 +828,8 @@ plot_spectro <- function(
 #' @param time_col Column name for the time values (usually "GPS").
 #' @param err_lwr Column name for lower error band. If NULL, auto-detect from column names.
 #' @param err_upr Column name for upper error band. If NULL, auto-detect from column names.
+#' @param xlim A numeric vector. X axis limits (default: NULL).
+#' @param ylim A numeric vector. Y axis limits (default: NULL).
 #' @param p_crit Critical p-value threshold (default: 0.05).
 #' @param p_col Column name for p-values.
 #'
@@ -834,6 +842,8 @@ plot_anomalies <- function(
     time_col = "GPS",
     err_lwr = NULL,
     err_upr = NULL,
+    xlim = NULL,
+    ylim = NULL,
     p_crit = 0.05,
     p_col = "P0") {
     # tzero
@@ -920,7 +930,7 @@ plot_anomalies <- function(
     }
 
     p <- p +
-        oscillo_option(ts.recons, tzero) +
+        oscillo_option(ts.recons, tzero, xlim = xlim, ylim = ylim) +
         ggplot2::theme(
             legend.direction = "horizontal",
             legend.position.inside = c(1, 1),

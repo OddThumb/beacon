@@ -11,6 +11,8 @@ plot_anomalies(
   time_col = "GPS",
   err_lwr = NULL,
   err_upr = NULL,
+  xlim = NULL,
+  ylim = NULL,
   p_crit = 0.05,
   p_col = "P0"
 )
@@ -27,6 +29,10 @@ plot_anomalies(
 \item{err_lwr}{Column name for lower error band. If NULL, auto-detect from column names.}
 
 \item{err_upr}{Column name for upper error band. If NULL, auto-detect from column names.}
+
+\item{xlim}{A numeric vector. X axis limits (default: NULL).}
+
+\item{ylim}{A numeric vector. Y axis limits (default: NULL).}
 
 \item{p_crit}{Critical p-value threshold (default: 0.05).}
 

@@ -1282,7 +1282,7 @@ stat_anom <- function(proc, last_tcen = NULL) {
     tab <- dplyr::mutate(tab, t_lag = t_cen - dplyr::lag(t_cen)) # compute t_lag
     tab <- dplyr::filter(tab, cluster != 0L)
     tab <- dplyr::group_by(tab, cluster)
-    tab <- dplyr::reframe(tab, t_cen = t_cen, N_anom = n(), t_lag = t_lag)
+    tab <- dplyr::reframe(tab, t_cen = t_cen, N_anom = dplyr::n(), t_lag = t_lag)
     tab <- dplyr::distinct(tab, cluster, .keep_all = TRUE)
 
     # Organize output

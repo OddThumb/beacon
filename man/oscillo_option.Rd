@@ -4,7 +4,7 @@
 \alias{oscillo_option}
 \title{Common ggplot Components for Oscillogram Plot}
 \usage{
-oscillo_option(ts, tzero = 0, title = NULL)
+oscillo_option(ts, tzero = 0, title = NULL, xlim = NULL, ylim = NULL)
 }
 \arguments{
 \item{ts}{A time series object.}
@@ -12,6 +12,10 @@ oscillo_option(ts, tzero = 0, title = NULL)
 \item{tzero}{A numeric value for time offset.}
 
 \item{title}{A character string for the plot title.}
+
+\item{xlim}{A numeric vector. X axis limits (default: NULL).}
+
+\item{ylim}{A numeric vector. Y axis limits (default: NULL).}
 }
 \value{
 A list of ggplot2 elements.
