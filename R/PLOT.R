@@ -441,8 +441,11 @@ plot_oscillo_multi <- function(
 oscillo_option <- function(ts, tzero = 0, title = NULL, xlim = NULL, ylim = NULL) {
     if (is.null(ylim)) {
         ylim <- get_limit(ts, 1.5)
+        value.order <- floor(log10(amax(ts)))
+    } else {
+        value.order <- floor(log10(amax(ylim)))
     }
-    value.order <- floor(log10(amax(ts)))
+
     list(
         ggplot2::scale_x_continuous(
             expand = c(0, 0),
