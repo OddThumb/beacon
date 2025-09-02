@@ -273,7 +273,7 @@ window_to <- function(ts, ref) {
 #' @return A cropped time series (`ts`) object.
 #' @export
 crop_to <- function(ts, ind.range) {
-    if (inherits(ts, "ts")) {
+    if (!inherits(ts, "ts")) {
         stop("(InputError) Given data is not a class of `ts`")
     }
     if (!all(ind.range %in% seq_along(ts))) {
