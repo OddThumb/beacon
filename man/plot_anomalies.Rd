@@ -14,7 +14,9 @@ plot_anomalies(
   xlim = NULL,
   ylim = NULL,
   p_crit = 0.05,
-  p_col = "P0"
+  p_col = "P0",
+  sig_color = "red",
+  lowsig_color = "grey50"
 )
 }
 \arguments{
@@ -26,9 +28,9 @@ plot_anomalies(
 
 \item{time_col}{Column name for the time values (usually "GPS").}
 
-\item{err_lwr}{Column name for lower error band. If NULL, auto-detect from column names.}
+\item{err_lwr}{Column name for lower error band. If NULL, auto-detect.}
 
-\item{err_upr}{Column name for upper error band. If NULL, auto-detect from column names.}
+\item{err_upr}{Column name for upper error band. If NULL, auto-detect.}
 
 \item{xlim}{A numeric vector. X axis limits (default: NULL).}
 
@@ -36,10 +38,14 @@ plot_anomalies(
 
 \item{p_crit}{Critical p-value threshold (default: 0.05).}
 
-\item{p_col}{Column name for p-values.}
+\item{p_col}{Column name for p-values (default: "P0").}
+
+\item{sig_color}{Color for significant anomalies (default: "red").}
+
+\item{lowsig_color}{Color for low-significance anomalies (default: "grey50").}
 }
 \value{
-A ggplot object showing anomalies and uncertainty bands.
+A ggplot object.
 }
 \description{
 Plot anomalies with error bands and significance

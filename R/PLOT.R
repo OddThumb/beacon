@@ -831,165 +831,108 @@ plot_spectro <- function(
 #' @param tzero Optional time zero to align the time axis.
 #' @param val_col Column name for the observed signal value.
 #' @param time_col Column name for the time values (usually "GPS").
-#' @param err_lwr Column name for lower error band. If NULL, auto-detect from column names.
-#' @param err_upr Column name for upper error band. If NULL, auto-detect from column names.
+#' @param err_lwr Column name for lower error band. If NULL, auto-detect.
+#' @param err_upr Column name for upper error band. If NULL, auto-detect.
 #' @param xlim A numeric vector. X axis limits (default: NULL).
 #' @param ylim A numeric vector. Y axis limits (default: NULL).
 #' @param p_crit Critical p-value threshold (default: 0.05).
-#' @param p_col Column name for p-values.
+#' @param p_col Column name for p-values (default: "P0").
+#' @param sig_color Color for significant anomalies (default: "red").
+#' @param lowsig_color Color for low-significance anomalies (default: "grey50").
 #'
-#' @return A ggplot object showing anomalies and uncertainty bands.
+#' @return A ggplot object.
 #' @export
-plot_anomalies <- function(
-    anom.df,
-    tzero = NULL,
-    val_col = "observed",
-    time_col = "GPS",
-    err_lwr = NULL,
-    err_upr = NULL,
-    xlim = NULL,
-    ylim = NULL,
-    p_crit = 0.05,
-    p_col = "P0") {
+plot_anomalies <- function(anom.df,
+                           tzero = NULL,
+                           val_col = "observed",
+                           time_col = "GPS",
+                           err_lwr = NULL,
+                           err_upr = NULL,
+                           xlim = NULL,
+                           ylim = NULL,
+                           p_crit = 0.05,
+                           p_col = "P0",
+                           sig_color = "red",
+                           lowsig_color = "grey50") {
     # tzero
     if (is.null(tzero)) {
-        tzero <- anom.df[1, time_col, drop = T]
+        tzero <- anom.df[1, time_col, drop = TRUE]
     }
 
     # ts for auto-theme
     ts.recons <- ts(
-        anom.df[, val_col, drop = T],
-        start = anom.df[, time_col, drop = T][1L] - tzero,
-        deltat = uniqdif(anom.df[, time_col, drop = T])[1L]
+        anom.df[, val_col, drop = TRUE],
+        start = anom.df[, time_col, drop = TRUE][1L] - tzero,
+        deltat = uniqdif(anom.df[, time_col, drop = TRUE])[1L]
     )
 
     # Error bar
     if (is.null(err_lwr) || is.null(err_upr)) {
         if (all(c("recomposed_l1", "recomposed_l2") %in% names(anom.df))) {
-            # decomp is not NULL
             err_lwr <- "recomposed_l1"
             err_upr <- "recomposed_l2"
         } else if (all(c("observed_l1", "observed_l2") %in% names(anom.df))) {
-            # decomp is NULL
             err_lwr <- "observed_l1"
             err_upr <- "observed_l2"
         } else {
             stop("No recomposed_* or observed_* columns found. Pass err_lwr/err_upr explicitly.")
         }
     }
+
+    # Base: ribbon + line
     p <- ggplot2::ggplot(
         anom.df,
         ggplot2::aes(x = .data[[time_col]] - tzero, y = .data[[val_col]])
     ) +
         ggplot2::geom_ribbon(
             ggplot2::aes(ymin = .data[[err_lwr]], ymax = .data[[err_upr]]),
-            na.rm = F,
-            fill = "grey50",
-            alpha = 0.5
-        )
+            na.rm = FALSE, fill = "grey50", alpha = 0.5
+        ) +
+        ggplot2::geom_line(color = "grey15")
 
-    # Line and point
-    p <- p + ggplot2::geom_line(color = "grey15")
+    # Anomalies
+    anoms <- dplyr::filter(anom.df, .data[["anomaly"]] == 1)
     if (!is.null(p_crit)) {
-        anom.df <- dplyr::mutate(
-            dplyr::filter(
-                anom.df,
-                anomaly == 1
-            ),
-            lt.p_crit = ifelse(.data[[p_col]] < p_crit, "signif", "lowsig")
+        anoms <- dplyr::mutate(
+            anoms,
+            sig_flag = ifelse(.data[[p_col]] < p_crit, "signif", "lowsig")
         )
         p <- p +
             ggplot2::geom_point(
-                data = anom.df,
-                ggplot2::aes(color = lt.p_crit),
-                shape = 20,
-                size = 2,
-                alpha = 0.35
+                data = anoms,
+                ggplot2::aes(color = sig_flag),
+                shape = 20, size = 2, alpha = 0.35
             ) +
             ggplot2::geom_point(
-                data = anom.df,
-                ggplot2::aes(color = lt.p_crit),
-                shape = 21,
-                size = 3,
-                alpha = 0.35
+                data = anoms,
+                ggplot2::aes(color = sig_flag),
+                shape = 21, size = 3, alpha = 0.35
             ) +
             ggplot2::scale_color_manual(
-                values = c("signif" = "red", "lowsig" = "grey50")
+                values = c("signif" = sig_color, "lowsig" = lowsig_color),
+                guide = "none"
             )
     } else {
+        # no p-value filtering: all anomalies in sig_color
         p <- p +
             ggplot2::geom_point(
-                data = dplyr::filter(anom.df, anomaly == 1),
-                color = "red",
-                shape = 20,
-                size = 2,
-                alpha = 0.35
+                data = anoms, color = sig_color,
+                shape = 20, size = 2, alpha = 0.35
             ) +
             ggplot2::geom_point(
-                data = dplyr::filter(anom.df, anomaly == 1),
-                color = "red",
-                shape = 21,
-                size = 3,
-                alpha = 0.35
+                data = anoms, color = sig_color,
+                shape = 21, size = 3, alpha = 0.35
             )
     }
 
+    # Theme
     p <- p +
         oscillo_option(ts.recons, tzero, xlim = xlim, ylim = ylim) +
         ggplot2::theme(
-            legend.direction = "horizontal",
-            legend.position.inside = c(1, 1),
-            legend.justification = c(1, 1),
-            legend.background = ggplot2::element_rect(
-                colour = ggplot2::alpha("black", 0.5),
-                fill = ggplot2::alpha("white", 0.5)
-            )
+            legend.position = "none"
         )
-    return(p)
-}
 
-#' Plot anomalies for multiple detectors
-#'
-#' @param anom.det A data.frame with anomaly results that includes detector info in column "det".
-#' @param ... Passed to \code{plot_anomalies()}.
-#'
-#' @return A faceted ggplot object showing anomaly results per detector.
-#' @export
-plot_anomalies_multi <- function(anom.det, ...) {
-    plot_anomalies(anom.det, ...) +
-        ggplot2::labs(y = "strain") +
-        ggplot2::scale_y_continuous(breaks = scales::pretty_breaks()) +
-        ggplot2::geom_text(
-            data = dplyr::filter(
-                dplyr::filter(
-                    dplyr::distinct(
-                        dplyr::arrange(anom.det, P0),
-                        det,
-                        P0,
-                        .keep_all = TRUE
-                    ),
-                    !is.na(P0)
-                ),
-                P0 < 0.05
-            ),
-            ggplot2::aes(label = signif(P0, 3L)),
-            size = 2.5,
-            hjust = -0.2,
-            check_overlap = T,
-            na.rm = T
-        ) +
-        ggplot2::facet_wrap(
-            facets = ggplot2::vars(det),
-            nrow = 4L,
-            strip.position = "right",
-            scales = "free_y"
-        ) +
-        ggplot2::theme(
-            panel.border = ggplot2::element_rect(linewidth = 0.2),
-            strip.background = ggplot2::element_blank(),
-            strip.placement = "outside"
-        ) +
-        ggplot2::coord_cartesian(clip = "off")
+    return(p)
 }
 
 #' Plot lambda values over time
@@ -1067,7 +1010,8 @@ plot_lambda <- function(
 plot_coinc <- function(coinc.res,
                        tzero = NULL,
                        p_crit = 0.05,
-                       a = 3,
+                       a = 2.3, # b1p1k=2.3, b8p4k=1.6
+                       alpha.det = 0.3,
                        legend.position = "tr",
                        annotate.vals = FALSE,
                        annotate.thresh = p_crit) {
@@ -1075,7 +1019,7 @@ plot_coinc <- function(coinc.res,
     P0_names <- c("P0_net", "P0_H1_bin", "P0_L1_bin")
     new_names <- structure(c("coinc", "H1", "L1"), names = P0_names)
     det_colors <- structure(c("black", "red", "blue"), names = P0_names)
-    det_alphas <- structure(c(1, 0.3, 0.3), names = P0_names)
+    det_alphas <- structure(c(1, alpha.det, alpha.det), names = P0_names)
     det_ltypes <- structure(c(1, 2, 2), names = P0_names)
     legpos <- switch(legend.position,
         "tr" = list(pos = c(1, 1), jus = c(1, 1)),

@@ -8,7 +8,8 @@ plot_coinc(
   coinc.res,
   tzero = NULL,
   p_crit = 0.05,
-  a = 3,
+  a = 2.3,
+  alpha.det = 0.3,
   legend.position = "tr",
   annotate.vals = FALSE,
   annotate.thresh = p_crit
