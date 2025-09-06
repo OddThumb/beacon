@@ -160,7 +160,7 @@ sigmasq <- function(
                 testing.equal <- all.equal.numeric(
                     deltaf(ht),
                     deltaf(psd),
-                    tol = 1e-5
+                    tolerance = 1e-5
                 )
                 if (testing.equal) {}
             },
@@ -256,7 +256,7 @@ matched_filter <- function(
             testing.equal <- all.equal.numeric(
                 deltaf(qtilde),
                 deltaf(psd),
-                tol = 1e-5
+                tolerance = 1e-5
             )
             if (testing.equal) {}
         },

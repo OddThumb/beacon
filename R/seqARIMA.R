@@ -496,6 +496,7 @@ sar <- function(ts, ...) {
     attr(resid, "collector") <- "single"
     attr(resid, "feature") <- AR$ar
     attr(resid, "p_order") <- AR$order
+    attr(resid, "var.pred") <- AR$var.pred
     return(resid)
 }
 
