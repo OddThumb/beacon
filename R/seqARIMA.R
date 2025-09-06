@@ -1002,6 +1002,7 @@ seqarima <- function(
 
         return.list[["ar_feat"]] <- attr(x_ar, "feature")
         return.list[["p"]] <- attr(x_ar, "p_order")
+        return.list[["var.pred"]] <- attr(x_ar, "var.pred")
         if (return.step) {
             return.list[["steps"]][["AR"]] <- x_ar
         }
