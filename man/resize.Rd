@@ -4,12 +4,16 @@
 \alias{resize}
 \title{Resize a `ts` to target length}
 \usage{
-resize(ts, nlen)
+resize(x, nlen, align = c("left", "center", "right"))
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{x}{A `ts` object.}
 
 \item{nlen}{An integer. Desired length.}
+
+\item{align}{Character. One of "left", "center", "right".
+Determines how the series is aligned when padding/truncating.
+Default: "left".}
 }
 \value{
 A resized `ts` object (padded with zeros or truncated).

@@ -4,10 +4,10 @@
 \alias{shift_phase}
 \title{Align phase of a `ts` to another}
 \usage{
-shift_phase(ts, ref = NULL, phase = NULL)
+shift_phase(x, ref = NULL, phase = NULL)
 }
 \arguments{
-\item{ts}{A `ts` object to be shifted.}
+\item{x}{A `ts` object to be shifted.}
 
 \item{ref}{A reference `ts` object (optional).}
 

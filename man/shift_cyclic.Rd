@@ -4,10 +4,10 @@
 \alias{shift_cyclic}
 \title{Cyclically shift a `ts`}
 \usage{
-shift_cyclic(ts, t_cyclic)
+shift_cyclic(x, t_cyclic)
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{x}{A `ts` object.}
 
 \item{t_cyclic}{A numeric. Time to shift cyclically.}
 }

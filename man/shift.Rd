@@ -4,10 +4,10 @@
 \alias{shift}
 \title{Shift time series by time offset}
 \usage{
-shift(ts, t_shift)
+shift(x, t_shift)
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{x}{A `ts` object.}
 
 \item{t_shift}{A numeric. Amount to shift (in seconds).}
 }

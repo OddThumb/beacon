@@ -285,12 +285,19 @@ crop_to <- function(ts, ind.range) {
 
 #' Shift time series by time offset
 #'
-#' @param ts A `ts` object.
+#' @param x A `ts` object.
 #' @param t_shift A numeric. Amount to shift (in seconds).
 #' @return A time-shifted `ts`.
 #' @export
-shift <- function(ts, t_shift) {
-    ts(data = c(ts), start = c(ti(ts)) + t_shift, deltat = deltat(ts))
+shift <- function(x, t_shift) {
+    stopifnot(inherits(x, "ts"))
+    f <- frequency(x)
+    k <- t_shift * f
+    if (abs(k - round(k)) > .Machine$double.eps^0.5) {
+        stop("t_shift must be an integer multiple of 1/frequency.")
+    }
+    tsp(x) <- tsp(x) + c(t_shift, t_shift, 0)
+    x
 }
 
 #' Cyclically shift a vector
@@ -309,76 +316,115 @@ cyclic <- function(x, n) {
 
 #' Cyclically shift a `ts`
 #'
-#' @param ts A `ts` object.
+#' @param x A `ts` object.
 #' @param t_cyclic A numeric. Time to shift cyclically.
 #' @return A cyclic-shifted `ts` object.
 #' @export
-shift_cyclic <- function(ts, t_cyclic) {
-    x <- c(ts)
-    n <- trunc(t_cyclic * frequency(ts))
-    ts(cyclic(x, n), start = ti(ts), frequency = frequency(ts))
+shift_cyclic <- function(x, t_cyclic) {
+    stopifnot(inherits(x, "ts"))
+    f <- frequency(x)
+    N <- NROW(x)
+    if (N == 0L) {
+        return(x)
+    }
+
+    n <- as.integer(round(t_cyclic * f))
+    n <- ((n %% N) + N) %% N
+    if (n == 0L) {
+        return(x)
+    }
+
+    if (is.matrix(x)) {
+        x2 <- apply(x, 2, function(col) cyclic(col, n))
+    } else {
+        x2 <- cyclic(x, n)
+    }
+    tsp(x2) <- tsp(x)
+    class(x2) <- class(x)
+    x2
 }
 
 
 #' Align phase of a `ts` to another
 #'
-#' @param ts A `ts` object to be shifted.
+#' @param x A `ts` object to be shifted.
 #' @param ref A reference `ts` object (optional).
 #' @param phase A numeric phase shift (optional).
 #' @return A phase-aligned `ts` object with attributes for applied shift.
 #' @export
-shift_phase <- function(ts, ref = NULL, phase = NULL) {
+shift_phase <- function(x, ref = NULL, phase = NULL) {
     sampling.freq <- frequency(ts)
 
     if (is.null(ref) & is.null(phase)) {
         stop("InputError: At least, one of `ref` or `phase` is required.")
     } else if (!is.null(phase)) {
         d_phi <- phase
-    } else if (is.null(phase) & !is.null(ref)) {
+    } else { # ref provided
         if (sampling.freq != frequency(ref)) {
-            stop(
-                "Error) Frequencies are different between given time-series and reference time-series"
-            )
+            stop("Error) Frequencies are different between given time-series and reference time-series")
         }
-
-        # Phases of time-series
+        # NOTE: If you meant statistical mode, DO NOT use base::mode()
+        # Replace with your own `Mode()` or another estimator.
         phi_ref <- mode(time(ref) %% (1 / sampling.freq))
-        phi_ts <- mode(time(ts) %% (1 / sampling.freq))
-
-        # Calculate difference of phase
+        phi_ts <- mode(time(x) %% (1 / sampling.freq))
         d_phi <- phi_ref - phi_ts
     }
 
-    # Correct ts's phase as reference's phase by adding phase difference (ref - ts)
-    ts.shift <- ts(ts, start = time(ts)[1] + d_phi, frequency = sampling.freq)
+    # shift time axis by exactly d_phi (start & end both move by the same amount)
+    tsp(x) <- tsp(x) + c(d_phi, d_phi, 0)
 
-    # Assign attributes of chages
-    attr(ts.shift, "d_phi") <- d_phi
-    attr(
-        ts.shift,
-        "corrected_by"
-    ) <- "time(ts) + d_phi; d_phi = phi_ref - phi_ts"
-
-    return(ts.shift)
+    attr(x, "d_phi") <- d_phi
+    attr(x, "corrected_by") <- "time + d_phi; d_phi = phi_ref - phi_ts"
+    x
 }
 
 
 #' Resize a `ts` to target length
 #'
-#' @param ts A `ts` object.
+#' @param x A `ts` object.
 #' @param nlen An integer. Desired length.
+#' @param align Character. One of "left", "center", "right".
+#'              Determines how the series is aligned when padding/truncating.
+#'              Default: "left".
 #' @return A resized `ts` object (padded with zeros or truncated).
 #' @export
-resize <- function(ts, nlen) {
-    if (length(ts) >= nlen) {
-        ts(c(ts)[1:nlen], start = ti(ts), frequency = frequency(ts))
+resize <- function(x, nlen, align = c("left", "center", "right")) {
+    stopifnot(inherits(x, "ts"))
+    align <- match.arg(align)
+    f <- frequency(x)
+    st <- start(x)
+    is_mat <- is.matrix(x)
+    n <- NROW(x)
+
+    slice <- function(i) if (is_mat) x[i, , drop = FALSE] else x[i]
+    pad0 <- function(k) if (is_mat) matrix(0, nrow = k, ncol = NCOL(x)) else rep(0, k)
+
+    if (n >= nlen) {
+        if (align == "left") {
+            x_new <- slice(1:nlen)
+        } else if (align == "right") {
+            x_new <- slice((n - nlen + 1):n)
+        } else {
+            s <- floor((n - nlen) / 2) + 1
+            e <- s + nlen - 1
+            x_new <- slice(s:e)
+        }
     } else {
-        ts(
-            c(ts, rep(0, nlen - length(ts))),
-            start = ti(ts),
-            frequency = frequency(ts)
-        )
+        pad <- nlen - n
+        if (align == "left") {
+            x_new <- if (is_mat) rbind(x, pad0(pad)) else c(x, pad0(pad))
+        } else if (align == "right") {
+            x_new <- if (is_mat) rbind(pad0(pad), x) else c(pad0(pad), x)
+        } else {
+            lp <- floor(pad / 2)
+            rp <- pad - lp
+            x_new <- if (is_mat) rbind(pad0(lp), x, pad0(rp)) else c(pad0(lp), x, pad0(rp))
+        }
     }
+
+    out <- ts(x_new, start = st, frequency = f)
+    if (is_mat && !is.null(colnames(x))) colnames(out) <- colnames(x)
+    out
 }
 
 
