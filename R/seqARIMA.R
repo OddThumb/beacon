@@ -782,7 +782,7 @@ Autoregressive <- function(ts, p, aic = TRUE, verbose = TRUE, ...) {
 #'
 #' # Using a Tukey window
 #' if (requireNamespace("bspec", quietly = TRUE)) {
-#'     ma(ts_data, order = 11, w.func = bspec::tukeywindow, r = 0.3)
+#'     ma(ts_data, order = 11, w.func = tukey_window, r = 0.3)
 #' }
 #' }
 #' @export

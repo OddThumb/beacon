@@ -184,6 +184,81 @@ geo_mean <- function(x, na.rm = T) {
     exp(sum(log(x)) / length(x))
 }
 
+#' Generate a Tukey Window
+#'
+#' Computes a Tukey (tapered cosine) window of length \code{n} with taper
+#' parameter \code{alpha}. The Tukey window is rectangular when
+#' \code{alpha = 0} and becomes a Hann window when \code{alpha = 1}.
+#'
+#' @param n Integer. Length of the window (number of points).
+#' @param alpha Numeric in [0, 1]. Shape parameter controlling the fraction
+#'   of the window inside the cosine tapered regions.
+#'   \itemize{
+#'     \item \code{alpha = 0}: rectangular window.
+#'     \item \code{0 < alpha < 1}: Tukey window with cosine tapers.
+#'     \item \code{alpha = 1}: Hann window.
+#'   }
+#'
+#' @return A numeric vector of length \code{n} containing the Tukey window values.
+#'
+#' @details
+#' The Tukey window is defined piecewise:
+#' \deqn{
+#'   w[m] =
+#'   \begin{cases}
+#'   \tfrac{1}{2}\left[1+\cos\!\left(\pi\left(\tfrac{2m}{\alpha(N-1)}-1\right)\right)\right], & 0 \leq m < \tfrac{\alpha(N-1)}{2}, \\
+#'   1, & \tfrac{\alpha(N-1)}{2} \leq m \leq (N-1)(1-\tfrac{\alpha}{2}), \\
+#'   \tfrac{1}{2}\left[1+\cos\!\left(\pi\left(\tfrac{2m}{\alpha(N-1)}-\tfrac{2}{\alpha}+1\right)\right)\right], & (N-1)(1-\tfrac{\alpha}{2}) < m \leq N-1.
+#'   \end{cases}
+#' }
+#'
+#' where \eqn{N} is the window length. For \code{alpha = 0} the definition
+#' reduces to a rectangular window, and for \code{alpha = 1} to a Hann window.
+#'
+#' @examples
+#' \dontrun{
+#' # Rectangular window
+#' tukey_window(8, alpha = 0)
+#'
+#' # Hann window
+#' tukey_window(8, alpha = 1)
+#'
+#' # General Tukey window
+#' tukey_window(16, alpha = 0.5)
+#' }
+#' @export
+tukey_window <- function(n, alpha) {
+    if (n <= 1L) {
+        return(rep(1, n))
+    }
+
+    # Rectangular
+    if (alpha <= 0) {
+        return(rep(1, n))
+    }
+    # Hann
+    if (alpha >= 1) {
+        m <- seq_len(n) - 1L
+        return(0.5 * (1 - cos(2 * pi * m / (n - 1L))))
+    }
+
+    r <- n - 1L
+    m <- 0L:r
+    edge <- floor(alpha * r / 2)
+
+    w <- numeric(n)
+
+    left <- (m <= edge)
+    right <- (m >= (r - edge))
+    middle <- !(left | right)
+
+    w[left] <- 0.5 * (1 + cos(pi * (2 * m[left] / (alpha * r) - 1)))
+    w[middle] <- 1
+    w[right] <- 0.5 * (1 + cos(pi * (2 * m[right] / (alpha * r) - 2 / alpha + 1)))
+
+    w
+}
+
 #' Floor with Decimal Digits
 #'
 #' Applies the \code{floor()} function to a number with precision controlled by number of digits.
