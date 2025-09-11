@@ -430,16 +430,16 @@ resize <- function(x, nlen, align = c("left", "center", "right")) {
 
 #' Pad a `ts` with zeros
 #'
-#' @param ts A `ts` object.
+#' @param x A `ts` object.
 #' @param tstart A numeric. Start time of output.
 #' @param tend A numeric. End time of output.
-#' @param at A numeric. Time to inject original `ts`.
+#' @param at A numeric. Starting time to inject original `x`, no matter `x` has its own time stamps.
 #'
 #' @return A padded `ts` object.
 #' @examples
 #' \dontrun{
 #' # Original signal from t = 0 with 0.1 sec spacing
-#' x <- ts(c(1, 2, 3, 4, 5), deltat = 0.1)
+#' x <- ts(1:5, deltat = 0.1)
 #'
 #' # Pad x into a 1-second series starting at t = 1.3
 #' padded <- pad(x, tstart = 1, tend = 2, at = 1.3)
@@ -447,33 +447,44 @@ resize <- function(x, nlen, align = c("left", "center", "right")) {
 #' time(padded)
 #' # shows inserted values at 1.3, 1.4, ..., 1.7
 #' padded
+#'
+#' # If x has time of -2, -1, 0, 1, 2,
+#' x <- ts(1:5, start = -2)
+#' # And pad with at = 0,
+#' padded <- pad(x, tstart = -10, tend = 10, at = 0)
+#' # x will start from 0 time not -2
 #' }
 #' @export
-pad <- function(ts, tstart, tend, at = 0) {
-    sampling_freq <- frequency(ts)
+pad <- function(x, tstart, tend, at = 0) {
+    stopifnot(inherits(x, "ts"))
+    sampling_freq <- frequency(x)
 
-    # Time vector of full zero-base
+    # Time grid for the padded series
     times <- seq(tstart, tend, by = 1 / sampling_freq)
-    base.inds <- seq_along(times)
+    ngrid <- length(times)
 
-    # Shifted insertion index
+    # Compute insertion range in samples
     shift_samples <- round((at - tstart) * sampling_freq)
-    ts_len <- length(ts)
+    n_rows <- NROW(x)
+    start_idx <- shift_samples + 1L
+    end_idx <- start_idx + n_rows - 1L
 
-    # Zero vector
-    zerobase <- numeric(length(times))
-
-    # Assign data (careful indexing)
-    start_idx <- shift_samples + 1
-    end_idx <- start_idx + ts_len - 1
-
-    if (start_idx >= 1 && end_idx <= length(zerobase)) {
-        zerobase[start_idx:end_idx] <- ts
-    } else {
+    if (start_idx < 1L || end_idx > ngrid) {
         stop("Padded series would go out of bounds. Check 'at', 'tstart', 'tend'.")
     }
 
-    ts(zerobase, start = tstart, frequency = sampling_freq)
+    # Zero base with proper shape
+    if (is.matrix(x)) {
+        zerobase <- matrix(0, nrow = ngrid, ncol = NCOL(x))
+        zerobase[start_idx:end_idx, ] <- x
+        out <- ts(zerobase, start = tstart, frequency = sampling_freq)
+        colnames(out) <- colnames(x)
+    } else {
+        zerobase <- numeric(ngrid)
+        zerobase[start_idx:end_idx] <- x
+        out <- ts(zerobase, start = tstart, frequency = sampling_freq)
+    }
+    out
 }
 
 #' Ensure even-length `ts`

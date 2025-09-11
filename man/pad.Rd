@@ -4,16 +4,16 @@
 \alias{pad}
 \title{Pad a `ts` with zeros}
 \usage{
-pad(ts, tstart, tend, at = 0)
+pad(x, tstart, tend, at = 0)
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{x}{A `ts` object.}
 
 \item{tstart}{A numeric. Start time of output.}
 
 \item{tend}{A numeric. End time of output.}
 
-\item{at}{A numeric. Time to inject original `ts`.}
+\item{at}{A numeric. Starting time to inject original `x`, no matter `x` has its own time stamps.}
 }
 \value{
 A padded `ts` object.
@@ -24,7 +24,7 @@ Pad a `ts` with zeros
 \examples{
 \dontrun{
 # Original signal from t = 0 with 0.1 sec spacing
-x <- ts(c(1, 2, 3, 4, 5), deltat = 0.1)
+x <- ts(1:5, deltat = 0.1)
 
 # Pad x into a 1-second series starting at t = 1.3
 padded <- pad(x, tstart = 1, tend = 2, at = 1.3)
@@ -32,5 +32,11 @@ padded <- pad(x, tstart = 1, tend = 2, at = 1.3)
 time(padded)
 # shows inserted values at 1.3, 1.4, ..., 1.7
 padded
+
+# If x has time of -2, -1, 0, 1, 2,
+x <- ts(1:5, start = -2)
+# And pad with at = 0,
+padded <- pad(x, tstart = -10, tend = 10, at = 0)
+# x will start from 0 time not -2
 }
 }
