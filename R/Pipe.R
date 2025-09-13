@@ -1901,7 +1901,7 @@ pipe_net <- function(
             window_size = arch_params$window_size,
             overlap = arch_params$overlap,
             mean.func = arch_params$mean.func,
-            p_col = paste0("P0_", arch_params$DQ),
+            p_col = ifelse(is.null(arch_params$DQ), "P0", paste0("P0_", arch_params$DQ)),
             return = 2L
         )
     }
