@@ -1017,7 +1017,7 @@ plot_coinc <- function(coinc.res,
                        annotate.thresh = p_crit) {
     # Lazy way...
     P0_names <- c("P0_net", "P0_H1_bin", "P0_L1_bin")
-    new_names <- structure(c("coinc", "H1", "L1"), names = P0_names)
+    new_names <- structure(c("net", "H1", "L1"), names = P0_names)
     det_colors <- structure(c("black", "red", "blue"), names = P0_names)
     det_alphas <- structure(c(1, alpha.det, alpha.det), names = P0_names)
     det_ltypes <- structure(c(1, 2, 2), names = P0_names)
