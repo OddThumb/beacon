@@ -2140,7 +2140,10 @@ reproduce <- function(
         window_size = window_size,
         overlap = overlap,
         mean.func = result$arch_params$mean.func,
-        p_col = paste0("P0_", result$arch_params$DQ),
+        p_col = ifelse(is.null(result$arch_params$DQ),
+            "P0",
+            paste0("P0_", result$arch_params$DQ)
+        ),
         return = 2L
     )
     list("res.net" = res.net, "coinc.res" = coinc.res, "batch_num" = i_bch)
