@@ -994,6 +994,7 @@ config_pipe <- function(t_batch = 1L, replace = NULL) {
     def <- list(
         # seqARIMA parameters
         d = "auto",
+        d_max = 2,
         p = 1024L,
         q = seq.int(20),
         fl = 32L,
@@ -1024,7 +1025,7 @@ config_pipe <- function(t_batch = 1L, replace = NULL) {
         }
     }
 
-    n_missed <- tr_overlap(def$d, def$p, def$q, split = T)
+    n_missed <- tr_overlap(def$d_max, def$p, def$q, split = T)
     def[["n_missed"]] <- n_missed
 
     def
