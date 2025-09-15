@@ -993,7 +993,7 @@ arch <- function(ts, params) {
 config_pipe <- function(t_batch = 1L, replace = NULL) {
     def <- list(
         # seqARIMA parameters
-        d = 2L,
+        d = "auto",
         p = 1024L,
         q = seq.int(20),
         fl = 32L,
