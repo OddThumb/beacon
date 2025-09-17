@@ -892,8 +892,11 @@ plot_anomaly <- function(anom.df,
             na.rm = FALSE, fill = "grey50", alpha = 0.5
         ) +
         ggplot2::geom_line(
-            x = anom.df[[time_col]] - tzero,
-            y = anom.df[[val_col]],
+            data = anom.df,
+            ggplot2::aes(
+                x = .data[[time_col]] - tzero,
+                y = .data[[val_col]]
+            ),
             color = "grey15"
         )
 
@@ -907,12 +910,20 @@ plot_anomaly <- function(anom.df,
         p <- p +
             ggplot2::geom_point(
                 data = anoms,
-                ggplot2::aes(color = sig_flag),
+                ggplot2::aes(
+                    x = .data[[time_col]] - tzero,
+                    y = .data[[val_col]],
+                    color = sig_flag
+                ),
                 shape = 20, size = 2, alpha = 0.35
             ) +
             ggplot2::geom_point(
                 data = anoms,
-                ggplot2::aes(color = sig_flag),
+                ggplot2::aes(
+                    x = .data[[time_col]] - tzero,
+                    y = .data[[val_col]],
+                    color = sig_flag
+                ),
                 shape = 21, size = 3, alpha = 0.35
             ) +
             ggplot2::scale_color_manual(
@@ -923,11 +934,21 @@ plot_anomaly <- function(anom.df,
         # no p-value filtering: all anomalies in sig_color
         p <- p +
             ggplot2::geom_point(
-                data = anoms, color = sig_color,
+                data = anoms,
+                ggplot2::aes(
+                    x = .data[[time_col]] - tzero,
+                    y = .data[[val_col]]
+                ),
+                color = sig_color,
                 shape = 20, size = 2, alpha = 0.35
             ) +
             ggplot2::geom_point(
-                data = anoms, color = sig_color,
+                data = anoms,
+                ggplot2::aes(
+                    x = .data[[time_col]] - tzero,
+                    y = .data[[val_col]]
+                ),
+                color = sig_color,
                 shape = 21, size = 3, alpha = 0.35
             )
     }
