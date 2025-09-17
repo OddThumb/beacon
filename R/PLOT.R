@@ -892,8 +892,8 @@ plot_anomaly <- function(anom.df,
             na.rm = FALSE, fill = "grey50", alpha = 0.5
         ) +
         ggplot2::geom_line(
-            x = .data[[time_col]] - tzero,
-            y = .data[[val_col]],
+            x = anom.df[[time_col]] - tzero,
+            y = anom.df[[val_col]],
             color = "grey15"
         )
 
