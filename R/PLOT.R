@@ -842,18 +842,18 @@ plot_spectro <- function(
 #'
 #' @return A ggplot object.
 #' @export
-plot_anomalies <- function(anom.df,
-                           tzero = NULL,
-                           val_col = "observed",
-                           time_col = "GPS",
-                           err_lwr = NULL,
-                           err_upr = NULL,
-                           xlim = NULL,
-                           ylim = NULL,
-                           p_crit = 0.05,
-                           p_col = "P0",
-                           sig_color = "red",
-                           lowsig_color = "grey50") {
+plot_anomaly <- function(anom.df,
+                         tzero = NULL,
+                         val_col = "observed",
+                         time_col = "GPS",
+                         err_lwr = NULL,
+                         err_upr = NULL,
+                         xlim = NULL,
+                         ylim = NULL,
+                         p_crit = 0.05,
+                         p_col = "P0",
+                         sig_color = "red",
+                         lowsig_color = "grey50") {
     # tzero
     if (is.null(tzero)) {
         tzero <- anom.df[1, time_col, drop = TRUE]
@@ -880,15 +880,22 @@ plot_anomalies <- function(anom.df,
     }
 
     # Base: ribbon + line
-    p <- ggplot2::ggplot(
-        anom.df,
-        ggplot2::aes(x = .data[[time_col]] - tzero, y = .data[[val_col]])
-    ) +
+    p <- ggplot2::ggplot() +
         ggplot2::geom_ribbon(
-            ggplot2::aes(ymin = .data[[err_lwr]], ymax = .data[[err_upr]]),
+            data = anom.df,
+            ggplot2::aes(
+                x = .data[[time_col]] - tzero,
+                y = .data[[val_col]],
+                ymin = .data[[err_lwr]],
+                ymax = .data[[err_upr]]
+            ),
             na.rm = FALSE, fill = "grey50", alpha = 0.5
         ) +
-        ggplot2::geom_line(color = "grey15")
+        ggplot2::geom_line(
+            x = .data[[time_col]] - tzero,
+            y = .data[[val_col]],
+            color = "grey15"
+        )
 
     # Anomalies
     anoms <- dplyr::filter(anom.df, .data[["anomaly"]] == 1)
