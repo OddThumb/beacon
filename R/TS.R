@@ -353,7 +353,7 @@ shift_cyclic <- function(x, t_cyclic) {
 #' @return A phase-aligned `ts` object with attributes for applied shift.
 #' @export
 shift_phase <- function(x, ref = NULL, phase = NULL) {
-    sampling.freq <- frequency(ts)
+    sampling.freq <- frequency(x)
 
     if (is.null(ref) & is.null(phase)) {
         stop("InputError: At least, one of `ref` or `phase` is required.")
