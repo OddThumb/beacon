@@ -140,8 +140,8 @@ PACF <- function(ts, lag.max = length(ts), plot = TRUE, title = NULL) {
 #'
 #' Compute and optionally visualize the cross-correlation function between two time series.
 #'
-#' @param ts1 First numeric vector or time-series object.
-#' @param ts2 Second numeric vector or time-series object.
+#' @param ts1 First numeric vector or time-series object (Reference).
+#' @param ts2 Second numeric vector or time-series object (Shifted).
 #' @param lag.max Maximum lag to compute. Default is length of `ts1`.
 #' @param na.action NA handling function. Default is `na.fail`.
 #' @param title Optional plot title.

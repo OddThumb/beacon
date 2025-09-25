@@ -18,9 +18,9 @@ CCF(
 )
 }
 \arguments{
-\item{ts1}{First numeric vector or time-series object.}
+\item{ts1}{First numeric vector or time-series object (Reference).}
 
-\item{ts2}{Second numeric vector or time-series object.}
+\item{ts2}{Second numeric vector or time-series object (Shifted).}
 
 \item{lag.max}{Maximum lag to compute. Default is length of `ts1`.}
 
