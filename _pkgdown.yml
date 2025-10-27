@@ -2,3 +2,30 @@ url: https://oddthumb.github.io/beacon/
 template:
   bootstrap: 5
 
+home:
+  title: "beacon"
+  sidebar: ~     # 홈에서 우측 사이드바 비활성(선택)
+
+navbar:
+  structure:
+    left:  [reference, articles, news]
+    right: [search, github]
+  components:
+    articles:
+      text: Articles
+      href: articles/index.html
+    github:
+      icon: fab fa-github
+      href: https://github.com/OddThumb/beacon
+
+articles:
+  - title: Tutorials
+    desc: Getting started guides
+    contents:
+      - starts_with("Load-")   # Load-GW-Data.Rmd 같은 파일 자동 포함
+  - title: How-to
+    contents:
+      - starts_with("How-")
+  - title: Reference Guides
+    contents:
+      - ends_with("-guide")
