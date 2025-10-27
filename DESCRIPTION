@@ -3,7 +3,7 @@ Type: Package
 Title: BEACON: Burst Event Anomaly Clustering and Outlier Notification
 Version: 0.0.1
 Date: 2025-07-22
-Authors@R: person("Sangin", "Kim", role = c("aut", "cre"), email = "astrphscst@gmail.com")
+Authors@R: person("Sangin", "Kim", role = c("aut", "cre"), email = "kimsanginn@gmail.com")
 Description: BEACON is a fully data-driven pipeline designed to detect unmodeled gravitational wave (GW) transients. By combining sequential autoregressive modeling (seqARIMA) and anomaly clustering, BEACON provides a low-latency and model-agnostic framework for robust burst detection.
 License: GPL (>= 2)
 LinkingTo: Rcpp, RcppParallel

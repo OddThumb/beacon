@@ -127,6 +127,6 @@ system.file("extdata", "demo_4kHz.h5", package = "beacon")
 
 ## **Publications**
 
-If you use BEACON in your work, please cite: Kim et al., “Autoregressive Search of Gravitational Waves: Design of low-latency search pipeline for unmodeled transients — BEACON”, in prep.
+If you use BEACON in your work, please cite: Kim et al., “Autoregressive Search of Gravitational Waves: Design of low-latency search pipeline for unmodeled transients — BEACON”, submitted.
 
 If you use only `seqarima` in your work, please cite: [Kim et al., PRD, 2024, “Autoregressive Search of Gravitational Waves: Denoising”](https://doi.org/10.1103/PhysRevD.109.102003).
