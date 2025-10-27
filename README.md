@@ -109,7 +109,7 @@ reticulate::use_condaenv(condaenv = "path/to/your/conda/env")
 
 -   Repository: <https://github.com/OddThumb/beacon>
 
--   For detail usages, See GitHub Pages: <https://oddthumb.github.io/beacon/index.html>
+-   For detail usages, See GitHub Pages: <https://oddthumb.github.io/beacon/articles/>
 
 ## **Example Datasets**
 
