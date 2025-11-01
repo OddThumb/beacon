@@ -4,7 +4,6 @@ template:
 
 home:
   title: "beacon"
-  sidebar: ~     # 홈에서 우측 사이드바 비활성(선택)
 
 navbar:
   structure:
@@ -22,7 +21,7 @@ articles:
   - title: Tutorials
     desc: Getting started guides
     contents:
-      - starts_with("Load-")   # Load-GW-Data.Rmd 같은 파일 자동 포함
+      - starts_with("Load-")
   - title: How-to
     contents:
       - starts_with("How-")

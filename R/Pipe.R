@@ -1892,27 +1892,30 @@ pipe_net <- function(
     }
 
     # Coincidence analysis
-    if (any(sapply(res.net, function(det) all(is.na(det$proc))))) {
-        coinc.res <- NA
-    } else {
-        coinc.res <- coincide_P0(
-            shift.proc = data.table::data.table(res.net$H1$proc),
-            ref.proc = data.table::data.table(res.net$L1$proc),
-            n_shift = NULL,
-            window_size = arch_params$window_size,
-            overlap = arch_params$overlap,
-            mean.func = arch_params$mean.func,
-            p_col = ifelse(is.null(arch_params$DQ), "P0", paste0("P0_", arch_params$DQ)),
-            return = 2L
-        )
+    if (length(dets) > 1L) {
+        if (any(sapply(res.net, function(det) all(is.na(det$proc))))) {
+            coinc.res <- NA
+        } else {
+            coinc.res <- coincide_P0(
+                shift.proc = data.table::data.table(res.net$H1$proc),
+                ref.proc = data.table::data.table(res.net$L1$proc),
+                n_shift = NULL,
+                window_size = arch_params$window_size,
+                overlap = arch_params$overlap,
+                mean.func = arch_params$mean.func,
+                p_col = ifelse(is.null(arch_params$DQ), "P0", paste0("P0_", arch_params$DQ)),
+                return = 2L
+            )
+        }
+        coinc.lis[[length(coinc.lis) + 1]] <- coinc.res
     }
-    coinc.lis[[length(coinc.lis) + 1]] <- coinc.res
 
     # Assign them into parent frame (outside of pipe.net)
     assign("res.net", res.net, envir = parent.frame())
     assign("prev_batch", prev_batch, envir = parent.frame())
     assign("coinc.lis", coinc.lis, envir = parent.frame())
 }
+
 
 #' Run full anomaly detection stream over multiple batches
 #'
