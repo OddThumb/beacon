@@ -428,7 +428,7 @@ overlap <- function(
 #'
 #' @export
 interp_psd <- function(x, delta_f) {
-    new_n <- as.integer(round((length(fs) - 1) * deltaf(fs) / delta_f)) + 1L
+    new_n <- as.integer(round((length(x) - 1) * deltaf(x) / delta_f)) + 1L
     samples <- 0:(new_n - 1) * delta_f
     interp.fs <- approx(xout = samples, x = freqs(x), y = x)
 
