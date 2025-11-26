@@ -428,7 +428,7 @@ overlap <- function(
 #'
 #' @export
 interp_psd <- function(x, delta_f) {
-    new_n <- (length(x) - 1) * deltaf(x) / delta_f + 1
+    new_n <- as.integer(round((length(fs) - 1) * deltaf(fs) / delta_f)) + 1L
     samples <- 0:(new_n - 1) * delta_f
     interp.fs <- approx(xout = samples, x = freqs(x), y = x)
 
@@ -457,7 +457,7 @@ inv_spec_trunc_psd <- function(
     max_filter_len <- trunc(max_filter_len)
     N <- (length(x) - 1) * 2
 
-    kmin <- ifelse(is.null(fl), 1, fl / deltaf(x))
+    kmin <- if (is.null(fl)) 1L else as.integer(fl / deltaf(x))
     inv_asd <- double(N)
     inv_asd[(kmin + 1):(N %/% 2)] <- (1.0 / x[(kmin + 1):(N %/% 2)])^0.5
     q <- fftw::IFFT(inv_asd, plan = fftw::planFFT(length(inv_asd)))
@@ -526,6 +526,27 @@ psd <- function(
     delf = NULL,
     window_func = bspec::hannwindow
 ) {
+    median_bias <- function(n) {
+        # Direct translation of pycbc.psd.estimate.median_bias(n)
+        n <- as.integer(n)
+        if (n <= 0L) {
+            stop("n must be positive integer")
+        }
+
+        if (n >= 1000L) {
+            return(log(2))
+        }
+
+        kmax <- (n - 1L) %/% 2L
+        bias <- 1.0
+        if (kmax > 0L) {
+            for (k in 1L:kmax) {
+                bias <- bias + 1.0 / (2 * k + 1) - 1.0 / (2 * k)
+            }
+        }
+        bias
+    }
+
     if (is.null(delf)) {
         delf <- frequency(x) / length(x)
     }
@@ -537,7 +558,7 @@ psd <- function(
         windowfun = window_func
     )
     first_psd <- fs(
-        welch_psd$power,
+        welch_psd$power / median_bias(welch_psd$segments),
         df = uniqdif(welch_psd$frequency),
         sampling.freq = frequency(x)
     )
