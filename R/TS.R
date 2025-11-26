@@ -260,7 +260,7 @@ to_ts <- function(x, start = 0, delta_t = NULL) {
 #' @param ref A time series (`ts`) or a vector containing both an initial time and a final time.
 #' @return A windowed time series (`ts`) object.
 #' @export
-window_to <- function(ts, ref) {
+window_to <- function(x, ref) {
     if (is.ts(ref)) {
         window(x, start = time(ref)[1], end = utils::tail(time(ref), 1))
     } else if (length(ref) == 2) {

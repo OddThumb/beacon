@@ -4,12 +4,12 @@
 \alias{window_to}
 \title{Handy window function}
 \usage{
-window_to(ts, ref)
+window_to(x, ref)
 }
 \arguments{
-\item{ref}{A time series (`ts`) or a vector containing both an initial time and a final time.}
-
 \item{x}{A time series (`ts`) object.}
+
+\item{ref}{A time series (`ts`) or a vector containing both an initial time and a final time.}
 }
 \value{
 A windowed time series (`ts`) object.
