@@ -2,7 +2,7 @@
 #'
 #' Compute and visualize the autocorrelation function of a time series.
 #'
-#' @param ts A numeric vector or time-series object.
+#' @param x A numeric vector or time-series object.
 #' @param lag.max An integer specifying the maximum lag to compute ACF. Default is the length of `ts`.
 #' @param plot A logical. If TRUE (default), return a ggplot2 object for visualization.
 #' @param title An optional string to set as plot title.
@@ -15,9 +15,9 @@
 #' Otherwise, returns the "acf" object only.
 #'
 #' @export
-ACF <- function(ts, lag.max = length(ts), plot = TRUE, title = NULL) {
-    ret <- stats::acf(x = ts, lag.max = lag.max, type = "correlation", plot = F)
-    sigs <- 1.96 / sqrt(length(ts))
+ACF <- function(x, lag.max = length(x), plot = TRUE, title = NULL) {
+    ret <- stats::acf(x = x, lag.max = lag.max, type = "correlation", plot = F)
+    sigs <- 1.96 / sqrt(length(x))
     ret[["white95ci"]] <- sigs
 
     ret.df <- data.frame("lag" = c(ret$lag), "acf" = c(ret$acf))
@@ -71,7 +71,7 @@ ACF <- function(ts, lag.max = length(ts), plot = TRUE, title = NULL) {
 #' Compute and visualize the partial autocorrelation function of a time series.
 #'
 
-#' @param ts A numeric vector or time-series object.
+#' @param x A numeric vector or time-series object.
 #' @param lag.max An integer specifying the maximum lag to compute PACF. Default is the length of `ts`.
 #' @param plot A logical. If TRUE (default), return a ggplot2 object for visualization.
 #' @param title An optional string to set as plot title.
@@ -84,9 +84,9 @@ ACF <- function(ts, lag.max = length(ts), plot = TRUE, title = NULL) {
 #' Otherwise, returns the PACF object only.
 #'
 #' @export
-PACF <- function(ts, lag.max = length(ts), plot = TRUE, title = NULL) {
-    ret <- stats::acf(x = ts, lag.max = lag.max, type = "partial", plot = F)
-    sigs <- 1.96 / sqrt(length(ts))
+PACF <- function(x, lag.max = length(x), plot = TRUE, title = NULL) {
+    ret <- stats::acf(x = x, lag.max = lag.max, type = "partial", plot = F)
+    sigs <- 1.96 / sqrt(length(x))
     ret[["white95ci"]] <- sigs
 
     ret.df <- data.frame("lag" = c(ret$lag), "acf" = c(ret$acf))
@@ -171,7 +171,8 @@ CCF <- function(
     save = FALSE,
     dir = NULL,
     prefix = NULL,
-    times = NULL) {
+    times = NULL
+) {
     if (!is.ts(ts1) | !is.ts(ts2)) {
         if (is.null(times)) {
             stop("To convert given data to ts, 'times' needs to be provided")
@@ -207,14 +208,17 @@ CCF <- function(
                 color = "blue"
             ) +
             ggplot2::geom_hline(
-                ggplot2::aes(linetype = "95% C.I. for white noise", yintercept = -sigs),
+                ggplot2::aes(
+                    linetype = "95% C.I. for white noise",
+                    yintercept = -sigs
+                ),
                 color = "blue"
             ) +
             ggplot2::scale_x_continuous(
                 breaks = scales::breaks_pretty(ifelse(
                     nrow(ret.df > 10 * sampling.freq),
                     10,
-                    trunc(length(ts) / (sampling.freq / 2))
+                    trunc(length(ts1) / (sampling.freq / 2))
                 ))
             ) +
             ggplot2::scale_linetype_manual(

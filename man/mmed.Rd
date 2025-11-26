@@ -4,10 +4,10 @@
 \alias{mmed}
 \title{Apply median filter to a `ts`}
 \usage{
-mmed(ts, order)
+mmed(x, order)
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{x}{A `ts` object.}
 
 \item{order}{An odd integer. Window size of the median filter.}
 }

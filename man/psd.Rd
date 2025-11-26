@@ -4,16 +4,16 @@
 \alias{psd}
 \title{Generate power spectral density (PSD) estimate using Welch’s method}
 \usage{
-psd(ts, sl = 4, fl = 15, delf = NULL, window_func = bspec::hannwindow)
+psd(x, sl = 4, fl = 15, delf = NULL, window_func = bspec::hannwindow)
 }
 \arguments{
-\item{ts}{A `ts` time-series object.}
+\item{x}{A `ts` time-series object.}
 
 \item{sl}{Numeric scalar. Segment length for the Welch method (in time units).}
 
 \item{fl}{Numeric scalar. Low-frequency cutoff for filter truncation (same units as `ts` frequency).}
 
-\item{delf}{Numeric scalar, optional. Frequency resolution; defaults to `frequency(ts) / length(ts)`.}
+\item{delf}{Numeric scalar, optional. Frequency resolution; defaults to `frequency(x) / length(x)`.}
 
 \item{window_func}{Function. A window function (e.g., `bspec::hannwindow`) to shape each segment prior to PSD estimation.}
 }
@@ -33,7 +33,7 @@ inverse spectrum as needed.
 \details{
 The core estimation pipeline proceeds as follows:
   1. **Welch PSD estimation** using `bspec::welchPSD()`, with median averaging for robustness.
-  2. Conversion to `fs` object via `fs()`, pairing PSD power with `frequency(ts)`-based spacing.
+  2. Conversion to `fs` object via `fs()`, pairing PSD power with `frequency(x)`-based spacing.
   3. **Interpolation** to uniform frequency resolution via `interp_psd()`.
   4. **Inverse-spectrum truncation** using `inv_spec_trunc_psd()` to filter low-frequency components below `fl` using the provided window.
 

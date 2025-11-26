@@ -1,39 +1,39 @@
 #' Initial timestamp of a time series
 #'
-#' @param ts A `ts` object.
+#' @param x A `ts` object.
 #' @param n A numeric (default: 1). Number of initial timestamps to return.
 #' @return A numeric vector of length `n`.
 #' @export
-ti <- function(ts, n = 1) {
-    utils::head(c(time(ts)), n)
+ti <- function(x, n = 1) {
+    utils::head(c(time(x)), n)
 }
 
 #' Final timestamp of a time series
 #'
-#' @param ts A `ts` object.
+#' @param x A `ts` object.
 #' @param n A numeric (default: 1). Number of final timestamps to return.
 #' @return A numeric vector of length `n`.
 #' @export
-tf <- function(ts, n = 1) {
-    utils::tail(c(time(ts)), n)
+tf <- function(x, n = 1) {
+    utils::tail(c(time(x)), n)
 }
 
 #' Time range of a time series
 #'
-#' @param ts A `ts` object.
+#' @param x A `ts` object.
 #' @return A numeric vector of length 2: \code{c(start, end)}.
 #' @export
-tr <- function(ts) {
-    c(ti(ts), tf(ts))
+tr <- function(x) {
+    c(ti(x), tf(x))
 }
 
 #' Duration of a time series
 #'
-#' @param ts A `ts` object.
+#' @param x A `ts` object.
 #' @return A numeric value indicating duration in seconds.
 #' @export
-tl <- function(ts) {
-    diff(tr(ts)) + deltat(ts)
+tl <- function(x) {
+    diff(tr(x)) + deltat(x)
 }
 
 #' Convert GPS time to UTC
@@ -150,27 +150,27 @@ tsfy <- function(obj, ref, sampling.freq = NULL, na.rm = T) {
 
 #' Convert `ts` to data frame with time column
 #'
-#' @param ts A `ts` object.
+#' @param x A `ts` object.
 #' @param tzero A numeric (default: 0). Time shift.
 #' @param val.name A character. Name for value column (default: "x").
 #' @return A data frame with columns \code{time} and value.
 #' @export
-ts_df <- function(ts, tzero = 0, val.name = "x") {
-    if (!is.ts(ts)) {
+ts_df <- function(x, tzero = 0, val.name = "x") {
+    if (!is.ts(x)) {
         stop("Input object class is not 'ts'")
     }
 
-    if (!is.null(dim(ts))) {
+    if (!is.null(dim(x))) {
         tmp <- dplyr::relocate(
             dplyr::mutate(
-                as.data.frame(ts),
-                time = c(time(ts) - tzero)
+                as.data.frame(x),
+                time = c(time(x) - tzero)
             ),
             time,
             .before = 1
         )
     } else {
-        tmp <- data.frame(time = c(time(ts) - tzero), c(ts))
+        tmp <- data.frame(time = c(time(x) - tzero), c(x))
         colnames(tmp) <- c("time", val.name)
     }
     return(tmp)
@@ -178,14 +178,14 @@ ts_df <- function(ts, tzero = 0, val.name = "x") {
 
 #' Convert `ts` to tibbletime object
 #'
-#' @param ts A `ts` object.
+#' @param x A `ts` object.
 #' @param time_col A character. Column name for time (default: "time").
 #' @param val_col A character. Column name for value (default: "x").
 #' @return A \code{tbl_time} object.
 #' @export
-as_tbt <- function(ts, time_col = "time", val_col = "x") {
+as_tbt <- function(x, time_col = "time", val_col = "x") {
     timerange <- as.POSIXct(
-        tr(ts),
+        tr(x),
         origin = as.Date("1980-01-06"),
         tz = "UTC",
         format = "%Y-%m-%d %H:%M:%OS"
@@ -194,9 +194,9 @@ as_tbt <- function(ts, time_col = "time", val_col = "x") {
         dplyr::mutate(
             tibbletime::create_series(
                 timerange[1] ~ timerange[2],
-                period = paste(as.character(1 / frequency(ts)), "second")
+                period = paste(as.character(1 / frequency(x)), "second")
             ),
-            "{val_col}" := c(ts)
+            "{val_col}" := c(x)
         ),
         "{time_col}" := date
     )
@@ -206,27 +206,27 @@ as_tbt <- function(ts, time_col = "time", val_col = "x") {
 
 #' Inverse Fourier transform of `fs` object
 #'
-#' @param fs A `fs` object.
-#' @param start A numeric. Start time (default: 0 or `attr(fs, "ti")`).
+#' @param x A `fs` object.
+#' @param start A numeric. Start time (default: 0 or `attr(x, "ti")`).
 #' @param delta_t A numeric. Time step. If \code{NULL}, use natural resolution.
 #'
 #' @return A `ts` object in time domain.
 #' @export
-to_ts <- function(fs, start = 0, delta_t = NULL) {
-    nat_delta_t <- 1.0 / ((length(fs) - 1) * 2) / deltaf(fs)
+to_ts <- function(x, start = 0, delta_t = NULL) {
+    nat_delta_t <- 1.0 / ((length(x) - 1) * 2) / deltaf(x)
     if (is.null(delta_t)) {
         delta_t <- nat_delta_t
     }
 
-    if (!is.null(attr(fs, "ti"))) {
-        start <- attr(fs, "ti")
+    if (!is.null(attr(x, "ti"))) {
+        start <- attr(x, "ti")
     }
 
     # add 0.5 to round integer
-    tlen <- as.integer(1.0 / deltaf(fs) / delta_t + 0.5)
+    tlen <- as.integer(1.0 / deltaf(x) / delta_t + 0.5)
     flen <- as.integer(tlen / 2 + 1)
 
-    if (flen < length(fs)) {
+    if (flen < length(x)) {
         stop(
             " ValueError: The value of delta_t (",
             delta_t,
@@ -236,31 +236,35 @@ to_ts <- function(fs, start = 0, delta_t = NULL) {
         )
     }
 
-    tmp <- fs(double(tlen), df = deltaf(fs), sampling.freq = attr(fs, "sampling.freq"))
-    tmp[1:length(fs)] <- fs
+    tmp <- fs(
+        double(tlen),
+        df = deltaf(x),
+        sampling.freq = attr(x, "sampling.freq")
+    )
+    tmp[1:length(x)] <- x
     ifft.res <- fftw::IFFT(tmp, plan = fftw::planFFT(length(tmp)))
 
     ts.out <- Re(ifft.res)
     ts.out <- ts(ts.out, start = start, deltat = delta_t)
 
-    attr(ts.out, "assoc.fs") <- deparse(substitute(fs))
-    attr(ts.out, "delta_f") <- deltaf(fs)
-    attr(ts.out, "flen") <- length(fs)
+    attr(ts.out, "assoc.fs") <- deparse(substitute(x))
+    attr(ts.out, "delta_f") <- deltaf(x)
+    attr(ts.out, "flen") <- length(x)
     return(ts.out)
 }
 
 
 #' Handy window function
 #'
-#' @param ts A time series (`ts`) object.
+#' @param x A time series (`ts`) object.
 #' @param ref A time series (`ts`) or a vector containing both an initial time and a final time.
 #' @return A windowed time series (`ts`) object.
 #' @export
 window_to <- function(ts, ref) {
     if (is.ts(ref)) {
-        window(ts, start = time(ref)[1], end = utils::tail(time(ref), 1))
+        window(x, start = time(ref)[1], end = utils::tail(time(ref), 1))
     } else if (length(ref) == 2) {
-        window(ts, start = ref[1], end = ref[2])
+        window(x, start = ref[1], end = ref[2])
     } else {
         stop("Check input 'ref': ts object or time range")
     }
@@ -268,18 +272,18 @@ window_to <- function(ts, ref) {
 
 #' Handy window function with index
 #'
-#' @param ts        A time series (`ts`) object.
+#' @param x        A time series (`ts`) object.
 #' @param ind.range A vector of length of 2. A first and second element refer to initial and final index, respectively.
 #' @return A cropped time series (`ts`) object.
 #' @export
-crop_to <- function(ts, ind.range) {
-    if (!inherits(ts, "ts")) {
+crop_to <- function(x, ind.range) {
+    if (!inherits(x, "ts")) {
         stop("(InputError) Given data is not a class of `ts`")
     }
-    if (!all(ind.range %in% seq_along(ts))) {
+    if (!all(ind.range %in% seq_along(x))) {
         stop("(InputError) A given `ind.range` includes an index out of `ts`")
     }
-    window_to(ts, time(ts)[ind.range])
+    window_to(x, time(x)[ind.range])
 }
 
 
@@ -359,9 +363,12 @@ shift_phase <- function(x, ref = NULL, phase = NULL) {
         stop("InputError: At least, one of `ref` or `phase` is required.")
     } else if (!is.null(phase)) {
         d_phi <- phase
-    } else { # ref provided
+    } else {
+        # ref provided
         if (sampling.freq != frequency(ref)) {
-            stop("Error) Frequencies are different between given time-series and reference time-series")
+            stop(
+                "Error) Frequencies are different between given time-series and reference time-series"
+            )
         }
         # NOTE: If you meant statistical mode, DO NOT use base::mode()
         # Replace with your own `Mode()` or another estimator.
@@ -397,7 +404,9 @@ resize <- function(x, nlen, align = c("left", "center", "right")) {
     n <- NROW(x)
 
     slice <- function(i) if (is_mat) x[i, , drop = FALSE] else x[i]
-    pad0 <- function(k) if (is_mat) matrix(0, nrow = k, ncol = NCOL(x)) else rep(0, k)
+    pad0 <- function(k) {
+        if (is_mat) matrix(0, nrow = k, ncol = NCOL(x)) else rep(0, k)
+    }
 
     if (n >= nlen) {
         if (align == "left") {
@@ -418,12 +427,18 @@ resize <- function(x, nlen, align = c("left", "center", "right")) {
         } else {
             lp <- floor(pad / 2)
             rp <- pad - lp
-            x_new <- if (is_mat) rbind(pad0(lp), x, pad0(rp)) else c(pad0(lp), x, pad0(rp))
+            x_new <- if (is_mat) {
+                rbind(pad0(lp), x, pad0(rp))
+            } else {
+                c(pad0(lp), x, pad0(rp))
+            }
         }
     }
 
     out <- ts(x_new, start = st, frequency = f)
-    if (is_mat && !is.null(colnames(x))) colnames(out) <- colnames(x)
+    if (is_mat && !is.null(colnames(x))) {
+        colnames(out) <- colnames(x)
+    }
     out
 }
 
@@ -470,7 +485,9 @@ pad <- function(x, tstart, tend, at = 0) {
     end_idx <- start_idx + n_rows - 1L
 
     if (start_idx < 1L || end_idx > ngrid) {
-        stop("Padded series would go out of bounds. Check 'at', 'tstart', 'tend'.")
+        stop(
+            "Padded series would go out of bounds. Check 'at', 'tstart', 'tend'."
+        )
     }
 
     # Zero base with proper shape
@@ -489,26 +506,26 @@ pad <- function(x, tstart, tend, at = 0) {
 
 #' Ensure even-length `ts`
 #'
-#' @param ts A `ts` object.
+#' @param x A `ts` object.
 #' @return A `ts` object with even length (truncates last sample if needed).
 #' @export
-evenify <- function(ts) {
-    if (length(ts) %% 2 == 1) {
-        window_to(ts, tr(ts) + c(0, -1 / frequency(ts)))
+evenify <- function(x) {
+    if (length(x) %% 2 == 1) {
+        window_to(x, tr(x) + c(0, -1 / frequency(x)))
     } else {
-        message("Given ts has already even number of length: ", length(ts))
-        ts
+        message("Given ts has already even number of length: ", length(x))
+        x
     }
 }
 
 #' Normalize a `ts` to unit scale
 #'
-#' @param ts A `ts` object.
+#' @param x A `ts` object.
 #' @return A normalized `ts` object. Scale factor is stored in \code{attr(..., "order")}.
 #' @export
-unit_normalize <- function(ts) {
-    order.val <- get_order(ts)
-    norm <- ts / order.val
+unit_normalize <- function(x) {
+    order.val <- get_order(x)
+    norm <- x / order.val
     attr(norm, "order") <- order.val
     return(norm)
 }
@@ -516,41 +533,41 @@ unit_normalize <- function(ts) {
 #' Denormalize a unit-normalized `ts` object
 #'
 #' Restores the original scale of a normalized time series. The scale factor is retrieved
-#' from the \code{"order"} attribute of the input \code{ts}, or optionally provided directly.
+#' from the \code{"order"} attribute of the input \code{x}, or optionally provided directly.
 #'
-#' @param ts A normalized `ts` object.
+#' @param x A normalized `ts` object.
 #' @param order Optional numeric. If provided, used as the scale factor.
 #'
 #' @return A `ts` object restored to its original scale.
 #' @export
-unit_denormalize <- function(ts, order = NULL) {
+unit_denormalize <- function(x, order = NULL) {
     scale_factor <- if (!is.null(order)) {
         order
     } else {
-        attr(ts, "order", exact = TRUE)
+        attr(x, "order", exact = TRUE)
     }
 
     if (is.null(scale_factor)) {
         stop("No 'order' attribute found and no scale factor provided.")
     }
 
-    ts * scale_factor
+    x * scale_factor
 }
 
 #' Apply median filter to a `ts`
 #'
-#' @param ts A `ts` object.
+#' @param x A `ts` object.
 #' @param order An odd integer. Window size of the median filter.
 #' @return A smoothed `ts` object.
 #' @export
-mmed <- function(ts, order) {
-    meds <- runmed(ts, order)
-    ts(meds, start = ti(ts), frequency = frequency(ts))
+mmed <- function(x, order) {
+    meds <- runmed(x, order)
+    ts(meds, start = ti(x), frequency = frequency(x))
 }
 
 #' Apply band-pass filter to `ts`
 #'
-#' @param ts A `ts` object.
+#' @param x A `ts` object.
 #' @param fl A numeric. Lower cutoff frequency.
 #' @param fu A numeric. Upper cutoff frequency.
 #' @param resp A character. Filter type ("FIR" or "IIR").
@@ -560,12 +577,13 @@ mmed <- function(ts, order) {
 #' @return A band-pass filtered `ts` object with attributes.
 #' @export
 BandPass <- function(
-    ts,
+    x,
     fl = NULL,
     fu = NULL,
     resp = "FIR",
     filt_order = NULL,
-    verbose = T) {
+    verbose = T
+) {
     if (resp == "FIR") {
         filt.name <- "signal::fir1"
         n <- ifelse(is.null(filt_order), 512, filt_order)
@@ -576,7 +594,7 @@ BandPass <- function(
     filt.func <- eval(parse(text = filt.name))
     window.func <- bspec::welchwindow
 
-    sampling.freq <- frequency(ts)
+    sampling.freq <- frequency(x)
     nyq.freq <- sampling.freq / 2
 
     if (!is.null(fl) & !is.null(fu)) {
@@ -635,8 +653,8 @@ BandPass <- function(
         )
     }
     out <- tsfy(
-        signal::filtfilt(filt = FiltFun, x = ts),
-        ref = ts
+        signal::filtfilt(filt = FiltFun, x = x),
+        ref = x
     )
 
     attr(out, "type") <- filter.type
@@ -649,7 +667,7 @@ BandPass <- function(
 
 #' Spectral Whitening
 #'
-#' @param ts A `ts` object.
+#' @param x A `ts` object.
 #' @param sl A numeric. The segment length for estimating `psd`.
 #' @param fl A numeric. The lower-frequency-cutoff for `bandpass`.
 #' @param fu A numeric. The upper-frequency-cutoff for `bandpass`.
@@ -657,7 +675,7 @@ BandPass <- function(
 #' @return A `ts` object. Whitened time series.
 #'
 #' @export
-whiten <- function(ts, sl, fl, fu, ...) {
-    PSD <- psd(ts, sl, fl)
-    BandPass(to_ts((to_fs(ts) / (PSD^0.5))), fl, fu, verbose = F, ...)
+whiten <- function(x, sl, fl, fu, ...) {
+    PSD <- psd(x, sl, fl)
+    BandPass(to_ts((to_fs(x) / (PSD^0.5))), fl, fu, verbose = F, ...)
 }

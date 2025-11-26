@@ -4,10 +4,10 @@
 \alias{oscillo_option}
 \title{Common ggplot Components for Oscillogram Plot}
 \usage{
-oscillo_option(ts, tzero = 0, title = NULL, xlim = NULL, ylim = NULL)
+oscillo_option(x, tzero = 0, title = NULL, xlim = NULL, ylim = NULL)
 }
 \arguments{
-\item{ts}{A time series object.}
+\item{x}{A time series object.}
 
 \item{tzero}{A numeric value for time offset.}
 

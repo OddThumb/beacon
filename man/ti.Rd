@@ -4,10 +4,10 @@
 \alias{ti}
 \title{Initial timestamp of a time series}
 \usage{
-ti(ts, n = 1)
+ti(x, n = 1)
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{x}{A `ts` object.}
 
 \item{n}{A numeric (default: 1). Number of initial timestamps to return.}
 }

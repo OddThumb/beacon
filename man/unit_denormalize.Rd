@@ -4,10 +4,10 @@
 \alias{unit_denormalize}
 \title{Denormalize a unit-normalized `ts` object}
 \usage{
-unit_denormalize(ts, order = NULL)
+unit_denormalize(x, order = NULL)
 }
 \arguments{
-\item{ts}{A normalized `ts` object.}
+\item{x}{A normalized `ts` object.}
 
 \item{order}{Optional numeric. If provided, used as the scale factor.}
 }
@@ -16,5 +16,5 @@ A `ts` object restored to its original scale.
 }
 \description{
 Restores the original scale of a normalized time series. The scale factor is retrieved
-from the \code{"order"} attribute of the input \code{ts}, or optionally provided directly.
+from the \code{"order"} attribute of the input \code{x}, or optionally provided directly.
 }

@@ -4,17 +4,10 @@
 \alias{BandPass}
 \title{Apply band-pass filter to `ts`}
 \usage{
-BandPass(
-  ts,
-  fl = NULL,
-  fu = NULL,
-  resp = "FIR",
-  filt_order = NULL,
-  verbose = T
-)
+BandPass(x, fl = NULL, fu = NULL, resp = "FIR", filt_order = NULL, verbose = T)
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{x}{A `ts` object.}
 
 \item{fl}{A numeric. Lower cutoff frequency.}
 

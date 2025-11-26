@@ -4,10 +4,10 @@
 \alias{ma}
 \title{Two-sided Centered Moving Average Smoother}
 \usage{
-ma(ts, order, na.rm = T, w.func = NULL, ...)
+ma(x, order, na.rm = T, w.func = NULL, ...)
 }
 \arguments{
-\item{ts}{A `ts` object to be smoothed.}
+\item{x}{A `ts` object to be smoothed.}
 
 \item{order}{An integer specifying the moving average window size. Must be ≥ 1.}
 

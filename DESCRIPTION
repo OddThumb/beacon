@@ -11,9 +11,12 @@ SystemRequirements: GNU make
 Encoding: UTF-8
 RoxygenNote: 7.3.3
 Imports:
+    anomalize,
     bspec,
     curl,
     data.table,
+    dbscan,
+    doSNOW,
     dplyr,
     fftw,
     foreach,
@@ -32,6 +35,7 @@ Imports:
     reshape2,
     scales,
     signal,
+    snow,
     tibbletime,
     tseries,
     viridis

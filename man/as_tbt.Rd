@@ -4,10 +4,10 @@
 \alias{as_tbt}
 \title{Convert `ts` to tibbletime object}
 \usage{
-as_tbt(ts, time_col = "time", val_col = "x")
+as_tbt(x, time_col = "time", val_col = "x")
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{x}{A `ts` object.}
 
 \item{time_col}{A character. Column name for time (default: "time").}
 

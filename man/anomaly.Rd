@@ -5,7 +5,7 @@
 \title{Detect anomalies in time series using robust methods}
 \usage{
 anomaly(
-  ts,
+  x,
   max.anom = 100,
   scale = 1.5,
   method = "iqr",
@@ -14,7 +14,7 @@ anomaly(
 )
 }
 \arguments{
-\item{ts}{A \code{ts} object. Input time series data.}
+\item{x}{A \code{ts} object. Input time series data.}
 
 \item{max.anom}{An integer (default: 100). Maximum number of anomalies allowed.}
 

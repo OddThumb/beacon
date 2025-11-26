@@ -130,7 +130,8 @@ sigmasq <- function(
     htilde,
     psd = NULL,
     low_frequency_cutoff = NULL,
-    high_frequency_cutoff = NULL) {
+    high_frequency_cutoff = NULL
+) {
     # If htilde is ts, transform to fs.
     if (inherits(htilde, "ts")) {
         htilde <- to_fs(htilde)
@@ -208,7 +209,8 @@ matched_filter <- function(
     psd = NULL,
     fl = NULL,
     fu = NULL,
-    h.norm = NULL) {
+    h.norm = NULL
+) {
     # FFT of given ts
     htilde <- to_fs(template)
     stilde <- to_fs(data)
@@ -325,7 +327,8 @@ overlap_cplx <- function(
     psd = NULL,
     low_frequency_cutoff = NULL,
     high_frequency_cutoff = NULL,
-    normalized = TRUE) {
+    normalized = TRUE
+) {
     if (inherits(vec1, "ts")) {
         htilde <- to_fs(vec1)
     } else if (inherits(vec1, "fs")) {
@@ -404,7 +407,8 @@ overlap <- function(
     psd = NULL,
     low_frequency_cutoff = NULL,
     high_frequency_cutoff = NULL,
-    normalized = TRUE) {
+    normalized = TRUE
+) {
     Re(overlap_cplx(
         vec1,
         vec2,
@@ -419,42 +423,43 @@ overlap <- function(
 #' Interpolate PSD
 #' Return a new PSD that has been interpolated to the desired delta_f
 #'
-#' @param fs      A `fs` object. Frequency series to be interpolated.
+#' @param x      A `fs` object. Frequency series to be interpolated.
 #' @param delta_f A numeric. The desired delta_f of the output
 #'
 #' @export
-interp_psd <- function(fs, delta_f) {
-    new_n <- (length(fs) - 1) * deltaf(fs) / delta_f + 1
+interp_psd <- function(x, delta_f) {
+    new_n <- (length(x) - 1) * deltaf(x) / delta_f + 1
     samples <- 0:(new_n - 1) * delta_f
-    interp.fs <- approx(xout = samples, x = freqs(fs), y = fs)
+    interp.fs <- approx(xout = samples, x = freqs(x), y = x)
 
-    fs(interp.fs$y, df = delta_f, sampling.freq = attr(fs, "sampling.freq"))
+    fs(interp.fs$y, df = delta_f, sampling.freq = attr(x, "sampling.freq"))
 }
 
 #' Inverse Spectrum Truncation
 #'
-#' @param fs             A `fs` object of PSD.
+#' @param x             A `fs` object of PSD.
 #' @param max_filter_len A numeric.
 #' @param fl             A numeric. Low-frequency-cutoff.
 #' @param trunc_method   A window function. For truncating spectrum.
 #' @export
 inv_spec_trunc_psd <- function(
-    fs,
+    x,
     max_filter_len,
     fl = NULL,
-    trunc_method = NULL) {
-    if (!is.null(fl) & (fl < 0 | fl > vf(freqs(fs)))) {
+    trunc_method = NULL
+) {
+    if (!is.null(fl) & (fl < 0 | fl > vf(freqs(x)))) {
         stop(
             "ValueError: low_frequency_cutoff must be within the bandwidth of the PSD"
         )
     }
 
     max_filter_len <- trunc(max_filter_len)
-    N <- (length(fs) - 1) * 2
+    N <- (length(x) - 1) * 2
 
-    kmin <- ifelse(is.null(fl), 1, fl / deltaf(fs))
+    kmin <- ifelse(is.null(fl), 1, fl / deltaf(x))
     inv_asd <- double(N)
-    inv_asd[(kmin + 1):(N %/% 2)] <- (1.0 / fs[(kmin + 1):(N %/% 2)])^0.5
+    inv_asd[(kmin + 1):(N %/% 2)] <- (1.0 / x[(kmin + 1):(N %/% 2)])^0.5
     q <- fftw::IFFT(inv_asd, plan = fftw::planFFT(length(inv_asd)))
 
     trunc_start <- max_filter_len %/% 2
@@ -465,7 +470,8 @@ inv_spec_trunc_psd <- function(
 
     if (!is.null(trunc_method)) {
         trunc_window <- trunc_method(max_filter_len)
-        q[1:trunc_start] <- q[1:trunc_start] * utils::tail(trunc_window, trunc_start)
+        q[1:trunc_start] <- q[1:trunc_start] *
+            utils::tail(trunc_window, trunc_start)
         q[(trunc_end + 1):N] <- q[(trunc_end + 1):N] *
             utils::head(trunc_window, max_filter_len %/% 2)
     }
@@ -474,11 +480,11 @@ inv_spec_trunc_psd <- function(
         q[trunc_start:trunc_end] <- 0
     }
     psd_trunc <- fftw::FFT(q, plan = fftw::planFFT(length(q)))
-    psd_trunc <- psd_trunc[1:length(fs)]
+    psd_trunc <- psd_trunc[1:length(x)]
     psd_trunc <- Conj(psd_trunc) * psd_trunc
     psd_out <- 1 / abs(psd_trunc)
 
-    fs(psd_out, df = deltaf(fs), sampling.freq = attr(fs, "sampling.freq"))
+    fs(psd_out, df = deltaf(x), sampling.freq = attr(x, "sampling.freq"))
 }
 
 #' Generate power spectral density (PSD) estimate using Welch’s method
@@ -489,10 +495,10 @@ inv_spec_trunc_psd <- function(
 #' the median average (robust to outliers), then interpolating and truncating the
 #' inverse spectrum as needed.
 #'
-#' @param ts A `ts` time-series object.
+#' @param x A `ts` time-series object.
 #' @param sl Numeric scalar. Segment length for the Welch method (in time units).
 #' @param fl Numeric scalar. Low-frequency cutoff for filter truncation (same units as `ts` frequency).
-#' @param delf Numeric scalar, optional. Frequency resolution; defaults to `frequency(ts) / length(ts)`.
+#' @param delf Numeric scalar, optional. Frequency resolution; defaults to `frequency(x) / length(x)`.
 #' @param window_func Function. A window function (e.g., `bspec::hannwindow`) to shape each segment prior to PSD estimation.
 #'
 #' @return An object of class `fs`, representing the estimated PSD:
@@ -502,7 +508,7 @@ inv_spec_trunc_psd <- function(
 #'
 #' @details The core estimation pipeline proceeds as follows:
 #'   1. **Welch PSD estimation** using `bspec::welchPSD()`, with median averaging for robustness.
-#'   2. Conversion to `fs` object via `fs()`, pairing PSD power with `frequency(ts)`-based spacing.
+#'   2. Conversion to `fs` object via `fs()`, pairing PSD power with `frequency(x)`-based spacing.
 #'   3. **Interpolation** to uniform frequency resolution via `interp_psd()`.
 #'   4. **Inverse-spectrum truncation** using `inv_spec_trunc_psd()` to filter low-frequency components below `fl` using the provided window.
 #'
@@ -514,29 +520,31 @@ inv_spec_trunc_psd <- function(
 #'
 #' @export
 psd <- function(
-    ts,
+    x,
     sl = 4,
     fl = 15,
     delf = NULL,
-    window_func = bspec::hannwindow) {
+    window_func = bspec::hannwindow
+) {
     if (is.null(delf)) {
-        delf <- frequency(ts) / length(ts)
+        delf <- frequency(x) / length(x)
     }
 
     welch_psd <- bspec::welchPSD(
-        ts,
+        x,
         seglength = sl,
         method = "median",
         windowfun = window_func
     )
-    first_psd <- fs(welch_psd$power,
+    first_psd <- fs(
+        welch_psd$power,
         df = uniqdif(welch_psd$frequency),
-        sampling.freq = frequency(ts)
+        sampling.freq = frequency(x)
     )
     secon_psd <- interp_psd(first_psd, delf)
     third_psd <- inv_spec_trunc_psd(
         secon_psd,
-        max_filter_len = sl * frequency(ts),
+        max_filter_len = sl * frequency(x),
         fl = fl,
         trunc_method = window_func
     )

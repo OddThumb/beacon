@@ -5,7 +5,7 @@
 \title{Estimate frequency/trend windows from ACF with spectral fallback}
 \usage{
 decomp_freq_trend(
-  ts,
+  x,
   fac.f = 1,
   fac.t = 1.5,
   max_period_frac = 0.2,
@@ -14,8 +14,8 @@ decomp_freq_trend(
 )
 }
 \arguments{
-\item{ts}{A numeric or \code{ts} time series. If \code{ts}, its
-\code{frequency(ts)} is used upstream when computing the ACF; here we only
+\item{x}{A numeric or \code{ts} time series. If \code{ts}, its
+\code{frequency(x)} is used upstream when computing the ACF; here we only
 consume the ACF output assuming lags are already in seconds.}
 
 \item{fac.f}{Numeric scalar. Multiplier for the seasonal window
@@ -30,7 +30,7 @@ period as a fraction of the series duration (default \code{0.2}). Prevents
 overly long periods relative to batch length.}
 
 \item{lag.max}{Integer. Maximum lag forwarded to \code{ACF()} (default:
-\code{min(4096, length(ts)-1)}).}
+\code{min(4096, length(x)-1)}).}
 
 \item{use_fft_fallback}{Logical. If \code{TRUE} (default), use
 \code{stats::spec.pgram} fallback when no significant ACF peak is found.}
@@ -70,7 +70,7 @@ clamped to avoid pathological window sizes.
 }
 \examples{
 \dontrun{
-ft <- decomp_freq_trend(ts, fac.f = 1.0, fac.t = 1.5)
+ft <- decomp_freq_trend(x, fac.f = 1.0, fac.t = 1.5)
 anomalize::time_decompose(df, observed,
     method = "twitter",
     frequency = paste(ft$freq, "seconds"),

@@ -4,10 +4,10 @@
 \alias{eoa}
 \title{Apply Ensemble of Averages (EoA)}
 \usage{
-eoa(ts, qs, collector = "median", w.func = NULL, ...)
+eoa(x, qs, collector = "median", w.func = NULL, ...)
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{x}{A `ts` object.}
 
 \item{qs}{MA orders.}
 

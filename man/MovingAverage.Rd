@@ -4,10 +4,10 @@
 \alias{MovingAverage}
 \title{Apply MA or EoA depending on `q`}
 \usage{
-MovingAverage(ts, q, verbose = TRUE, ...)
+MovingAverage(x, q, verbose = TRUE, ...)
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{x}{A `ts` object.}
 
 \item{q}{MA order(s).}
 

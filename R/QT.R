@@ -119,7 +119,11 @@ qseries <- function(fseries, Q, f0, return_complex = FALSE) {
     windowed <- cyclic(windowed, center)
 
     # calculate the time series for this q -value
-    windowed <- fs(windowed, df = deltaf(fseries), sampling.freq = attr(fseries, "sampling.freq"))
+    windowed <- fs(
+        windowed,
+        df = deltaf(fseries),
+        sampling.freq = attr(fseries, "sampling.freq")
+    )
     ifft.res <- fftw::IFFT(windowed, plan = fftw::planFFT(tlen))
 
     if (return_complex) {
@@ -209,7 +213,8 @@ interp2d <- function(x, y, z, xout, yout, method = "linear") {
         # Inspired by fields::interp.surface
         nx <- length(x)
         ny <- length(y)
-        ll <- switch(method,
+        ll <- switch(
+            method,
             "linear" = list(
                 lx = approx(x = x, y = 1:nx, xout = loc[, 1], rule = 2)$y,
                 ly = approx(x = y, y = 1:ny, xout = loc[, 2], rule = 2)$y
@@ -257,7 +262,7 @@ interp2d <- function(x, y, z, xout, yout, method = "linear") {
 #' PyCBC source:
 #' \url{https://pycbc.org/pycbc/latest/html/_modules/pycbc/filter/qtransform.html}
 #'
-#' @param ts A \code{ts} object. Input time series.
+#' @param x A \code{ts} object. Input time series.
 #' @param delta_t A numeric. Time resolution (optional).
 #' @param delta_f A numeric. Frequency resolution (optional, mutually exclusive with \code{logfsteps}).
 #' @param logfsteps A numeric. Number of log-spaced frequency bins (mutually exclusive with \code{delta_f}).
@@ -274,19 +279,20 @@ interp2d <- function(x, y, z, xout, yout, method = "linear") {
 #' }
 #' @export
 qtransform <- function(
-    ts,
+    x,
     delta_t = NULL,
     delta_f = NULL,
     logfsteps = NULL,
     frange = NULL,
     qrange = c(4, 64),
     mismatch = 0.2,
-    return_complex = FALSE) {
+    return_complex = FALSE
+) {
     if (is.null(frange)) {
-        frange <- c(30, as.integer(frequency(ts) / 2 * 8))
+        frange <- c(30, as.integer(frequency(x) / 2 * 8))
     }
 
-    fseries <- to_fs(ts)
+    fseries <- to_fs(x)
     q_base <- qtiling(fseries, qrange, frange, mismatch)
     qpl.res <- qplane(q_base, fseries, return_complex = return_complex)
     times <- qpl.res$times
@@ -299,7 +305,7 @@ qtransform <- function(
 
     # Interpolate if requested
     if (!is.null(delta_t)) {
-        interp_times <- seq(ti(ts), tf(ts), delta_t)
+        interp_times <- seq(ti(x), tf(x), delta_t)
     } else {
         interp_times <- times
     }

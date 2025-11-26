@@ -4,10 +4,10 @@
 \alias{auto_diff}
 \title{Automatically determine differencing order via KPSS}
 \usage{
-auto_diff(ts, t.seg = 0.5, d_max = 2, verbose = TRUE)
+auto_diff(x, t.seg = 0.5, d_max = 2, verbose = TRUE)
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{x}{A `ts` object.}
 
 \item{t.seg}{Segment duration.}
 

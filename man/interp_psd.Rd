@@ -5,10 +5,10 @@
 \title{Interpolate PSD
 Return a new PSD that has been interpolated to the desired delta_f}
 \usage{
-interp_psd(fs, delta_f)
+interp_psd(x, delta_f)
 }
 \arguments{
-\item{fs}{A `fs` object. Frequency series to be interpolated.}
+\item{x}{A `fs` object. Frequency series to be interpolated.}
 
 \item{delta_f}{A numeric. The desired delta_f of the output}
 }

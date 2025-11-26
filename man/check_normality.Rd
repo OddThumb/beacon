@@ -4,10 +4,10 @@
 \alias{check_normality}
 \title{Check for normality using the Anderson-Darling test}
 \usage{
-check_normality(ts, t.seg = 0.5)
+check_normality(x, t.seg = 0.5)
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{x}{A `ts` object.}
 
 \item{t.seg}{Segment duration in seconds.}
 }

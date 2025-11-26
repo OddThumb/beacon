@@ -4,10 +4,10 @@
 \alias{PACF}
 \title{Plot Partial Auto Correlation Function (PACF)}
 \usage{
-PACF(ts, lag.max = length(ts), plot = TRUE, title = NULL)
+PACF(x, lag.max = length(x), plot = TRUE, title = NULL)
 }
 \arguments{
-\item{ts}{A numeric vector or time-series object.}
+\item{x}{A numeric vector or time-series object.}
 
 \item{lag.max}{An integer specifying the maximum lag to compute PACF. Default is the length of `ts`.}
 

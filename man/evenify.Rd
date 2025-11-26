@@ -4,10 +4,10 @@
 \alias{evenify}
 \title{Ensure even-length `ts`}
 \usage{
-evenify(ts)
+evenify(x)
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{x}{A `ts` object.}
 }
 \value{
 A `ts` object with even length (truncates last sample if needed).

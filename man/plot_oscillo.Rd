@@ -5,7 +5,7 @@
 \title{Plot a Single Oscillogram}
 \usage{
 plot_oscillo(
-  ts,
+  x,
   tzero = NULL,
   trange = NULL,
   ylim = "pm",
@@ -15,7 +15,7 @@ plot_oscillo(
 )
 }
 \arguments{
-\item{ts}{A numeric time series object.}
+\item{x}{A numeric time series object.}
 
 \item{tzero}{A numeric value indicating time shift (default: NULL).}
 

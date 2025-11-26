@@ -7,9 +7,9 @@
 window_to(ts, ref)
 }
 \arguments{
-\item{ts}{A time series (`ts`) object.}
-
 \item{ref}{A time series (`ts`) or a vector containing both an initial time and a final time.}
+
+\item{x}{A time series (`ts`) object.}
 }
 \value{
 A windowed time series (`ts`) object.

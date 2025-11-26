@@ -5,7 +5,7 @@
 \title{Apply sequential ARIMA pipeline}
 \usage{
 seqarima(
-  ts,
+  x,
   d = NULL,
   p = NULL,
   q = NULL,
@@ -22,7 +22,7 @@ seqarima(
 )
 }
 \arguments{
-\item{ts}{A time series (`ts`) object.}
+\item{x}{A time series (`ts`) object.}
 
 \item{d}{Differencing order. Use 0 for no differencing, or 'auto' for KPSS-based auto-differencing.}
 

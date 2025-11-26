@@ -21,7 +21,8 @@ proc2ts <- function(
     proc.df,
     val_col = "observed",
     time_col = "GPS",
-    frequency = 4096) {
+    frequency = 4096
+) {
     ts(
         proc.df[, val_col, drop = T],
         start = proc.df[1, time_col],
@@ -105,7 +106,7 @@ tr_overlap <- function(d, p, q, split = F) {
 #' Divides a \code{ts} object into equal-length segments (batches) of duration \code{t_bch} seconds.
 #' If a \code{dqmask} attribute is present and \code{has.DQ = TRUE}, it is also split and attached to each batch.
 #'
-#' @param ts A \code{ts} object with optional \code{dqmask} attribute.
+#' @param x A \code{ts} object with optional \code{dqmask} attribute.
 #' @param t_bch A numeric. Desired batch length in seconds (default: 1).
 #' @param has.DQ Logical (default: \code{TRUE}). Whether to also batch the \code{dqmask} attribute if present.
 #'
@@ -113,7 +114,7 @@ tr_overlap <- function(d, p, q, split = F) {
 #'         each batch will have its own \code{dqmask} and \code{dq.lev} attributes.
 #'
 #' @details
-#' The function computes the number of batches as \code{round(tl(ts) / t_bch)} where \code{tl(ts)} is the total duration.
+#' The function computes the number of batches as \code{round(tl(x) / t_bch)} where \code{tl(x)} is the total duration.
 #' The time series is evenly split based on index, assuming uniform sampling.
 #'
 #' If \code{dqmask} is present in the input \code{ts}, it is divided row-wise or element-wise depending on its structure,
@@ -128,7 +129,7 @@ tr_overlap <- function(d, p, q, split = F) {
 #'
 #' @seealso \code{\link{window_to}}, \code{\link{tl}}
 #' @export
-batching <- function(ts, t_bch = 1, has.DQ = T) {
+batching <- function(x, t_bch = 1, has.DQ = T) {
     batching.dq <- function(dqmask, n_bch, dq.level) {
         if (is.null(dim(dqmask))) {
             ind.split <- split(
@@ -152,20 +153,20 @@ batching <- function(ts, t_bch = 1, has.DQ = T) {
             window_to(dqmask, vr(time_dqmask))
         }))
     }
-    n_bch <- round(tl(ts) / t_bch)
+    n_bch <- round(tl(x) / t_bch)
     ind.split <- split(
-        seq_along(ts),
-        cut(seq_along(ts), breaks = n_bch, labels = F)
+        seq_along(x),
+        cut(seq_along(x), breaks = n_bch, labels = F)
     )
-    time.stamp <- time(ts)
+    time.stamp <- time(x)
     batch <- lapply(ind.split, function(ind) {
-        ts(ts[ind], start = time.stamp[ind[1]], frequency = frequency(ts))
+        ts(x[ind], start = time.stamp[ind[1]], frequency = frequency(x))
     })
     names(batch) <- paste0("batch", sprintf("%04d", seq(n_bch)))
 
     if (has.DQ) {
         # Add dqmask attributes
-        dqmask <- get_dqmask(ts)
+        dqmask <- get_dqmask(x)
         dq.level <- attr(dqmask, "level")
         batch.dq <- batching.dq(dqmask, n_bch, dq.level)
 
@@ -230,8 +231,8 @@ batching.network <- function(ts.list, t_bch = 1, has.DQ = TRUE) {
 #'   \deqn{\mathrm{trend}     = \max(1.1\,\mathrm{frequency}, \min(t_\mathrm{fac}\,\tau, \tau_\max))}
 #'   where \eqn{\tau_\max = \min(\max(\mathrm{lag}),\, \mathrm{max\_period\_frac}\cdot N\Delta t)}.
 #'
-#' @param ts A numeric or \code{ts} time series. If \code{ts}, its
-#'   \code{frequency(ts)} is used upstream when computing the ACF; here we only
+#' @param x A numeric or \code{ts} time series. If \code{ts}, its
+#'   \code{frequency(x)} is used upstream when computing the ACF; here we only
 #'   consume the ACF output assuming lags are already in seconds.
 #' @param fac.f Numeric scalar. Multiplier for the seasonal window
 #'   (default \code{1.0}). For the Twitter method, \code{1.0} aligns with the
@@ -242,7 +243,7 @@ batching.network <- function(ts.list, t_bch = 1, has.DQ = TRUE) {
 #'   period as a fraction of the series duration (default \code{0.2}). Prevents
 #'   overly long periods relative to batch length.
 #' @param lag.max Integer. Maximum lag forwarded to \code{ACF()} (default:
-#'   \code{min(4096, length(ts)-1)}).
+#'   \code{min(4096, length(x)-1)}).
 #' @param use_fft_fallback Logical. If \code{TRUE} (default), use
 #'   \code{stats::spec.pgram} fallback when no significant ACF peak is found.
 #'
@@ -256,7 +257,7 @@ batching.network <- function(ts.list, t_bch = 1, has.DQ = TRUE) {
 #'
 #' @examples
 #' \dontrun{
-#' ft <- decomp_freq_trend(ts, fac.f = 1.0, fac.t = 1.5)
+#' ft <- decomp_freq_trend(x, fac.f = 1.0, fac.t = 1.5)
 #' anomalize::time_decompose(df, observed,
 #'     method = "twitter",
 #'     frequency = paste(ft$freq, "seconds"),
@@ -268,40 +269,51 @@ batching.network <- function(ts.list, t_bch = 1, has.DQ = TRUE) {
 #'   \code{\link[anomalize]{time_decompose}}
 #'
 #' @export
-decomp_freq_trend <- function(ts,
-                              fac.f = 1.0, # seasonal window = 1.0 * period
-                              fac.t = 1.5, # trend window    = 1.5 * period
-                              max_period_frac = 0.2, # cap period <= 20% of series duration
-                              lag.max = NULL,
-                              use_fft_fallback = TRUE) {
-    N <- length(ts)
-    if (is.null(lag.max)) lag.max <- min(4096L, N - 1L)
+decomp_freq_trend <- function(
+    x,
+    fac.f = 1.0, # seasonal window = 1.0 * period
+    fac.t = 1.5, # trend window    = 1.5 * period
+    max_period_frac = 0.2, # cap period <= 20% of series duration
+    lag.max = NULL,
+    use_fft_fallback = TRUE
+) {
+    N <- length(x)
+    if (is.null(lag.max)) {
+        lag.max <- min(4096L, N - 1L)
+    }
 
     # ACF object from your existing ACF(); 'lag' is already in seconds
-    acf.obj <- ACF(ts, lag.max = lag.max, plot = FALSE)
+    acf.obj <- ACF(x, lag.max = lag.max, plot = FALSE)
     lag_sec <- as.numeric(c(acf.obj$lag)) # seconds
     acv <- as.numeric(c(acf.obj$acf))
     ci <- acf.obj$white95ci
 
     # Effective sampling interval (sec) inferred from ACF lags
     dt <- suppressWarnings(median(diff(lag_sec), na.rm = TRUE))
-    if (!is.finite(dt) || dt <= 0) dt <- 1
+    if (!is.finite(dt) || dt <= 0) {
+        dt <- 1
+    }
 
     # Search range: exclude lag=0, bound by max_period_frac of series duration
     total_duration_sec <- N * dt
-    max_allow_sec <- min(max(lag_sec, na.rm = TRUE), total_duration_sec * max_period_frac)
+    max_allow_sec <- min(
+        max(lag_sec, na.rm = TRUE),
+        total_duration_sec * max_period_frac
+    )
     k <- which(lag_sec > 0 & lag_sec < max_allow_sec)
 
     # Find first significant local maximum: acv[i] > acv[i-1], >= acv[i+1], and > CI
     locs <- k[k > min(k) & k < max(k)]
-    is_locmax <- acv[locs] > acv[locs - 1] & acv[locs] >= acv[locs + 1] & acv[locs] > ci
+    is_locmax <- acv[locs] > acv[locs - 1] &
+        acv[locs] >= acv[locs + 1] &
+        acv[locs] > ci
     cand <- locs[is_locmax]
 
     if (length(cand) > 0L) {
         period_sec <- lag_sec[cand[1L]]
     } else if (use_fft_fallback) {
         # Fallback via dominant spectral peak (exclude near-DC)
-        sp <- stats::spec.pgram(ts, taper = 0.1, fast = TRUE, plot = FALSE)
+        sp <- stats::spec.pgram(x, taper = 0.1, fast = TRUE, plot = FALSE)
         f <- sp$freq # cycles per sample
         S <- sp$spec
         exc <- max(1L, floor(length(f) * 0.01))
@@ -381,8 +393,16 @@ iqr2 <- function(x, alpha = 0.05, max_anoms = 0.2, verbose = FALSE) {
         vals_tbl,
         limit_lower = limits[1],
         limit_upper = limits[2],
-        abs_diff_lower = ifelse(value <= limit_lower, abs(value - limit_lower), 0),
-        abs_diff_upper = ifelse(value >= limit_upper, abs(value - limit_upper), 0),
+        abs_diff_lower = ifelse(
+            value <= limit_lower,
+            abs(value - limit_lower),
+            0
+        ),
+        abs_diff_upper = ifelse(
+            value >= limit_upper,
+            abs(value - limit_upper),
+            0
+        ),
         max_abs_diff = ifelse(
             abs_diff_lower > abs_diff_upper,
             abs_diff_lower,
@@ -413,7 +433,11 @@ iqr2 <- function(x, alpha = 0.05, max_anoms = 0.2, verbose = FALSE) {
             0L,
             1L
         ),
-        outlier_reported = ifelse(outlier == 1L & below_max_anoms == 1L, 1L, 0L),
+        outlier_reported = ifelse(
+            outlier == 1L & below_max_anoms == 1L,
+            1L,
+            0L
+        ),
         direction = dplyr::case_when(
             (outlier_reported == 1L) & (value > limit_upper) ~ "Up",
             (outlier_reported == 1L) & (value < limit_lower) ~ "Down",
@@ -449,7 +473,10 @@ iqr2 <- function(x, alpha = 0.05, max_anoms = 0.2, verbose = FALSE) {
 
     if (verbose) {
         outlier_list <- list(
-            outlier = dplyr::pull(dplyr::arrange(vals_tbl, index), outlier_reported),
+            outlier = dplyr::pull(
+                dplyr::arrange(vals_tbl, index),
+                outlier_reported
+            ),
             outlier_idx = dplyr::pull(
                 dplyr::filter(vals_tbl, outlier_reported == 1L),
                 index
@@ -533,7 +560,8 @@ gesd2 <- function(x, alpha = 0.05, max_anoms = 0.2, verbose = FALSE) {
         x_new <- x_new[-max_ind]
         p <- 1 - alpha / (2 * (n - i + 1))
         t_pv <- qt(p, df = (n - i - 1))
-        lambda[i] <- ((n - i) * t_pv) / (sqrt((n - i - 1 + t_pv^2) * (n - i + 1)))
+        lambda[i] <- ((n - i) * t_pv) /
+            (sqrt((n - i - 1 + t_pv^2) * (n - i + 1)))
         if (!is.na(R[i]) & !is.na(lambda[i])) {
             if (R[i] > lambda[i]) {
                 m <- i
@@ -583,7 +611,10 @@ gesd2 <- function(x, alpha = 0.05, max_anoms = 0.2, verbose = FALSE) {
         )
     }
     if (verbose) {
-        outlier_vals <- dplyr::pull(dplyr::filter(vals_tbl, outlier == 1L), value)
+        outlier_vals <- dplyr::pull(
+            dplyr::filter(vals_tbl, outlier == 1L),
+            value
+        )
         outlier_direction <- dplyr::pull(
             dplyr::filter(vals_tbl, outlier == 1L),
             direction
@@ -660,7 +691,8 @@ anomalize2 <- function(
     method = c("iqr", "gesd"),
     alpha = 0.05,
     max_anoms = 0.2,
-    verbose = FALSE) {
+    verbose = FALSE
+) {
     if (missing(target)) {
         stop(
             "Error in anomalize(): argument \"target\" is missing, with no default",
@@ -718,7 +750,7 @@ anomalize2 <- function(
 #' Applies anomaly detection to a \code{ts} object using either direct or decomposition-based methods.
 #' Internally uses a customized version of \pkg{anomalize} logic with robust thresholding.
 #'
-#' @param ts A \code{ts} object. Input time series data.
+#' @param x A \code{ts} object. Input time series data.
 #' @param max.anom An integer (default: 100). Maximum number of anomalies allowed.
 #' @param scale A numeric (default: 1.5). Controls the IQR scaling factor. Corresponds to standard 1.5×IQR rule.
 #'              Internally converted to \code{alpha = 0.15 / scale} for compatibility with \code{anomalize2()}.
@@ -758,32 +790,36 @@ anomalize2 <- function(
 #' }
 #' @export
 anomaly <- function(
-    ts,
+    x,
     max.anom = 100,
     scale = 1.5, # Q1-1.5*IQR / Q3+1.5*IQR
     method = "iqr",
     decomp = NULL,
-    tzero = 0) {
+    tzero = 0
+) {
     # Translate input arguments
     expr_alpha <- 0.15 / scale # Definition of alpha in anomalize() function
-    expr_max_anoms <- signif(max.anom / length(ts), 2L)
+    expr_max_anoms <- signif(max.anom / length(x), 2L)
 
     # Convert ts to tibbletime
-    tbt <- dplyr::rename(as_tbt(ts), observed = x)
+    tbt <- dplyr::rename(as_tbt(x), observed = x)
 
     # Anomaly detection (time decomposition is an option)
     if (!is.null(decomp)) {
-        ft <- decomp_freq_trend(ts,
-            fac.f = 2.0, fac.t = 10.0,
+        ft <- decomp_freq_trend(
+            x,
+            fac.f = 2.0,
+            fac.t = 10.0,
             # fac.f=1.0, fac.t=1.5 are the Twitter design philosophy
-            max_period_frac = 1.0, lag.max = min(4096L, length(ts) - 1L)
+            max_period_frac = 1.0,
+            lag.max = min(4096L, length(x) - 1L)
         )
         expr_decomp_freq <- paste(ft$freq, "seconds")
         expr_decomp_trend <- paste(ft$trend, "seconds")
 
-        # freq_trend <- decomp_freq_trend(ts)
-        # decomp_freq <- freq_trend$freq * (1 / frequency(ts))
-        # decomp_trend <- freq_trend$trend * (1 / frequency(ts))
+        # freq_trend <- decomp_freq_trend(x)
+        # decomp_freq <- freq_trend$freq * (1 / frequency(x))
+        # decomp_trend <- freq_trend$trend * (1 / frequency(x))
         # expr_decomp_freq <- paste(decomp_freq, "seconds")
         # expr_decomp_trend <- paste(decomp_trend, "seconds")
 
@@ -865,7 +901,8 @@ run_dbscan <- function(
     eps = 0.01,
     minPts = 1,
     cluster.col = "cluster",
-    ...) {
+    ...
+) {
     dbs.input <- dplyr::select(
         dplyr::filter(anom.df, anomaly == 1L),
         dplyr::all_of(c(time_col, val_col))
@@ -885,7 +922,7 @@ run_dbscan <- function(
 #' Applies the full analysis pipeline to a time series: denoising via \code{seqarima()},
 #' anomaly detection via \code{anomaly()}, and clustering of anomalies via \code{run_dbscan()}.
 #'
-#' @param ts A time series (`ts`) object.
+#' @param x A time series (`ts`) object.
 #' @param params A list containing configuration parameters. The following fields are supported:
 #'   \itemize{
 #'     \item{\code{d_max}: Differencing order.}
@@ -924,13 +961,13 @@ run_dbscan <- function(
 #' head(result)
 #' }
 #' @export
-arch <- function(ts, params) {
+arch <- function(x, params) {
     N_anom_max <- ifelse(is.null(params$nmax), 100, params$nmax)
     iqr.factor <- ifelse(is.null(params$scale), 1.5, params$scale)
 
     # Run seqARIMA
     deno <- seqarima(
-        ts,
+        x,
         d = params$d,
         p = params$p,
         q = params$q,
@@ -1096,7 +1133,8 @@ is.anomdet <- function(proc) {
 adjust_proc <- function(
     proc,
     curr_batch,
-    n_missed) {
+    n_missed
+) {
     # Crop within only current batch times
     #  + add `n_missed[["Mt"]]` amount of prev batch at the front
     # n_missed[["Mt"]]: lost values by MA at tail.
@@ -1283,7 +1321,12 @@ stat_anom <- function(proc, last_tcen = NULL) {
     tab <- dplyr::mutate(tab, t_lag = t_cen - dplyr::lag(t_cen)) # compute t_lag
     tab <- dplyr::filter(tab, cluster != 0L)
     tab <- dplyr::group_by(tab, cluster)
-    tab <- dplyr::reframe(tab, t_cen = t_cen, N_anom = dplyr::n(), t_lag = t_lag)
+    tab <- dplyr::reframe(
+        tab,
+        t_cen = t_cen,
+        N_anom = dplyr::n(),
+        t_lag = t_lag
+    )
     tab <- dplyr::distinct(tab, cluster, .keep_all = TRUE)
 
     # Organize output
@@ -1396,12 +1439,18 @@ update_logic <- function(updated, current, P_update) {
                 #   Then following function `stat_anom` will filter out anomaly==0 in
                 #     calculating statistics.
                 current.filtered <- stat_anom(
-                    dplyr::mutate(proc, anomaly = ifelse(P0 < P_update, 0, anomaly)),
+                    dplyr::mutate(
+                        proc,
+                        anomaly = ifelse(P0 < P_update, 0, anomaly)
+                    ),
                     last_tcen = prev_tcen
                 )
 
                 # Update statistics with filtered statistics
-                updated_new <- update_stat(upd = updated, cur = current.filtered)
+                updated_new <- update_stat(
+                    upd = updated,
+                    cur = current.filtered
+                )
             } else {
                 # Ordinary updating procedure w/o any filtering
                 updated_new <- update_stat(upd = updated, cur = current)
@@ -1611,7 +1660,8 @@ pipe <- function(
     prev_batch,
     res.list,
     arch_params,
-    verb = T) {
+    verb = T
+) {
     if (all(is.na(curr_batch))) {
         res.list <- append_NA(res.list)
         message_verb(
@@ -1665,7 +1715,10 @@ pipe <- function(
         res.list <- list.append(
             res.list,
             "lamb",
-            list(a = updated_stat$stats$lambda_a, c = updated_stat$stats$lambda_c)
+            list(
+                a = updated_stat$stats$lambda_a,
+                c = updated_stat$stats$lambda_c
+            )
         )
         res.list <- list.append(res.list, "ustat", updated_stat)
         # res.list <- list.append(res.list, "proc", proc)
@@ -1706,7 +1759,8 @@ coincide_P0 <- function(
     step_size = (1 - overlap) * window_size,
     mean.func = har.mean,
     p_col = "P0_BURST_CAT2",
-    return = 1L) {
+    return = 1L
+) {
     if (length(mean.func) > 1L) {
         if (is.null(attr(mean.func, "names"))) {
             stop(
@@ -1841,7 +1895,8 @@ pipe_net <- function(
     arch_params,
     update_model = TRUE,
     verb = TRUE,
-    debug = FALSE) {
+    debug = FALSE
+) {
     # Get detector names
     dets <- names(batch_net)
 
@@ -1859,15 +1914,16 @@ pipe_net <- function(
         })
         names(res.net) <- dets
     } else {
-        res.net <- foreach::foreach(det = dets, .combine = "list") %dopar% {
-            pipe(
-                curr_batch = batch_net[[det]],
-                prev_batch = prev_batch[[det]],
-                res.list = res.net[[det]],
-                arch_params = arch_params,
-                verb = verb
-            )
-        }
+        res.net <- foreach::foreach(det = dets, .combine = "list") %dopar%
+            {
+                pipe(
+                    curr_batch = batch_net[[det]],
+                    prev_batch = prev_batch[[det]],
+                    res.list = res.net[[det]],
+                    arch_params = arch_params,
+                    verb = verb
+                )
+            }
         names(res.net) <- dets
     }
 
@@ -1903,7 +1959,11 @@ pipe_net <- function(
                 window_size = arch_params$window_size,
                 overlap = arch_params$overlap,
                 mean.func = arch_params$mean.func,
-                p_col = ifelse(is.null(arch_params$DQ), "P0", paste0("P0_", arch_params$DQ)),
+                p_col = ifelse(
+                    is.null(arch_params$DQ),
+                    "P0",
+                    paste0("P0_", arch_params$DQ)
+                ),
                 return = 2L
             )
         }
@@ -1963,7 +2023,8 @@ pipe_net <- function(
 stream <- function(
     batch_set,
     arch_params,
-    use_model = NA) {
+    use_model = NA
+) {
     # Initialize pipeline
     dets <- names(batch_set[[1]])
     init <- init_pipe(dets = dets)
@@ -2080,7 +2141,8 @@ reproduce <- function(
     batch_num = NULL,
     result,
     window_size = NULL,
-    overlap = NULL) {
+    overlap = NULL
+) {
     # Find which batch is going to be reproduced
     if (methods::hasArg(batch_at) & is.null(batch_num)) {
         # Find which batch contains the time "batch_at"
@@ -2144,7 +2206,8 @@ reproduce <- function(
         window_size = window_size,
         overlap = overlap,
         mean.func = result$arch_params$mean.func,
-        p_col = ifelse(is.null(result$arch_params$DQ),
+        p_col = ifelse(
+            is.null(result$arch_params$DQ),
             "P0",
             paste0("P0_", result$arch_params$DQ)
         ),

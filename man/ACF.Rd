@@ -4,10 +4,10 @@
 \alias{ACF}
 \title{Plot Auto Correlation Function (ACF)}
 \usage{
-ACF(ts, lag.max = length(ts), plot = TRUE, title = NULL)
+ACF(x, lag.max = length(x), plot = TRUE, title = NULL)
 }
 \arguments{
-\item{ts}{A numeric vector or time-series object.}
+\item{x}{A numeric vector or time-series object.}
 
 \item{lag.max}{An integer specifying the maximum lag to compute ACF. Default is the length of `ts`.}
 

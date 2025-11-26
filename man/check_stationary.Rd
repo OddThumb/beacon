@@ -4,10 +4,10 @@
 \alias{check_stationary}
 \title{Check for stationarity using the KPSS test across segments}
 \usage{
-check_stationary(ts, t.seg = 0.5)
+check_stationary(x, t.seg = 0.5)
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{x}{A `ts` object.}
 
 \item{t.seg}{Segment duration in seconds.}
 }

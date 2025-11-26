@@ -4,10 +4,10 @@
 \alias{dur}
 \title{Get Duration of the Original Time Series}
 \usage{
-dur(fs)
+dur(x)
 }
 \arguments{
-\item{fs}{An `fs` object derived from a `ts` object.}
+\item{x}{An `fs` object derived from a `ts` object.}
 }
 \value{
 A numeric scalar. Duration in seconds.

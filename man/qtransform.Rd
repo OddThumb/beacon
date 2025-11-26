@@ -5,7 +5,7 @@
 \title{Q-transform of time series}
 \usage{
 qtransform(
-  ts,
+  x,
   delta_t = NULL,
   delta_f = NULL,
   logfsteps = NULL,
@@ -16,7 +16,7 @@ qtransform(
 )
 }
 \arguments{
-\item{ts}{A \code{ts} object. Input time series.}
+\item{x}{A \code{ts} object. Input time series.}
 
 \item{delta_t}{A numeric. Time resolution (optional).}
 

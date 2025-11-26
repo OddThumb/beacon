@@ -4,10 +4,10 @@
 \alias{get_MissingValues}
 \title{Sequential ARIMA pipeline components}
 \usage{
-get_MissingValues(ts, ref)
+get_MissingValues(x, ref)
 }
 \arguments{
-\item{ts}{A time series (`ts`) object that may have NA values.}
+\item{x}{A time series (`ts`) object that may have NA values.}
 
 \item{ref}{A reference `ts` object used for comparison.}
 }

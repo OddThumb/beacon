@@ -4,10 +4,10 @@
 \alias{cutoff_to}
 \title{Crop frequency series to a given range}
 \usage{
-cutoff_to(fs, ref, frange = NULL)
+cutoff_to(x, ref, frange = NULL)
 }
 \arguments{
-\item{fs}{A `fs` object (frequency series).}
+\item{x}{A `fs` object (frequency series).}
 
 \item{ref}{A vector with elements: `c(min, max)`, indicating index range.}
 

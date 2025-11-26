@@ -4,10 +4,10 @@
 \alias{fs_df}
 \title{Convert `fs` to Data Frame}
 \usage{
-fs_df(fs)
+fs_df(x)
 }
 \arguments{
-\item{fs}{An `fs` object.}
+\item{x}{An `fs` object.}
 }
 \value{
 A data frame with two columns: `freqs` and `PSD`.

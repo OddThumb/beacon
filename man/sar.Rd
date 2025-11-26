@@ -4,10 +4,10 @@
 \alias{sar}
 \title{Simple wrapper for AR fitting}
 \usage{
-sar(ts, ...)
+sar(x, ...)
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{x}{A `ts` object.}
 
 \item{...}{Arguments passed to `burgar()`.}
 }

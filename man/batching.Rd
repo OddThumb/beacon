@@ -4,10 +4,10 @@
 \alias{batching}
 \title{Split a time series into fixed-length batches}
 \usage{
-batching(ts, t_bch = 1, has.DQ = T)
+batching(x, t_bch = 1, has.DQ = T)
 }
 \arguments{
-\item{ts}{A \code{ts} object with optional \code{dqmask} attribute.}
+\item{x}{A \code{ts} object with optional \code{dqmask} attribute.}
 
 \item{t_bch}{A numeric. Desired batch length in seconds (default: 1).}
 
@@ -22,7 +22,7 @@ Divides a \code{ts} object into equal-length segments (batches) of duration \cod
 If a \code{dqmask} attribute is present and \code{has.DQ = TRUE}, it is also split and attached to each batch.
 }
 \details{
-The function computes the number of batches as \code{round(tl(ts) / t_bch)} where \code{tl(ts)} is the total duration.
+The function computes the number of batches as \code{round(tl(x) / t_bch)} where \code{tl(x)} is the total duration.
 The time series is evenly split based on index, assuming uniform sampling.
 
 If \code{dqmask} is present in the input \code{ts}, it is divided row-wise or element-wise depending on its structure,

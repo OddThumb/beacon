@@ -4,10 +4,10 @@
 \alias{Differencing}
 \title{Difference a time series manually or automatically}
 \usage{
-Differencing(ts, d, t.seg = 0.5, return.pvals = FALSE, verbose = TRUE)
+Differencing(x, d, t.seg = 0.5, return.pvals = FALSE, verbose = TRUE)
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{x}{A `ts` object.}
 
 \item{d}{Differencing order. Use 0 for none, integer for fixed, 'auto' for automatic.}
 

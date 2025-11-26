@@ -4,10 +4,10 @@
 \alias{freqs}
 \title{Get Frequency Samples from `fs`}
 \usage{
-freqs(fs)
+freqs(x)
 }
 \arguments{
-\item{fs}{An `fs` object.}
+\item{x}{An `fs` object.}
 }
 \value{
 A numeric vector of frequency values (in Hz).

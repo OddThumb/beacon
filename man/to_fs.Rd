@@ -4,13 +4,13 @@
 \alias{to_fs}
 \title{Convert Time Series (`ts`) to Frequency Series (`fs`)}
 \usage{
-to_fs(ts, delta_f = NULL)
+to_fs(x, delta_f = NULL)
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{x}{A `ts` object.}
 
 \item{delta_f}{Optional. A numeric value indicating desired frequency resolution.
-If NULL, defaults to `sampling.freq / length(ts)`.}
+If NULL, defaults to `sampling.freq / length(x)`.}
 }
 \value{
 An `fs` object containing frequency-domain representation and metadata.

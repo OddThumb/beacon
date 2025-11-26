@@ -4,10 +4,10 @@
 \alias{Autoregressive}
 \title{Fit AR model using either single or ensemble approach}
 \usage{
-Autoregressive(ts, p, aic = TRUE, verbose = TRUE, ...)
+Autoregressive(x, p, aic = TRUE, verbose = TRUE, ...)
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{x}{A `ts` object.}
 
 \item{p}{AR order(s).}
 

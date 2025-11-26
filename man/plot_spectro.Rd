@@ -5,7 +5,7 @@
 \title{Plot Q-Transform Spectrogram with Oscillogram}
 \usage{
 plot_spectro(
-  ts,
+  x,
   tzero = 0,
   trange = NULL,
   frange = c(32, 512),
@@ -32,7 +32,7 @@ plot_spectro(
 )
 }
 \arguments{
-\item{ts}{A time series object.}
+\item{x}{A time series object.}
 
 \item{tzero}{Time offset (default: 0).}
 

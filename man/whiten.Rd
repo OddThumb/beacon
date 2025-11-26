@@ -4,10 +4,10 @@
 \alias{whiten}
 \title{Spectral Whitening}
 \usage{
-whiten(ts, sl, fl, fu, ...)
+whiten(x, sl, fl, fu, ...)
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{x}{A `ts` object.}
 
 \item{sl}{A numeric. The segment length for estimating `psd`.}
 

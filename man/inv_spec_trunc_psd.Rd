@@ -4,10 +4,10 @@
 \alias{inv_spec_trunc_psd}
 \title{Inverse Spectrum Truncation}
 \usage{
-inv_spec_trunc_psd(fs, max_filter_len, fl = NULL, trunc_method = NULL)
+inv_spec_trunc_psd(x, max_filter_len, fl = NULL, trunc_method = NULL)
 }
 \arguments{
-\item{fs}{A `fs` object of PSD.}
+\item{x}{A `fs` object of PSD.}
 
 \item{max_filter_len}{A numeric.}
 

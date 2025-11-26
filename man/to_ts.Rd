@@ -4,12 +4,12 @@
 \alias{to_ts}
 \title{Inverse Fourier transform of `fs` object}
 \usage{
-to_ts(fs, start = 0, delta_t = NULL)
+to_ts(x, start = 0, delta_t = NULL)
 }
 \arguments{
-\item{fs}{A `fs` object.}
+\item{x}{A `fs` object.}
 
-\item{start}{A numeric. Start time (default: 0 or `attr(fs, "ti")`).}
+\item{start}{A numeric. Start time (default: 0 or `attr(x, "ti")`).}
 
 \item{delta_t}{A numeric. Time step. If \code{NULL}, use natural resolution.}
 }

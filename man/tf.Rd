@@ -4,10 +4,10 @@
 \alias{tf}
 \title{Final timestamp of a time series}
 \usage{
-tf(ts, n = 1)
+tf(x, n = 1)
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{x}{A `ts` object.}
 
 \item{n}{A numeric (default: 1). Number of final timestamps to return.}
 }

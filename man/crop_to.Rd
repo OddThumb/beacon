@@ -4,10 +4,10 @@
 \alias{crop_to}
 \title{Handy window function with index}
 \usage{
-crop_to(ts, ind.range)
+crop_to(x, ind.range)
 }
 \arguments{
-\item{ts}{A time series (`ts`) object.}
+\item{x}{A time series (`ts`) object.}
 
 \item{ind.range}{A vector of length of 2. A first and second element refer to initial and final index, respectively.}
 }

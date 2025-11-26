@@ -4,10 +4,10 @@
 \alias{unit_normalize}
 \title{Normalize a `ts` to unit scale}
 \usage{
-unit_normalize(ts)
+unit_normalize(x)
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{x}{A `ts` object.}
 }
 \value{
 A normalized `ts` object. Scale factor is stored in \code{attr(..., "order")}.

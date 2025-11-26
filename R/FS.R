@@ -28,47 +28,47 @@ fs <- function(x, df, sampling.freq) {
 #' Transforms a time series object to a frequency series by computing FFT.
 #'
 
-#' @param ts A `ts` object.
+#' @param x A `ts` object.
 #' @param delta_f Optional. A numeric value indicating desired frequency resolution.
-#'                If NULL, defaults to `sampling.freq / length(ts)`.
+#'                If NULL, defaults to `sampling.freq / length(x)`.
 #'
 #' @return An `fs` object containing frequency-domain representation and metadata.
 #'
 #' @export
-to_fs <- function(ts, delta_f = NULL) {
+to_fs <- function(x, delta_f = NULL) {
     # Check deltaf is given
     if (is.null(delta_f)) {
-        delta_f <- frequency(ts) / length(ts)
+        delta_f <- frequency(x) / length(x)
     }
 
     # Add 0.5 to round integer
-    sampling.freq <- frequency(ts)
+    sampling.freq <- frequency(x)
     tlen <- floor(1 / delta_f / (1 / sampling.freq) + 0.5)
     flen <- (tlen %/% 2) + 1 # flen <- round(tlen/2 + 1)
 
     # Check tlen
-    if (tlen < length(ts)) {
+    if (tlen < length(x)) {
         stop(
             "ValueError: The value of delta_f (",
             delta_f,
             ") would be ",
             "undersampled. Maximum delta.f ",
             "is ",
-            (1 / tl(ts))
+            (1 / tl(x))
         )
     }
 
     # Prepare temporary data for FFT
-    tmp <- ts(rep_len(0, tlen), start = ti(ts), frequency = sampling.freq)
-    tmp[1:length(ts)] <- ts
-    #// fft.res <- fftw::FFT(ts, plan = fftw::planFFT(length(ts)))
+    tmp <- ts(rep_len(0, tlen), start = ti(x), frequency = sampling.freq)
+    tmp[1:length(x)] <- x
+    #// fft.res <- fftw::FFT(x, plan = fftw::planFFT(length(x)))
     fft.res <- fftw::FFT(tmp, plan = fftw::planFFT(length(tmp)))
     fs.out <- fft.res[1:flen]
 
     # Add attributes
     out <- fs(fs.out, df = delta_f, sampling.freq = sampling.freq)
-    attr(out, "assoc.ts") <- deparse(substitute(ts))
-    attr(out, "ti") <- ti(ts)
+    attr(out, "assoc.ts") <- deparse(substitute(x))
+    attr(out, "ti") <- ti(x)
     attr(out, "tlen") <- tlen
     out
 }
@@ -230,14 +230,14 @@ plot.fs <- function(
 #'
 #' Computes the discrete frequency values corresponding to the bins of an `fs` object.
 #'
-#' @param fs An `fs` object.
+#' @param x An `fs` object.
 #'
 #' @return A numeric vector of frequency values (in Hz).
 #' @export
-freqs <- function(fs) {
-    delta_f <- attr(fs, "delta_f")
-    flen <- attr(fs, "flen")
-    frange <- attr(fs, "frange")
+freqs <- function(x) {
+    delta_f <- attr(x, "delta_f")
+    flen <- attr(x, "flen")
+    frange <- attr(x, "frange")
     # seq(0, flen - 1) * delta_f
     seq(frange[1], frange[2], by = delta_f)
 }
@@ -247,54 +247,54 @@ freqs <- function(fs) {
 #' Computes the total duration in seconds of the time-domain signal that
 #' generated the `fs` object.
 #'
-#' @param fs An `fs` object derived from a `ts` object.
+#' @param x An `fs` object derived from a `ts` object.
 #'
 #' @return A numeric scalar. Duration in seconds.
 #' @export
-dur <- function(fs) {
-    if (is.null(attr(fs, "tlen")) | is.null(attr(fs, "sampling.freq"))) {
+dur <- function(x) {
+    if (is.null(attr(x, "tlen")) | is.null(attr(x, "sampling.freq"))) {
         stop("This fs is not coming from ts")
     }
-    attr(fs, "tlen") / attr(fs, "sampling.freq")
+    attr(x, "tlen") / attr(x, "sampling.freq")
 }
 
 #' Convert `fs` to Data Frame
 #'
 #' Converts an `fs` object to a data frame with columns `freqs` and `PSD`.
 #'
-#' @param fs An `fs` object.
+#' @param x An `fs` object.
 #'
 #' @return A data frame with two columns: `freqs` and `PSD`.
 #' @export
-fs_df <- function(fs) {
-    data.frame("freqs" = freqs(fs), "PSD" = fs)
+fs_df <- function(x) {
+    data.frame("freqs" = freqs(x), "PSD" = x)
 }
 
 #' Crop frequency series to a given range
 #'
-#' @param fs A `fs` object (frequency series).
+#' @param x A `fs` object (frequency series).
 #' @param ref A vector with elements: `c(min, max)`, indicating index range.
 #' @param frange A vector of frequency range. `frange[1]` can be larger than `ref[1]` and `frange[2]` can be smaller than `ref[2]`, so as to consider the specific frequency range.
 #' @return A cropped `fs` object with preserved attributes.
 #'
 #' @export
-cutoff_to <- function(fs, ref, frange = NULL) {
-    if (!inherits(fs, "fs")) {
+cutoff_to <- function(x, ref, frange = NULL) {
+    if (!inherits(x, "fs")) {
         stop("TypeError: Input must be a fs class")
     }
     if (!is.null(frange)) {
-        kmin <- which.min(abs(freqs(fs) - frange[1]))
-        kmax <- which.min(abs(freqs(fs) - frange[2]))
+        kmin <- which.min(abs(freqs(x) - frange[1]))
+        kmax <- which.min(abs(freqs(x) - frange[2]))
     } else {
         kmin <- ref[1]
         kmax <- ref[2]
-        frange <- freqs(fs)[ref]
+        frange <- freqs(x)[ref]
     }
 
-    out <- fs[kmin:kmax]
+    out <- x[kmin:kmax]
     out <- copy_attr(
         out,
-        ref = fs,
+        ref = x,
         which = c("sampling.freq", "delta_f", "class", "ti")
     )
     attr(out, "flen") <- kmax - kmin + 1

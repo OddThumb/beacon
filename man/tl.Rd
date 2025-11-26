@@ -4,10 +4,10 @@
 \alias{tl}
 \title{Duration of a time series}
 \usage{
-tl(ts)
+tl(x)
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{x}{A `ts` object.}
 }
 \value{
 A numeric value indicating duration in seconds.

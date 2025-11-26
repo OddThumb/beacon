@@ -4,10 +4,10 @@
 \alias{arch}
 \title{Run full architecture: denoising, anomaly detection, and clustering}
 \usage{
-arch(ts, params)
+arch(x, params)
 }
 \arguments{
-\item{ts}{A time series (`ts`) object.}
+\item{x}{A time series (`ts`) object.}
 
 \item{params}{A list containing configuration parameters. The following fields are supported:
 \itemize{

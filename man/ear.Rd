@@ -5,7 +5,7 @@
 \title{Ensemble AR model fitting across multiple orders}
 \usage{
 ear(
-  ts,
+  x,
   ps,
   aic = T,
   return.vec = T,
@@ -16,7 +16,7 @@ ear(
 )
 }
 \arguments{
-\item{ts}{A `ts` object.}
+\item{x}{A `ts` object.}
 
 \item{ps}{Vector of AR orders.}
 

@@ -160,7 +160,8 @@ savetab <- function(
     show = T,
     append = F,
     nsep = 30,
-    ...) {
+    ...
+) {
     message(" >>> Saving table in MD format...")
     if (append & !is.null(nsep)) {
         utils::write.table(
@@ -239,7 +240,8 @@ savefig <- function(
     height = 5,
     show = T,
     verbose = F,
-    ...) {
+    ...
+) {
     message_verb(" >>> Saving...", v = verbose)
     ggpubr::ggexport(
         plot,
@@ -258,7 +260,7 @@ savefig <- function(
 #'
 #' Generate a line plot of a single time series (oscillogram).
 #'
-#' @param ts A numeric time series object.
+#' @param x A numeric time series object.
 #' @param tzero A numeric value indicating time shift (default: NULL).
 #' @param trange A numeric vector specifying time range to display.
 #' @param ylim Either 'pm' or a numeric vector of length 2.
@@ -269,17 +271,18 @@ savefig <- function(
 #' @return A ggplot object.
 #' @export
 plot_oscillo <- function(
-    ts,
+    x,
     tzero = NULL,
     trange = NULL,
     ylim = "pm",
     title = NULL,
     size = 0.3,
-    ...) {
+    ...
+) {
     if (is.null(trange)) {
-        trange <- c(time(ts)[1], time(ts)[length(ts)])
+        trange <- c(time(x)[1], time(x)[length(x)])
     }
-    ts.df <- data.frame("time" = time(ts), "strain" = ts)
+    ts.df <- data.frame("time" = time(x), "strain" = x)
     ts.df <- dplyr::mutate(
         dplyr::filter(ts.df, time >= trange[1] & time <= trange[2]),
         "time" = time - ifelse(is.null(tzero), 0, tzero)
@@ -352,7 +355,8 @@ plot_oscillo_multi <- function(
     title = NULL,
     color = NULL,
     width = 0.3,
-    ...) {
+    ...
+) {
     if (is.null(ncol(ts.df))) {
         stop("For one ts, use Oscillo()")
     }
@@ -430,7 +434,7 @@ plot_oscillo_multi <- function(
 #'
 #' Generate a list of ggplot2 components for consistent oscillogram theme.
 #'
-#' @param ts A time series object.
+#' @param x A time series object.
 #' @param tzero A numeric value for time offset.
 #' @param title A character string for the plot title.
 #' @param xlim A numeric vector. X axis limits (default: NULL).
@@ -438,10 +442,16 @@ plot_oscillo_multi <- function(
 #'
 #' @return A list of ggplot2 elements.
 #' @export
-oscillo_option <- function(ts, tzero = 0, title = NULL, xlim = NULL, ylim = NULL) {
+oscillo_option <- function(
+    x,
+    tzero = 0,
+    title = NULL,
+    xlim = NULL,
+    ylim = NULL
+) {
     if (is.null(ylim)) {
-        ylim <- get_limit(ts, 1.5)
-        value.order <- floor(log10(amax(ts)))
+        ylim <- get_limit(x, 1.5)
+        value.order <- floor(log10(amax(x)))
         om <- 10^value.order
     } else {
         value.order <- floor(log10(amax(ylim)))
@@ -479,7 +489,7 @@ oscillo_option <- function(ts, tzero = 0, title = NULL, xlim = NULL, ylim = NULL
 #'
 #' Create a Q-transform spectrogram stacked with its oscillogram using ggplot2.
 #'
-#' @param ts A time series object.
+#' @param x A time series object.
 #' @param tzero Time offset (default: 0).
 #' @param trange Time range for cropping the data.
 #' @param frange Frequency range for spectrogram.
@@ -507,7 +517,7 @@ oscillo_option <- function(ts, tzero = 0, title = NULL, xlim = NULL, ylim = NULL
 #' @return A ggplot object, or a list with \code{spec.plot} and \code{osci.plot} if \code{stack = FALSE}.
 #' @export
 plot_spectro <- function(
-    ts,
+    x,
     tzero = 0,
     trange = NULL,
     frange = c(32, 512),
@@ -530,15 +540,16 @@ plot_spectro <- function(
     osciXlabel = TRUE,
     osciYlabel = TRUE,
     stack = T,
-    ...) {
+    ...
+) {
     # Frequency
-    sampling.freq <- frequency(ts)
+    sampling.freq <- frequency(x)
 
     # Crop ts with given trange argument
     if (is.null(trange)) {
-        trange <- tr(ts)
+        trange <- tr(x)
     }
-    ts.crop <- window_to(ts, trange)
+    ts.crop <- window_to(x, trange)
 
     # Resolutions
     delt <- 1 / tres
@@ -552,7 +563,7 @@ plot_spectro <- function(
 
     # Q-transform
     qspecdata <- qtransform(
-        ts = ts.crop,
+        x = ts.crop,
         delta_t = delt,
         delta_f = delf,
         logfsteps = logfstep,
@@ -698,13 +709,15 @@ plot_spectro <- function(
             lgndttlang <- 0
         }
 
-        lgndpos <- switch(specScalePos,
+        lgndpos <- switch(
+            specScalePos,
             "ul" = c(0, 1),
             "ur" = c(1, 1),
             "bl" = c(0, 0),
             "br" = c(1, 0)
         )
-        lgndjus <- switch(specScalePos,
+        lgndjus <- switch(
+            specScalePos,
             "ul" = c(0, 1),
             "ur" = c(1, 1),
             "bl" = c(0, 0),
@@ -842,18 +855,20 @@ plot_spectro <- function(
 #'
 #' @return A ggplot object.
 #' @export
-plot_anomaly <- function(anom.df,
-                         tzero = NULL,
-                         val_col = "observed",
-                         time_col = "GPS",
-                         err_lwr = NULL,
-                         err_upr = NULL,
-                         xlim = NULL,
-                         ylim = NULL,
-                         p_crit = 0.05,
-                         p_col = "P0",
-                         sig_color = "red",
-                         lowsig_color = "grey50") {
+plot_anomaly <- function(
+    anom.df,
+    tzero = NULL,
+    val_col = "observed",
+    time_col = "GPS",
+    err_lwr = NULL,
+    err_upr = NULL,
+    xlim = NULL,
+    ylim = NULL,
+    p_crit = 0.05,
+    p_col = "P0",
+    sig_color = "red",
+    lowsig_color = "grey50"
+) {
     # tzero
     if (is.null(tzero)) {
         tzero <- anom.df[1, time_col, drop = TRUE]
@@ -875,7 +890,9 @@ plot_anomaly <- function(anom.df,
             err_lwr <- "observed_l1"
             err_upr <- "observed_l2"
         } else {
-            stop("No recomposed_* or observed_* columns found. Pass err_lwr/err_upr explicitly.")
+            stop(
+                "No recomposed_* or observed_* columns found. Pass err_lwr/err_upr explicitly."
+            )
         }
     }
 
@@ -889,7 +906,9 @@ plot_anomaly <- function(anom.df,
                 ymin = .data[[err_lwr]],
                 ymax = .data[[err_upr]]
             ),
-            na.rm = FALSE, fill = "grey50", alpha = 0.5
+            na.rm = FALSE,
+            fill = "grey50",
+            alpha = 0.5
         ) +
         ggplot2::geom_line(
             data = anom.df,
@@ -915,7 +934,9 @@ plot_anomaly <- function(anom.df,
                     y = .data[[val_col]],
                     color = sig_flag
                 ),
-                shape = 20, size = 2, alpha = 0.35
+                shape = 20,
+                size = 2,
+                alpha = 0.35
             ) +
             ggplot2::geom_point(
                 data = anoms,
@@ -924,7 +945,9 @@ plot_anomaly <- function(anom.df,
                     y = .data[[val_col]],
                     color = sig_flag
                 ),
-                shape = 21, size = 3, alpha = 0.35
+                shape = 21,
+                size = 3,
+                alpha = 0.35
             ) +
             ggplot2::scale_color_manual(
                 values = c("signif" = sig_color, "lowsig" = lowsig_color),
@@ -940,7 +963,9 @@ plot_anomaly <- function(anom.df,
                     y = .data[[val_col]]
                 ),
                 color = sig_color,
-                shape = 20, size = 2, alpha = 0.35
+                shape = 20,
+                size = 2,
+                alpha = 0.35
             ) +
             ggplot2::geom_point(
                 data = anoms,
@@ -949,7 +974,9 @@ plot_anomaly <- function(anom.df,
                     y = .data[[val_col]]
                 ),
                 color = sig_color,
-                shape = 21, size = 3, alpha = 0.35
+                shape = 21,
+                size = 3,
+                alpha = 0.35
             )
     }
 
@@ -978,7 +1005,8 @@ plot_lambda <- function(
     lambda = c("a", "c"),
     chunk_len = 1,
     t_from = NULL,
-    ...) {
+    ...
+) {
     lambda <- match.arg(lambda)
     extract_key <- if (lambda == "a") "a" else "c"
     y_label <- if (lambda == "a") "$\\lambda_a$" else "$\\lambda_c$"
@@ -1035,21 +1063,24 @@ plot_lambda <- function(
 #'
 #' @return A ggplot object with time-series of coincidence significance.
 #' @export
-plot_coinc <- function(coinc.res,
-                       tzero = NULL,
-                       p_crit = 0.05,
-                       a = 2.3, # b1p1k=2.3, b8p4k=1.6
-                       alpha.det = 0.3,
-                       legend.position = "tr",
-                       annotate.vals = FALSE,
-                       annotate.thresh = p_crit) {
+plot_coinc <- function(
+    coinc.res,
+    tzero = NULL,
+    p_crit = 0.05,
+    a = 2.3, # b1p1k=2.3, b8p4k=1.6
+    alpha.det = 0.3,
+    legend.position = "tr",
+    annotate.vals = FALSE,
+    annotate.thresh = p_crit
+) {
     # Lazy way...
     P0_names <- c("P0_net", "P0_H1_bin", "P0_L1_bin")
     new_names <- structure(c("net", "H1", "L1"), names = P0_names)
     det_colors <- structure(c("black", "red", "blue"), names = P0_names)
     det_alphas <- structure(c(1, alpha.det, alpha.det), names = P0_names)
     det_ltypes <- structure(c(1, 2, 2), names = P0_names)
-    legpos <- switch(legend.position,
+    legpos <- switch(
+        legend.position,
         "tr" = list(pos = c(1, 1), jus = c(1, 1)),
         "tl" = list(pos = c(0, 1), jus = c(0, 1)),
         "br" = list(pos = c(1, 0), jus = c(1, 0)),
@@ -1076,7 +1107,10 @@ plot_coinc <- function(coinc.res,
         NA_character_
     )
 
-    p <- ggplot2::ggplot(coinc_melt, ggplot2::aes(x = utc2gps(time_bin) - tzero)) +
+    p <- ggplot2::ggplot(
+        coinc_melt,
+        ggplot2::aes(x = utc2gps(time_bin) - tzero)
+    ) +
         ggplot2::geom_line(ggplot2::aes(
             y = y,
             color = variable,
@@ -1116,21 +1150,22 @@ plot_coinc <- function(coinc.res,
         )
 
     if (annotate.vals) {
-        p <- p + ggrepel::geom_text_repel(
-            data = subset(coinc_melt, !is.na(label)),
-            ggplot2::aes(
-                x = utc2gps(time_bin) - tzero,
-                y = y,
-                label = label,
-                color = variable,
-                alpha = variable,
-            ),
-            size = 3,
-            # color = "black",
-            min.segment.length = 0,
-            max.overlaps = Inf,
-            show.legend = FALSE
-        )
+        p <- p +
+            ggrepel::geom_text_repel(
+                data = subset(coinc_melt, !is.na(label)),
+                ggplot2::aes(
+                    x = utc2gps(time_bin) - tzero,
+                    y = y,
+                    label = label,
+                    color = variable,
+                    alpha = variable,
+                ),
+                size = 3,
+                # color = "black",
+                min.segment.length = 0,
+                max.overlaps = Inf,
+                show.legend = FALSE
+            )
     }
 
     return(p)
@@ -1185,7 +1220,11 @@ get_break_rngdgt <- function(x, bin = 0.2) {
 #' @return A ggplot object showing discrete histogram-like point distribution.
 #' @export
 plot_onsource <- function(S.vec, color = "black", shape = 24, binwidth = 0.2) {
-    his <- graphics::hist(S.vec, breaks = get_break_rngdgt(S.vec, binwidth), plot = F)
+    his <- graphics::hist(
+        S.vec,
+        breaks = get_break_rngdgt(S.vec, binwidth),
+        plot = F
+    )
     df_ons <- dplyr::filter(
         data.frame(x = his$breaks[-1], y = his$counts),
         y != 0
@@ -1216,10 +1255,15 @@ plot_background <- function(
     binwidth = 0.2,
     xlimit = c(7, 30),
     ylimit = c(5e-3, 5e2),
-    factor = 1) {
+    factor = 1
+) {
     # Histogram setup
     rng <- range.width(S.bkg.vec, binwidth)
-    his <- graphics::hist(S.bkg.vec, breaks = seq(rng[1], rng[2], binwidth), plot = FALSE)
+    his <- graphics::hist(
+        S.bkg.vec,
+        breaks = seq(rng[1], rng[2], binwidth),
+        plot = FALSE
+    )
 
     # Histogram plot only
     p <- ggplot2::ggplot() +
