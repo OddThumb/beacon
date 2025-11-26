@@ -61,7 +61,8 @@ to_fs <- function(ts, delta_f = NULL) {
     # Prepare temporary data for FFT
     tmp <- ts(rep_len(0, tlen), start = ti(ts), frequency = sampling.freq)
     tmp[1:length(ts)] <- ts
-    fft.res <- fftw::FFT(ts, plan = fftw::planFFT(length(ts)))
+    #// fft.res <- fftw::FFT(ts, plan = fftw::planFFT(length(ts)))
+    fft.res <- fftw::FFT(tmp, plan = fftw::planFFT(length(tmp)))
     fs.out <- fft.res[1:flen]
 
     # Add attributes
@@ -105,22 +106,31 @@ print.fs <- function(x, ..., ts.info = TRUE) {
     cat("\u251c\u2500 delta_f = ", attr(x, "delta_f"), "\n", sep = "")
     # If ts.info=TRUE, print "Associated ts info", too.
     if (
-        !ts.info || (
-            is.null(attr(x, "assoc.ts")) &&
+        !ts.info ||
+            (is.null(attr(x, "assoc.ts")) &&
                 is.null(attr(x, "ti")) &&
-                is.null(attr(x, "sampling.freq"))
-        )
+                is.null(attr(x, "sampling.freq")))
     ) {
         cat("\u2514\u2500 flen    = ", attr(x, "flen"), "\n", sep = "")
     } else {
         cat("\u251c\u2500 flen    = ", attr(x, "flen"), "\n", sep = "")
         cat("\u2514\u2500 Associated ts info:\n")
         # Associated ts object name
-        cat('   \u251c\u2500 ts name       = "', attr(x, "assoc.ts"), '"\n', sep = "")
+        cat(
+            '   \u251c\u2500 ts name       = "',
+            attr(x, "assoc.ts"),
+            '"\n',
+            sep = ""
+        )
         # Associated ts object start time
         cat("   \u251c\u2500 Start time    = ", attr(x, "ti"), "\n", sep = "")
         # Associated ts object sampling frequency
-        cat("   \u2514\u2500 sampling.freq = ", attr(x, "sampling.freq"), "\n", sep = "")
+        cat(
+            "   \u2514\u2500 sampling.freq = ",
+            attr(x, "sampling.freq"),
+            "\n",
+            sep = ""
+        )
     }
 
     # Default printing
@@ -164,15 +174,21 @@ str.fs <- function(x) {
 #'
 #' @export
 plot.fs <- function(
-    x, ...,
+    x,
+    ...,
     log = "xy",
     xlab = "Frequency (Hz)",
     ylab = "PSD",
     xlim = NULL,
-    ylim = NULL) {
+    ylim = NULL
+) {
     base_breaks <- function(n = 10) {
         function(x) {
-            grDevices::axisTicks(log10(range(x, na.rm = TRUE)), log = TRUE, n = n)
+            grDevices::axisTicks(
+                log10(range(x, na.rm = TRUE)),
+                log = TRUE,
+                n = n
+            )
         }
     }
 

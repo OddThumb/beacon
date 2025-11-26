@@ -9,7 +9,7 @@ License: GPL (>= 2)
 LinkingTo: Rcpp, RcppParallel
 SystemRequirements: GNU make
 Encoding: UTF-8
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Imports:
     bspec,
     curl,
