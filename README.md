@@ -103,7 +103,7 @@ reticulate::use_condaenv(condaenv = "path/to/your/conda/env")
 
 ## Python Version
 
-> ⚙️ **Python Version (In Progress):** A Python version of the BEACON pipeline is currently under active development. While the core design is being ported from R, the Python version will support the same sequential anomaly detection and clustering logic. Stay tuned for updates in this repository 🔥.
+A **Python implementation** of BEACON is now available at [beacon-py](https://github.com/OddThumb/beacon-py).
 
 ## **Documentation**
 
