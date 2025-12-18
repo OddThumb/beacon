@@ -11,7 +11,7 @@ seqarima(
   q = NULL,
   fl = NULL,
   fu = NULL,
-  ar.aic = TRUE,
+  ar.aic = "AIC",
   ar.collector = "median",
   ma.collector = "median",
   ar.args = list(),
@@ -34,7 +34,7 @@ seqarima(
 
 \item{fu}{Upper frequency bound for band-pass filter.}
 
-\item{ar.aic}{Logical. Whether to use AIC-based AR model selection.}
+\item{ar.aic}{Information criterion for AR model selection. One of 'AIC', 'BIC', 'FPE', 'AICc', 'KIC', 'AKICc'.}
 
 \item{ar.collector}{Collector for AR ensemble. One of 'mean', 'median', or 'pca'.}
 

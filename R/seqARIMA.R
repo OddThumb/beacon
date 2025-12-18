@@ -269,7 +269,7 @@ C.Burg <- function(x, order.max) {
 #' Fit AR model using modified Burg method
 #'
 #' @param x A `ts` object.
-#' @param ic Information criterion: logical or character.
+#' @param ic Information criterion: one of 'AIC', 'BIC', 'FPE', 'AICc', 'KIC', 'AKICc'.
 #' @param order.max Maximum AR order.
 #' @param na.action How to handle NA.
 #' @param demean Whether to subtract the mean.
@@ -280,19 +280,19 @@ C.Burg <- function(x, order.max) {
 #' @details
 #' For \code{ic}, followings can be chosen:
 #' \itemize{
-#'   \item AIC
-#'   \item BIC
-#'   \item FPE
-#'   \item AICc
-#'   \item KIC
-#'   \item AKICc
+#'   \item AIC: Akaike Information Criterion (penalty factor: 2)
+#'   \item BIC: Bayesian Information Criterion (penalty factor: log(n))
+#'   \item FPE: Final Prediction Error
+#'   \item AICc: Corrected AIC with bias correction for small samples
+#'   \item KIC: Kashyap Information Criterion (penalty factor: 3)
+#'   \item AKICc: Corrected KIC with bias correction
 #' }
 #'
 #' @return An `ar` object.
 #' @export
 burgar <- function(
     x,
-    ic = TRUE,
+    ic = "AIC",
     order.max = NULL,
     na.action = na.fail,
     demean = TRUE,
@@ -301,35 +301,32 @@ burgar <- function(
     numCores = NULL,
     ...
 ) {
-    AIC <- function(order.max, vars.pred, n.used) {
-        2 * (0L:order.max) + n.used * log(vars.pred)
-    }
-    BIC <- function(order.max, vars.pred, n.used) {
-        (0L:order.max) * log(n.used) + n.used * log(vars.pred)
-    }
-    FPE <- function(order.max, vars.pred, n.used) {
-        (n.used + ((0L:order.max) + 1)) /
-            (n.used -
-                ((0L:order.max) +
-                    1)) *
-            vars.pred
-    }
-    AICc <- function(order.max, vars.pred, n.used) {
+    AIC <- function(order.max, vars.pred, n.used, demean = FALSE) {
         orders <- 0L:order.max
-        n.used *
-            log(vars.pred) +
-            2 * orders +
-            (2 * orders * (orders + 1)) / (n.used - orders - 1)
+        n.used * log(vars.pred) + 2 * orders + 2 * as.integer(demean)
     }
-    KIC <- function(order.max, vars.pred, n.used) {
-        n.used * log(vars.pred) + 3 * (0L:order.max)
-    }
-    AKICc <- function(order.max, vars.pred, n.used) {
+    BIC <- function(order.max, vars.pred, n.used, demean = FALSE) {
         orders <- 0L:order.max
-        n.used *
-            log(vars.pred) +
-            3 * orders +
-            (3 * orders * (orders + 1)) / (n.used - orders - 1)
+        orders * log(n.used) + n.used * log(vars.pred) + as.integer(demean) * log(n.used)
+    }
+    FPE <- function(order.max, vars.pred, n.used, demean = FALSE) {
+        orders <- 0L:order.max
+        k <- orders + as.integer(demean)
+        (n.used + k + 1) / (n.used - k - 1) * vars.pred
+    }
+    AICc <- function(order.max, vars.pred, n.used, demean = FALSE) {
+        orders <- 0L:order.max
+        k <- orders + as.integer(demean)
+        n.used * log(vars.pred) + 2 * k + (2 * k * (k + 1)) / (n.used - k - 1)
+    }
+    KIC <- function(order.max, vars.pred, n.used, demean = FALSE) {
+        orders <- 0L:order.max
+        n.used * log(vars.pred) + 3 * orders + 3 * as.integer(demean)
+    }
+    AKICc <- function(order.max, vars.pred, n.used, demean = FALSE) {
+        orders <- 0L:order.max
+        k <- orders + as.integer(demean)
+        n.used * log(vars.pred) + 3 * k + (3 * k * (k + 1)) / (n.used - k - 1)
     }
     if (is.null(series)) {
         series <- deparse1(substitute(x))
@@ -376,46 +373,35 @@ burgar <- function(
     if (any(is.nan(vars.pred))) {
         stop("zero-variance series")
     }
-    if (is.logical(ic)) {
-        xic <- n.used * log(vars.pred) + 2 * (0L:order.max) + 2 * demean
-        attr(xic, "ic") <- "default"
-        mic <- min(xic)
-        xic <- setNames(
-            if (is.finite(mic)) {
-                xic - min(xic)
-            } else {
-                ifelse(xic == mic, 0, Inf)
-            },
-            0L:order.max
-        )
-        order <- if (ic) {
-            (0L:order.max)[xic == 0]
+
+    # Information criterion
+    ic_fun <- switch(
+        ic,
+        AIC = AIC,
+        BIC = BIC,
+        FPE = FPE,
+        AICc = AICc,
+        KIC = KIC,
+        AKICc = AKICc,
+        stop("Unknown ic: '", ic, "'. Must be one of 'AIC', 'BIC', 'FPE', 'AICc', 'KIC', 'AKICc'")
+    )
+
+    xic <- ic_fun(order.max, vars.pred, n.used, demean)
+    attr(xic, "ic") <- ic
+
+    # Normalize IC
+    mic <- min(xic)
+    xic <- setNames(
+        if (is.finite(mic)) {
+            xic - min(xic)
         } else {
-            order.max
-        }
-    } else {
-        ic_fun <- switch(
-            ic,
-            AIC = AIC,
-            BIC = BIC,
-            FPE = FPE,
-            AICc = AICc,
-            KIC = KIC,
-            AKICc = AKICc
-        )
-        xic <- ic_fun(order.max, vars.pred, n.used)
-        attr(xic, "ic") <- ic
-        mic <- min(xic)
-        xic <- setNames(
-            if (is.finite(mic)) {
-                xic - min(xic)
-            } else {
-                ifelse(xic == mic, 0, Inf)
-            },
-            0L:order.max
-        )
-        order <- (0L:order.max)[xic == 0]
-    }
+            ifelse(xic == mic, 0, Inf)
+        },
+        0L:order.max
+    )
+
+    # Select order (choose order with minimum IC)
+    order <- (0L:order.max)[xic == 0]
     ar <- if (order) {
         coefs[order, 1L:order]
     } else {
@@ -912,7 +898,7 @@ MovingAverage <- function(x, q, verbose = TRUE, ...) {
 #' @param q MA order. Can be a single integer or a vector for ensemble.
 #' @param fl Lower frequency bound for band-pass filter.
 #' @param fu Upper frequency bound for band-pass filter.
-#' @param ar.aic Logical. Whether to use AIC-based AR model selection.
+#' @param ar.aic Information criterion for AR model selection. One of 'AIC', 'BIC', 'FPE', 'AICc', 'KIC', 'AKICc'.
 #' @param ar.collector Collector for AR ensemble. One of 'mean', 'median', or 'pca'.
 #' @param ma.collector Collector for MA ensemble. One of 'mean', 'median', or 'pca'.
 #' @param ar.args A named list of additional arguments to be passed to the `Autoregressive()` function.
@@ -965,7 +951,7 @@ seqarima <- function(
     q = NULL,
     fl = NULL,
     fu = NULL,
-    ar.aic = TRUE,
+    ar.aic = "AIC",
     ar.collector = "median",
     ma.collector = "median",
     ar.args = list(),

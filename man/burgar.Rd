@@ -6,7 +6,7 @@
 \usage{
 burgar(
   x,
-  ic = TRUE,
+  ic = "AIC",
   order.max = NULL,
   na.action = na.fail,
   demean = TRUE,
@@ -19,7 +19,7 @@ burgar(
 \arguments{
 \item{x}{A `ts` object.}
 
-\item{ic}{Information criterion: logical or character.}
+\item{ic}{Information criterion: one of 'AIC', 'BIC', 'FPE', 'AICc', 'KIC', 'AKICc'.}
 
 \item{order.max}{Maximum AR order.}
 
@@ -42,11 +42,11 @@ Fit AR model using modified Burg method
 \details{
 For \code{ic}, followings can be chosen:
 \itemize{
-  \item AIC
-  \item BIC
-  \item FPE
-  \item AICc
-  \item KIC
-  \item AKICc
+  \item AIC: Akaike Information Criterion (penalty factor: 2)
+  \item BIC: Bayesian Information Criterion (penalty factor: log(n))
+  \item FPE: Final Prediction Error
+  \item AICc: Corrected AIC with bias correction for small samples
+  \item KIC: Kashyap Information Criterion (penalty factor: 3)
+  \item AKICc: Corrected KIC with bias correction
 }
 }
