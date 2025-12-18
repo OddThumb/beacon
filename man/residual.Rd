@@ -4,18 +4,34 @@
 \alias{residual}
 \title{Compute residuals using AR coefficients}
 \usage{
-residual(x, ar, numCores = parallel::detectCores())
+residual(x, ar)
+
+residual(x, ar)
 }
 \arguments{
-\item{x}{Time series data.}
+\item{x}{A numeric vector or `ts` object. The input time series.}
 
-\item{ar}{AR coefficients.}
+\item{ar}{A numeric vector. AR coefficients from an AR model fit.}
 
 \item{numCores}{Number of CPU cores to use.}
 }
 \value{
 Residual time series.
+
+A numeric vector of zero-phase corrected residuals with the same
+  length as `x`. The first `order` and last `order` values are set to NA
+  where `order = length(ar)`.
 }
 \description{
-Compute residuals using AR coefficients
+Calculates AR model residuals with zero-phase correction using FFT-based
+phase adjustment. This function applies an AR filter causally, then corrects
+for phase distortion in the frequency domain to produce zero-phase residuals.
+}
+\details{
+The function performs the following steps:
+1. Applies causal AR filter: constructs polynomial (1, -ar) and convolves
+2. Fills NA values with 0 for FFT computation
+3. Computes phase response of AR coefficients in frequency domain
+4. Corrects phase distortion by multiplying FFT of residuals with exp(-i * phase)
+5. Transforms back to time domain and restores edge NAs
 }

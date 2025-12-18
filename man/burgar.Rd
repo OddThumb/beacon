@@ -31,8 +31,6 @@ burgar(
 
 \item{var.method}{Method for innovation variance.}
 
-\item{numCores}{An integer. The number of cores for fast embed by C++ (See `embedParallelCpp()`).}
-
 \item{...}{Additional args.}
 }
 \value{

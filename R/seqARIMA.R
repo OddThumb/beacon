@@ -294,7 +294,6 @@ C.Burg <- function(x, order.max) {
 #' @param demean Whether to subtract the mean.
 #' @param series Series name.
 #' @param var.method Method for innovation variance.
-#' @param numCores An integer. The number of cores for fast embed by C++ (See `embedParallelCpp()`).
 #' @param ... Additional args.
 #'
 #' @return An `ar` object.
@@ -318,76 +317,59 @@ burgar <- function(
     }
     FPE <- function(order.max, vars.pred, n.used) {
         (n.used + ((0L:order.max) + 1)) /
-            (n.used - ((0L:order.max) + 1)) *
+            (n.used -
+                ((0L:order.max) +
+                    1)) *
             vars.pred
     }
-
     if (is.null(series)) {
         series <- deparse1(substitute(x))
     }
-
     if (ists <- is.ts(x)) {
         xtsp <- tsp(x)
     }
-
     x <- na.action(as.ts(x))
-
     if (anyNA(x)) {
         stop("NAs in 'x'")
     }
-
     if (ists) {
         xtsp <- tsp(x)
     }
-
     xfreq <- frequency(x)
-
     x <- as.vector(x)
-
     if (demean) {
         x.mean <- mean(x)
         x <- x - x.mean
     } else {
         x.mean <- 0
     }
-
     n.used <- length(x)
-
     order.max <- if (is.null(order.max)) {
         min(n.used - 1L, floor(10 * log10(n.used)))
     } else {
         floor(order.max)
     }
-
     if (order.max < 1L) {
         stop("'order.max' must be >= 1")
     } else if (order.max >= n.used) {
         stop("'order.max' must be < 'n.used'")
     }
-
     xic <- numeric(order.max + 1L)
-
-    z <- C.Burg(x, order.max)
+    z <- C_Burg_beacon(x, order.max)
     coefs <- matrix(z[[1L]], order.max, order.max)
-
-    # partialacf
-    partialacf <- array(diag(coefs), dim = c(order.max, 1L, 1L))
-
-    # var.pred (as a role of maximum likelihood function)
     vars.pred <- if (var.method == 1L) {
         z[[2L]]
     } else {
         z[[3L]]
     }
+    # partialacf
+    #partialacf <- array(diag(coefs), dim = c(order.max, 1L, 1L))
     if (any(is.nan(vars.pred))) {
         stop("zero-variance series")
     }
-
-    # Information Criteria part
     if (is.logical(ic)) {
         xic <- n.used * log(vars.pred) + 2 * (0L:order.max) + 2 * demean
         attr(xic, "ic") <- "default"
-
         mic <- min(xic)
         xic <- setNames(
             if (is.finite(mic)) {
@@ -397,17 +379,15 @@ burgar <- function(
             },
             0L:order.max
         )
-
         order <- if (ic) {
             (0L:order.max)[xic == 0]
         } else {
             order.max
         }
     } else {
-        ic_fun <- switch(ic, "AIC" = AIC, "BIC" = BIC, "FPE" = FPE)
+        ic_fun <- switch(ic, AIC = AIC, BIC = BIC, FPE = FPE)
         xic <- ic_fun(order.max, vars.pred, n.used)
         attr(xic, "ic") <- ic
-
         mic <- min(xic)
         xic <- setNames(
             if (is.finite(mic)) {
@@ -417,41 +397,19 @@ burgar <- function(
             },
             0L:order.max
         )
-
         order <- (0L:order.max)[xic == 0]
     }
-
-    # AR coefficients
     ar <- if (order) {
         coefs[order, 1L:order]
     } else {
         numeric()
     }
-
     var.pred <- vars.pred[order + 1L]
-
-    # To calculate residuals, C++ version of embed function is employed.
-    if (is.null(numCores)) {
-        maxcores <- parallel::detectCores()
-        numCores <- ifelse(order.max > 4e3, maxcores, maxcores / 2)
-    }
-    resid <- if (order) {
-        c(
-            rep(NA, order),
-            embedParallelCpp(x, order + 1L, numCores) %*% c(1, -ar)
-        )
-    } else {
-        x
-    }
-
-    if (ists) {
-        attr(resid, "tsp") <- xtsp
-        attr(resid, "class") <- "ts"
-    }
 
     res <- list(
         order = order,
         ar = ar,
+        #partialacf = partialacf,
         var.pred = var.pred,
         vars.pred = vars.pred,
         x.mean = x.mean,
@@ -459,29 +417,66 @@ burgar <- function(
         n.used = n.used,
         n.obs = n.used,
         order.max = order.max,
-        partialacf = partialacf,
-        resid = resid,
         method = ifelse(var.method == 1L, "Burg", "Burg2"),
         series = series,
         frequency = xfreq,
         call = match.call()
     )
-
     res$asy.var.coef <- NULL
-    # WE DON'T NEED THIS WHICH TAKES TIME A LOT!
-    # if (order) {
-    #    xacf <- acf(x, type = "covariance", lag.max = order,
-    #                plot = FALSE)$acf
-    #    res$asy.var.coef <- solve(toeplitz(drop(xacf)[seq_len(order)])) *
-    #        var.pred/n.used
-    # }
-
     class(res) <- "ar"
-
     res
 }
 
-#' Simple wrapper for AR fitting
+#' Compute zero-phase AR residuals
+#'
+#' Calculates AR model residuals with zero-phase correction using FFT-based
+#' phase adjustment. This function applies an AR filter causally, then corrects
+#' for phase distortion in the frequency domain to produce zero-phase residuals.
+#'
+#' @param x A numeric vector or `ts` object. The input time series.
+#' @param ar A numeric vector. AR coefficients from an AR model fit.
+#'
+#' @return A numeric vector of zero-phase corrected residuals with the same
+#'   length as `x`. The first `order` and last `order` values are set to NA
+#'   where `order = length(ar)`.
+#'
+#' @details
+#' The function performs the following steps:
+#' 1. Applies causal AR filter: constructs polynomial (1, -ar) and convolves
+#' 2. Fills NA values with 0 for FFT computation
+#' 3. Computes phase response of AR coefficients in frequency domain
+#' 4. Corrects phase distortion by multiplying FFT of residuals with exp(-i * phase)
+#' 5. Transforms back to time domain and restores edge NAs
+#'
+residual <- function(x, ar) {
+    # Construct AR coef vector: 1 - a_1 - a_2 - ...
+    a <- c(1, -ar)
+    order <- length(ar)
+
+    # Faster than embed-based calculation of residual
+    resid <- stats::filter(x, a, method = "convolution", sides = 1)
+
+    # Copy of resid only for FFT input
+    resid_filled <- resid
+    resid_filled[is.na(resid_filled)] <- 0
+
+    # Phase response of AR coefs
+    n <- length(x)
+    A_f <- fft(c(a, rep(0, n - length(a))))
+    phase_A <- Arg(A_f)
+
+    # Phase correction
+    Y_f <- fft(res_causal_filled)
+    Y_fp <- Y_f * exp(-1i * phase_A)
+    y_p <- Re(fft(Y_fp, inverse = TRUE)) / n
+
+    # Refill NA values
+    y_p[1:order] <- NA
+    y_p[(length(y_p) - order + 1):length(y_p)] <- NA
+    y_p
+}
+
+##' Simple wrapper for AR fitting
 #'
 #' @param x A `ts` object.
 #' @param ... Arguments passed to `burgar()`.
@@ -490,7 +485,7 @@ burgar <- function(
 #' @export
 sar <- function(x, ...) {
     AR <- burgar(x = x, ...)
-    resid <- na.omit(AR$resid)
+    resid <- na.omit(residual(x, AR$ar))
 
     attr(resid, "collector") <- "single"
     attr(resid, "feature") <- AR$ar
