@@ -277,6 +277,17 @@ C.Burg <- function(x, order.max) {
 #' @param var.method Method for innovation variance.
 #' @param ... Additional args.
 #'
+#' @details
+#' For \code{ic}, followings can be chosen:
+#' \itemize{
+#'   \item AIC
+#'   \item BIC
+#'   \item FPE
+#'   \item AICc
+#'   \item KIC
+#'   \item AKICc
+#' }
+#'
 #' @return An `ar` object.
 #' @export
 burgar <- function(
@@ -302,6 +313,23 @@ burgar <- function(
                 ((0L:order.max) +
                     1)) *
             vars.pred
+    }
+    AICc <- function(order.max, vars.pred, n.used) {
+        orders <- 0L:order.max
+        n.used *
+            log(vars.pred) +
+            2 * orders +
+            (2 * orders * (orders + 1)) / (n.used - orders - 1)
+    }
+    KIC <- function(order.max, vars.pred, n.used) {
+        n.used * log(vars.pred) + 3 * (0L:order.max)
+    }
+    AKICc <- function(order.max, vars.pred, n.used) {
+        orders <- 0L:order.max
+        n.used *
+            log(vars.pred) +
+            3 * orders +
+            (3 * orders * (orders + 1)) / (n.used - orders - 1)
     }
     if (is.null(series)) {
         series <- deparse1(substitute(x))
@@ -366,7 +394,15 @@ burgar <- function(
             order.max
         }
     } else {
-        ic_fun <- switch(ic, AIC = AIC, BIC = BIC, FPE = FPE)
+        ic_fun <- switch(
+            ic,
+            AIC = AIC,
+            BIC = BIC,
+            FPE = FPE,
+            AICc = AICc,
+            KIC = KIC,
+            AKICc = AKICc
+        )
         xic <- ic_fun(order.max, vars.pred, n.used)
         attr(xic, "ic") <- ic
         mic <- min(xic)
