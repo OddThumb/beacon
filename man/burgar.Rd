@@ -39,3 +39,14 @@ An `ar` object.
 \description{
 Fit AR model using modified Burg method
 }
+\details{
+For \code{ic}, followings can be chosen:
+\itemize{
+  \item AIC
+  \item BIC
+  \item FPE
+  \item AICc
+  \item KIC
+  \item AKICc
+}
+}
