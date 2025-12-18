@@ -466,7 +466,7 @@ residual <- function(x, ar) {
     phase_A <- Arg(A_f)
 
     # Phase correction
-    Y_f <- fft(res_causal_filled)
+    Y_f <- fft(resid_filled)
     Y_fp <- Y_f * exp(-1i * phase_A)
     y_p <- Re(fft(Y_fp, inverse = TRUE)) / n
 
