@@ -2,22 +2,16 @@
 % Please edit documentation in R/seqARIMA.R
 \name{residual}
 \alias{residual}
-\title{Compute residuals using AR coefficients}
+\title{Compute zero-phase AR residuals}
 \usage{
-residual(x, ar)
-
 residual(x, ar)
 }
 \arguments{
 \item{x}{A numeric vector or `ts` object. The input time series.}
 
 \item{ar}{A numeric vector. AR coefficients from an AR model fit.}
-
-\item{numCores}{Number of CPU cores to use.}
 }
 \value{
-Residual time series.
-
 A numeric vector of zero-phase corrected residuals with the same
   length as `x`. The first `order` and last `order` values are set to NA
   where `order = length(ar)`.

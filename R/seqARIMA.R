@@ -251,26 +251,7 @@ Differencing <- function(
 }
 
 
-#' Compute residuals using AR coefficients
-#'
-#' @param x Time series data.
-#' @param ar AR coefficients.
-#' @param numCores Number of CPU cores to use.
-#'
-#' @return Residual time series.
-#' @export
-residual <- function(x, ar, numCores = parallel::detectCores()) {
-    order <- length(ar)
-    ts(
-        c(
-            rep(NA, order),
-            embedParallelCpp(x, order + 1L, numCores) %*% c(1, -ar)
-        ),
-        start = ti(x),
-        frequency = frequency(x)
-    )
-}
-
+#' Compute residuals using AR coefficient
 #' AR Burg core (.Call)
 #' @param x numeric vector (time series)
 #' @param order.max integer, maximum AR order

@@ -2,7 +2,8 @@
 % Please edit documentation in R/seqARIMA.R
 \name{C.Burg}
 \alias{C.Burg}
-\title{AR Burg core (.Call)}
+\title{Compute residuals using AR coefficient
+AR Burg core (.Call)}
 \usage{
 C.Burg(x, order.max)
 }
@@ -15,5 +16,6 @@ C.Burg(x, order.max)
 list(coefs = p x p numeric matrix, var.pred1 = numeric(p+1), var.pred2 = numeric(p+1))
 }
 \description{
+Compute residuals using AR coefficient
 AR Burg core (.Call)
 }
